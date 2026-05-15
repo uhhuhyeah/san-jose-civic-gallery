@@ -15,13 +15,13 @@ module Civic
     scope :recent_first, -> { order(agenda_date: :desc, intro_date: :desc, legistar_matter_id: :desc) }
     scope :search, ->(query) {
       normalized = query.to_s.strip
-      if normalized.present?
-        pattern = "%#{sanitize_sql_like(normalized)}%"
-        where(
-          "matter_file ILIKE :pattern OR title ILIKE :pattern OR name ILIKE :pattern",
-          pattern:
-        )
-      end
+      next all if normalized.blank?
+
+      pattern = "%#{sanitize_sql_like(normalized)}%"
+      where(
+        "matter_file ILIKE :pattern OR title ILIKE :pattern OR name ILIKE :pattern",
+        pattern:
+      )
     }
 
     def display_name

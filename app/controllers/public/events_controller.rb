@@ -15,7 +15,7 @@ module Public
         agenda_items: Civic::EventItem.current_from_source.count,
         matters: Civic::Matter.count,
         attachments: Civic::MatterAttachment.current_from_source.count,
-        imported_files: Civic::MatterAttachment.joins(:source_file_attachment).count,
+        imported_files: Civic::MatterAttachment.imported.count,
         extracted_texts: Documents::ExtractedText.where(status: "ok").count
       }
     end

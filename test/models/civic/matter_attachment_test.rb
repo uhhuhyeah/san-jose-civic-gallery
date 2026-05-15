@@ -16,5 +16,18 @@ module Civic
       assert_includes attachment.errors[:legistar_matter_attachment_id], "can't be blank"
       assert_includes attachment.errors[:name], "can't be blank"
     end
+
+    test "imported scope returns attachments with a recorded import timestamp" do
+      not_yet = @matter.all_attachments.create!(legistar_matter_attachment_id: 7001, name: "Pending")
+      imported = @matter.all_attachments.create!(
+        legistar_matter_attachment_id: 7002,
+        name: "Imported",
+        source_file_imported_at: Time.current
+      )
+
+      ids = MatterAttachment.imported.pluck(:id)
+      assert_includes ids, imported.id
+      assert_not_includes ids, not_yet.id
+    end
   end
 end

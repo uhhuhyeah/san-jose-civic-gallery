@@ -14,6 +14,7 @@ module Civic
 
     scope :current_from_source, -> { where(source_present: true) }
     scope :display_order, -> { order(:sort_order, :legistar_matter_attachment_id) }
+    scope :imported, -> { where.not(source_file_imported_at: nil) }
 
     def imported?
       source_file.attached?

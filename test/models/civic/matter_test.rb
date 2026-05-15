@@ -52,5 +52,14 @@ module Civic
       assert_equal [ title_match.id ], Matter.search("library").pluck(:id)
       assert_equal [ name_match.id ], Matter.search("parks").pluck(:id)
     end
+
+    test "search returns all matters when query is blank" do
+      Matter.create!(legistar_matter_id: 88010, matter_file: "26-710")
+      Matter.create!(legistar_matter_id: 88011, matter_file: "26-711")
+
+      assert_equal Matter.count, Matter.search("").count
+      assert_equal Matter.count, Matter.search("   ").count
+      assert_equal Matter.count, Matter.search(nil).count
+    end
   end
 end
