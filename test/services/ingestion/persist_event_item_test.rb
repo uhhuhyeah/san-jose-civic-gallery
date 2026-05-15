@@ -31,6 +31,7 @@ module Ingestion
         event: @event,
         matter: @matter,
         event_item_payload:,
+        source_system: "legistar.sanjose",
         request_url: "https://example.test/Events/7622/EventItems",
         fetched_at: Time.zone.parse("2026-05-15 08:00:00"),
         http_status: 200,
@@ -44,6 +45,8 @@ module Ingestion
       assert_equal "CC 1.1", event_item.matter_file
       assert_equal "event_item", snapshot.resource_type
       assert_equal "129630", snapshot.source_id
+      assert_equal "legistar.sanjose", event_item.source_system
+      assert_equal snapshot.id, event_item.last_source_snapshot_id
     end
   end
 end

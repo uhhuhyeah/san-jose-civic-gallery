@@ -11,6 +11,7 @@ module Ingestion
 
       matter, snapshot = PersistMatter.call(
         matter_payload: response.fetch(:payload),
+        source_system: client.source_system,
         request_url: response.fetch(:request_url),
         fetched_at: response.fetch(:fetched_at),
         http_status: response.fetch(:status),
@@ -24,10 +25,12 @@ module Ingestion
     end
 
     def self.link_event_items!(matter:)
-      Civic::EventItem.where(matter_id: matter.legistar_matter_id).update_all(
-        civic_matter_id: matter.id,
-        updated_at: Time.current
-      )
+      Civic::EventItem
+        .where(source_system: matter.source_system, matter_id: matter.legistar_matter_id)
+        .update_all(
+          civic_matter_id: matter.id,
+          updated_at: Time.current
+        )
     end
     private_class_method :link_event_items!
 

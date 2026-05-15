@@ -18,11 +18,12 @@ module Ingestion
         seen_ids << event_item_payload.fetch("EventItemId")
         matter_id = event_item_payload["EventItemMatterId"]
         matter_ids << matter_id if matter_id.present?
-        matter = Civic::Matter.find_by(legistar_matter_id: matter_id) if matter_id.present?
+        matter = Civic::Matter.find_by(source_system: client.source_system, legistar_matter_id: matter_id) if matter_id.present?
 
         event_item, snapshot = PersistEventItem.call(
           event:,
           event_item_payload:,
+          source_system: client.source_system,
           request_url: response.fetch(:request_url),
           fetched_at: response.fetch(:fetched_at),
           http_status: response.fetch(:status),

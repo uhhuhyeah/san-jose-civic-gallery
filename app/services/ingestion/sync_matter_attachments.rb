@@ -18,6 +18,7 @@ module Ingestion
         attachment, snapshot = PersistMatterAttachment.call(
           matter:,
           attachment_payload:,
+          source_system: client.source_system,
           request_url: response.fetch(:request_url),
           fetched_at: response.fetch(:fetched_at),
           http_status: response.fetch(:status),

@@ -1,8 +1,8 @@
 module Ingestion
   class PersistEventItem
-    def self.call(event:, event_item_payload:, request_url:, fetched_at:, http_status:, response_sha256:, matter: nil)
+    def self.call(event:, event_item_payload:, source_system:, request_url:, fetched_at:, http_status:, response_sha256:, matter: nil)
       snapshot = SourceSnapshot.create!(
-        source_system: "legistar",
+        source_system: source_system,
         resource_type: "event_item",
         source_id: event_item_payload.fetch("EventItemId").to_s,
         request_url: request_url,
@@ -12,14 +12,17 @@ module Ingestion
         payload: event_item_payload
       )
 
-      event_item = Civic::EventItem.find_or_initialize_by(legistar_event_item_id: event_item_payload.fetch("EventItemId"))
-      event_item.assign_attributes(attributes_from(event:, matter:, event_item_payload:, fetched_at:, response_sha256:))
+      event_item = Civic::EventItem.find_or_initialize_by(
+        source_system: source_system,
+        legistar_event_item_id: event_item_payload.fetch("EventItemId")
+      )
+      event_item.assign_attributes(attributes_from(event:, matter:, event_item_payload:, fetched_at:, response_sha256:, snapshot:))
       event_item.save!
 
       [ event_item, snapshot ]
     end
 
-    def self.attributes_from(event:, matter:, event_item_payload:, fetched_at:, response_sha256:)
+    def self.attributes_from(event:, matter:, event_item_payload:, fetched_at:, response_sha256:, snapshot:)
       {
         civic_event_id: event.id,
         civic_matter_id: matter&.id,
@@ -44,7 +47,8 @@ module Ingestion
         source_missing_at: nil,
         source_last_modified_at: event_item_payload["EventItemLastModifiedUtc"],
         last_synced_at: fetched_at,
-        raw_source_digest: response_sha256
+        raw_source_digest: response_sha256,
+        last_source_snapshot_id: snapshot.id
       }
     end
     private_class_method :attributes_from

@@ -34,6 +34,8 @@ module Ingestion
       ]
 
       client = Class.new do
+        define_method(:source_system) { "legistar.sanjose" }
+
         define_method(:event_items) do |event_id:|
           raise "unexpected event_id" unless event_id == 7622
 

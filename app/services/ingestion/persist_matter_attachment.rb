@@ -1,8 +1,8 @@
 module Ingestion
   class PersistMatterAttachment
-    def self.call(matter:, attachment_payload:, request_url:, fetched_at:, http_status:, response_sha256:)
+    def self.call(matter:, attachment_payload:, source_system:, request_url:, fetched_at:, http_status:, response_sha256:)
       snapshot = SourceSnapshot.create!(
-        source_system: "legistar",
+        source_system: source_system,
         resource_type: "matter_attachment",
         source_id: attachment_payload.fetch("MatterAttachmentId").to_s,
         request_url: request_url,
@@ -13,15 +13,16 @@ module Ingestion
       )
 
       attachment = Civic::MatterAttachment.find_or_initialize_by(
+        source_system: source_system,
         legistar_matter_attachment_id: attachment_payload.fetch("MatterAttachmentId")
       )
-      attachment.assign_attributes(attributes_from(matter:, attachment_payload:, fetched_at:, response_sha256:))
+      attachment.assign_attributes(attributes_from(matter:, attachment_payload:, fetched_at:, response_sha256:, snapshot:))
       attachment.save!
 
       [ attachment, snapshot ]
     end
 
-    def self.attributes_from(matter:, attachment_payload:, fetched_at:, response_sha256:)
+    def self.attributes_from(matter:, attachment_payload:, fetched_at:, response_sha256:, snapshot:)
       {
         civic_matter_id: matter.id,
         name: attachment_payload["MatterAttachmentName"],
@@ -40,7 +41,8 @@ module Ingestion
         source_missing_at: nil,
         source_last_modified_at: attachment_payload["MatterAttachmentLastModifiedUtc"],
         last_synced_at: fetched_at,
-        raw_source_digest: response_sha256
+        raw_source_digest: response_sha256,
+        last_source_snapshot_id: snapshot.id
       }
     end
     private_class_method :attributes_from

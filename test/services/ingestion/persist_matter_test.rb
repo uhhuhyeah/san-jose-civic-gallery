@@ -17,6 +17,7 @@ module Ingestion
 
       matter, snapshot = PersistMatter.call(
         matter_payload:,
+        source_system: "legistar.sanjose",
         request_url: "https://example.test/Matters/15915",
         fetched_at: Time.zone.parse("2026-05-15 08:30:00"),
         http_status: 200,
@@ -28,6 +29,8 @@ module Ingestion
       assert_equal "Language Access Instructions", matter.title
       assert_equal "matter", snapshot.resource_type
       assert_equal "15915", snapshot.source_id
+      assert_equal "legistar.sanjose", matter.source_system
+      assert_equal snapshot.id, matter.last_source_snapshot_id
     end
   end
 end

@@ -30,6 +30,7 @@ module Ingestion
       attachment, snapshot = PersistMatterAttachment.call(
         matter: @matter,
         attachment_payload: payload,
+        source_system: "legistar.sanjose",
         request_url: "https://example.test/Matters/15886/Attachments",
         fetched_at: Time.zone.parse("2026-05-15 09:00:00"),
         http_status: 200,
@@ -41,6 +42,8 @@ module Ingestion
       assert_equal "Agreement", attachment.name
       assert_equal "matter_attachment", snapshot.resource_type
       assert_equal "39135", snapshot.source_id
+      assert_equal "legistar.sanjose", attachment.source_system
+      assert_equal snapshot.id, attachment.last_source_snapshot_id
     end
   end
 end

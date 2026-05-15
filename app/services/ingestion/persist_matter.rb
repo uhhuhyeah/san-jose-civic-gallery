@@ -1,8 +1,8 @@
 module Ingestion
   class PersistMatter
-    def self.call(matter_payload:, request_url:, fetched_at:, http_status:, response_sha256:)
+    def self.call(matter_payload:, source_system:, request_url:, fetched_at:, http_status:, response_sha256:)
       snapshot = SourceSnapshot.create!(
-        source_system: "legistar",
+        source_system: source_system,
         resource_type: "matter",
         source_id: matter_payload.fetch("MatterId").to_s,
         request_url: request_url,
@@ -12,14 +12,17 @@ module Ingestion
         payload: matter_payload
       )
 
-      matter = Civic::Matter.find_or_initialize_by(legistar_matter_id: matter_payload.fetch("MatterId"))
-      matter.assign_attributes(attributes_from(matter_payload, fetched_at:, response_sha256:))
+      matter = Civic::Matter.find_or_initialize_by(
+        source_system: source_system,
+        legistar_matter_id: matter_payload.fetch("MatterId")
+      )
+      matter.assign_attributes(attributes_from(matter_payload, fetched_at:, response_sha256:, snapshot:))
       matter.save!
 
       [ matter, snapshot ]
     end
 
-    def self.attributes_from(matter_payload, fetched_at:, response_sha256:)
+    def self.attributes_from(matter_payload, fetched_at:, response_sha256:, snapshot:)
       {
         matter_file: matter_payload["MatterFile"],
         body_name: matter_payload["MatterBodyName"],
@@ -37,7 +40,8 @@ module Ingestion
         notes: matter_payload["MatterNotes"],
         source_last_modified_at: matter_payload["MatterLastModifiedUtc"],
         last_synced_at: fetched_at,
-        raw_source_digest: response_sha256
+        raw_source_digest: response_sha256,
+        last_source_snapshot_id: snapshot.id
       }
     end
     private_class_method :attributes_from

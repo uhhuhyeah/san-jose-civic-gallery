@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_15_171000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_15_200000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -52,6 +52,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_171000) do
     t.bigint "civic_matter_id"
     t.integer "consent"
     t.datetime "created_at", null: false
+    t.bigint "last_source_snapshot_id"
     t.datetime "last_synced_at"
     t.bigint "legistar_event_item_id", null: false
     t.string "matter_file"
@@ -64,9 +65,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_171000) do
     t.string "passed_flag_name"
     t.string "raw_source_digest"
     t.integer "roll_call_flag"
+    t.datetime "source_last_modified_at"
     t.datetime "source_missing_at"
     t.boolean "source_present", default: true, null: false
-    t.datetime "source_last_modified_at"
+    t.string "source_system", default: "legistar.sanjose", null: false
     t.string "tally"
     t.text "title"
     t.datetime "updated_at", null: false
@@ -74,7 +76,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_171000) do
     t.index ["civic_event_id", "source_present"], name: "idx_civic_event_items_source_presence"
     t.index ["civic_event_id"], name: "index_civic_event_items_on_civic_event_id"
     t.index ["civic_matter_id"], name: "index_civic_event_items_on_civic_matter_id"
-    t.index ["legistar_event_item_id"], name: "index_civic_event_items_on_legistar_event_item_id", unique: true
+    t.index ["last_source_snapshot_id"], name: "index_civic_event_items_on_last_source_snapshot_id"
+    t.index ["source_system", "legistar_event_item_id"], name: "idx_civic_event_items_unique_per_source", unique: true
+    t.index ["source_system", "matter_id"], name: "idx_civic_event_items_source_system_matter_id"
   end
 
   create_table "civic_events", force: :cascade do |t|
@@ -85,6 +89,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_171000) do
     t.date "event_date", null: false
     t.string "event_time"
     t.string "in_site_url"
+    t.bigint "last_source_snapshot_id"
     t.datetime "last_synced_at"
     t.bigint "legistar_event_id", null: false
     t.string "location_name"
@@ -92,10 +97,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_171000) do
     t.string "minutes_status_name"
     t.string "raw_source_digest"
     t.datetime "source_last_modified_at"
+    t.datetime "source_missing_at"
+    t.boolean "source_present", default: true, null: false
+    t.string "source_system", default: "legistar.sanjose", null: false
     t.string "title"
     t.datetime "updated_at", null: false
     t.index ["event_date"], name: "index_civic_events_on_event_date"
-    t.index ["legistar_event_id"], name: "index_civic_events_on_legistar_event_id", unique: true
+    t.index ["last_source_snapshot_id"], name: "index_civic_events_on_last_source_snapshot_id"
+    t.index ["source_present"], name: "idx_civic_events_source_presence"
+    t.index ["source_system", "legistar_event_id"], name: "idx_civic_events_unique_per_source", unique: true
   end
 
   create_table "civic_matter_attachments", force: :cascade do |t|
@@ -108,6 +118,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_171000) do
     t.boolean "is_hyperlink"
     t.boolean "is_minute_order"
     t.boolean "is_supporting_document"
+    t.bigint "last_source_snapshot_id"
     t.datetime "last_synced_at"
     t.bigint "legistar_matter_attachment_id", null: false
     t.string "matter_version"
@@ -120,14 +131,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_171000) do
     t.string "source_file_checksum_sha256"
     t.text "source_file_import_error"
     t.datetime "source_file_imported_at"
+    t.datetime "source_last_modified_at"
     t.datetime "source_missing_at"
     t.boolean "source_present", default: true, null: false
-    t.datetime "source_last_modified_at"
+    t.string "source_system", default: "legistar.sanjose", null: false
     t.datetime "updated_at", null: false
     t.index ["civic_matter_id", "sort_order"], name: "idx_civic_matter_attachments_order"
     t.index ["civic_matter_id", "source_present"], name: "idx_civic_matter_attachments_source_presence"
     t.index ["civic_matter_id"], name: "index_civic_matter_attachments_on_civic_matter_id"
-    t.index ["legistar_matter_attachment_id"], name: "idx_on_legistar_matter_attachment_id_112c601288", unique: true
+    t.index ["last_source_snapshot_id"], name: "index_civic_matter_attachments_on_last_source_snapshot_id"
+    t.index ["source_system", "legistar_matter_attachment_id"], name: "idx_civic_matter_attachments_unique_per_source", unique: true
   end
 
   create_table "civic_matters", force: :cascade do |t|
@@ -137,6 +150,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_171000) do
     t.date "enactment_date"
     t.string "enactment_number"
     t.date "intro_date"
+    t.bigint "last_source_snapshot_id"
     t.datetime "last_synced_at"
     t.bigint "legistar_matter_id", null: false
     t.string "matter_file", null: false
@@ -148,11 +162,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_171000) do
     t.string "raw_source_digest"
     t.string "requester"
     t.datetime "source_last_modified_at"
+    t.string "source_system", default: "legistar.sanjose", null: false
     t.text "title"
     t.datetime "updated_at", null: false
     t.string "version"
-    t.index ["legistar_matter_id"], name: "index_civic_matters_on_legistar_matter_id", unique: true
+    t.index ["last_source_snapshot_id"], name: "index_civic_matters_on_last_source_snapshot_id"
     t.index ["matter_file"], name: "index_civic_matters_on_matter_file"
+    t.index ["source_system", "legistar_matter_id"], name: "idx_civic_matters_unique_per_source", unique: true
   end
 
   create_table "document_extracted_texts", force: :cascade do |t|
@@ -190,6 +206,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_171000) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "civic_event_items", "civic_events"
   add_foreign_key "civic_event_items", "civic_matters"
+  add_foreign_key "civic_event_items", "ingestion_source_snapshots", column: "last_source_snapshot_id", on_delete: :nullify
+  add_foreign_key "civic_events", "ingestion_source_snapshots", column: "last_source_snapshot_id", on_delete: :nullify
   add_foreign_key "civic_matter_attachments", "civic_matters"
+  add_foreign_key "civic_matter_attachments", "ingestion_source_snapshots", column: "last_source_snapshot_id", on_delete: :nullify
+  add_foreign_key "civic_matters", "ingestion_source_snapshots", column: "last_source_snapshot_id", on_delete: :nullify
   add_foreign_key "document_extracted_texts", "civic_matter_attachments"
 end

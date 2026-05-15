@@ -15,6 +15,7 @@ module Ingestion
       response.fetch(:payload).each do |event_payload|
         event, snapshot = PersistEvent.call(
           event_payload:,
+          source_system: client.source_system,
           request_url: response.fetch(:request_url),
           fetched_at: response.fetch(:fetched_at),
           http_status: response.fetch(:status),

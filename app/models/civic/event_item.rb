@@ -4,8 +4,10 @@ module Civic
 
     belongs_to :event, class_name: "Civic::Event", foreign_key: :civic_event_id, inverse_of: :event_items
     belongs_to :matter, class_name: "Civic::Matter", foreign_key: :civic_matter_id, inverse_of: :event_items, optional: true
+    belongs_to :last_source_snapshot, class_name: "Ingestion::SourceSnapshot", optional: true
 
-    validates :legistar_event_item_id, presence: true, uniqueness: true
+    validates :source_system, presence: true
+    validates :legistar_event_item_id, presence: true, uniqueness: { scope: :source_system }
     validates :event, presence: true
 
     scope :current_from_source, -> { where(source_present: true) }

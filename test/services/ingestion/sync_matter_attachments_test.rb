@@ -17,6 +17,8 @@ module Ingestion
 
     test "reconciles missing attachments and enqueues file import for current ones" do
       client = Class.new do
+        def source_system; "legistar.sanjose"; end
+
         def matter_attachments(matter_id:)
           raise "unexpected matter_id" unless matter_id == 15886
 

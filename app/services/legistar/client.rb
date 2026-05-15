@@ -6,9 +6,16 @@ require "uri"
 module Legistar
   class Client
     DEFAULT_BASE_URL = "https://webapi.legistar.com/v1/sanjose"
+    DEFAULT_SOURCE_SYSTEM = "legistar.sanjose"
     DEFAULT_OPEN_TIMEOUT = 5
     DEFAULT_READ_TIMEOUT = 30
     DEFAULT_USER_AGENT = "SanJoseCivicPulse/1.0 (+mail@davidamcclain.com)"
+
+    attr_reader :source_system
+
+    def initialize(source_system: nil)
+      @source_system = source_system || ENV.fetch("LEGISTAR_SOURCE_SYSTEM", DEFAULT_SOURCE_SYSTEM)
+    end
 
     def recent_events(limit: 10, body_name: "City Council")
       params = {
