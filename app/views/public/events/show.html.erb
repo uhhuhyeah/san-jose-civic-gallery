@@ -1,0 +1,68 @@
+<h1><%= @event.display_name %></h1>
+
+<dl>
+  <dt>Body</dt>
+  <dd><%= @event.body_name.presence || "Unknown" %></dd>
+
+  <dt>Date</dt>
+  <dd><%= @event.event_date %></dd>
+
+  <dt>Agenda status</dt>
+  <dd><%= @event.agenda_status_name.presence || "Unknown" %></dd>
+
+  <dt>Minutes status</dt>
+  <dd><%= @event.minutes_status_name.presence || "Unknown" %></dd>
+
+  <dt>Official page</dt>
+  <dd>
+    <% if (official_page_url = official_legistar_url(@event.in_site_url)) %>
+      <%= link_to official_page_url, official_page_url, target: "_blank", rel: "noopener" %>
+    <% else %>
+      No official URL recorded
+    <% end %>
+  </dd>
+</dl>
+
+<h2>Agenda Items</h2>
+
+<% if @event.event_items.any? %>
+  <ol>
+    <% @event.event_items.each do |item| %>
+      <li>
+        <strong><%= item.display_name %></strong>
+        <% if item.title.present? && item.title != item.display_name %>
+          <div><%= item.title %></div>
+        <% end %>
+        <% if item.matter_file.present? || item.matter_name.present? %>
+          <div>
+            <%= [item.matter_file, item.matter_name].compact.join(" - ") %>
+          </div>
+        <% end %>
+        <% if item.matter %>
+          <% if item.matter.title.present? %>
+            <div><%= item.matter.title %></div>
+          <% end %>
+          <% if item.matter.attachments.any? %>
+            <div>
+              Attachments:
+              <%= item.matter.attachments.map { |attachment| attachment.name }.join(", ") %>
+            </div>
+          <% end %>
+        <% elsif item.matter_id.present? %>
+          <div class="matter-pending">
+            Linked matter sync pending (<%= item.matter_file.presence || item.matter_id %>)
+          </div>
+        <% end %>
+        <% if item.action_name.present? || item.passed_flag_name.present? %>
+          <div>
+            <%= [item.action_name, item.passed_flag_name].compact.join(" / ") %>
+          </div>
+        <% end %>
+      </li>
+    <% end %>
+  </ol>
+<% else %>
+  <p>No event items have been ingested yet.</p>
+<% end %>
+
+<p><%= link_to "Back to events", root_path %></p>

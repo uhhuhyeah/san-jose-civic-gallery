@@ -44,6 +44,32 @@ bin/setup
 bin/dev
 ```
 
+### Migrations
+
+Never edit a migration file after it has been recorded as run against
+any environment. Migrations are identified by timestamp, not by
+content, so once a row in `schema_migrations` exists for a given
+timestamp Rails will skip the file forever — leaving any subsequent
+edits unapplied. The dev DB and `schema.rb` then silently disagree,
+which is how three of this project's migrations ended up out of sync
+with the schema dump (now backfilled idempotently in
+`20260515200000_add_source_system_scoping_and_provenance.rb`).
+
+If you need to change schema, add a new migration. If you need to
+change a migration that hasn't been merged yet, roll it back first
+(`bin/rails db:rollback`) so the next migrate re-applies the edited
+version.
+
+### Tests
+
+`test/test_helper.rb` calls `parallelize(workers: 1)`. That is
+deliberate: process-based parallel testing forks workers that each
+open their own libpq connection, and `pg` segfaults under that
+pattern on macOS arm64. The suite is fast enough single-threaded
+that the speedup isn't worth the platform-specific crash. Leave the
+worker count at 1 unless you've actually verified parallel safety on
+the platforms we test on.
+
 ## Pull Request Guidance
 
 - Keep pull requests focused

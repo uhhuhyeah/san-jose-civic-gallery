@@ -8,11 +8,11 @@ local:
 
 r2:
   service: S3
-  access_key_id: <%= ENV.fetch("AWS_ACCESS_KEY_ID") %>
-  secret_access_key: <%= ENV.fetch("AWS_SECRET_ACCESS_KEY") %>
+  access_key_id: <%= ENV["AWS_ACCESS_KEY_ID"] %>
+  secret_access_key: <%= ENV["AWS_SECRET_ACCESS_KEY"] %>
   region: <%= ENV.fetch("AWS_REGION", "auto") %>
-  bucket: <%= ENV.fetch("AWS_BUCKET") %>
-  endpoint: <%= ENV.fetch("AWS_ENDPOINT_URL_S3") %>
+  bucket: <%= ENV["AWS_BUCKET"] %>
+  endpoint: <%= ENV["AWS_ENDPOINT_URL_S3"] %>
   force_path_style: false
 
 # Remember not to checkin your GCS keyfile to a repository

@@ -1,0 +1,19 @@
+<h1>San Jose Civic Pulse</h1>
+
+<p>Recent civic events ingested from official San Jose legislative sources.</p>
+
+<% if @events.any? %>
+  <ul>
+    <% @events.each do |event| %>
+      <li>
+        <%= link_to event.display_name, public_event_path(event) %>
+        on <%= event.event_date %>
+        <% if event.body_name.present? %>
+          (<%= event.body_name %>)
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p>No events have been ingested yet.</p>
+<% end %>

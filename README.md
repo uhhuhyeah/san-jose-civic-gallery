@@ -51,6 +51,10 @@ Local database defaults:
 
 Override them with `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and `TEST_DB_NAME` if needed.
 
+A full inventory of runtime environment variables — including the
+Legistar API client, attachment downloader, and Active Storage R2
+settings — lives in [docs/configuration.md](./docs/configuration.md).
+
 ## Production Direction
 
 - App deploys to a Hostinger VPS via Kamal
@@ -65,3 +69,26 @@ Override them with `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, an
 - Contributions should preserve provenance rather than optimize for cleverness
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) and [SECURITY.md](./SECURITY.md) before opening issues or pull requests.
+
+## First Ingestion Slice
+
+The app includes a minimal first slice for:
+
+- ingesting recent Legistar events
+- storing raw source snapshots
+- normalizing events into `Civic::Event`
+- reconciling event items and matter attachments against the latest source payloads
+- importing attachment files and extracting PDF text through background jobs
+- rendering ingested events on the public site
+
+You can run the sync manually from the Rails runner:
+
+```bash
+rbenv exec ruby bin/rails runner "Ingestion::SyncRecentEvents.call"
+```
+
+That command now persists recent events and fans out downstream sync stages through jobs. For a single blocking run during local development, use:
+
+```bash
+rbenv exec ruby bin/rails runner "Ingestion::SyncRecentEvents.call(sync_event_items: :inline)"
+```
