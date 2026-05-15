@@ -1,7 +1,7 @@
 module Ingestion
   class PersistEventItem
     def self.call(event:, event_item_payload:, source_system:, request_url:, fetched_at:, http_status:, response_sha256:, matter: nil)
-      snapshot = SourceSnapshot.create!(
+      snapshot = RecordSourceSnapshot.call(
         source_system: source_system,
         resource_type: "event_item",
         source_id: event_item_payload.fetch("EventItemId").to_s,

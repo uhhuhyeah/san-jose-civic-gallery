@@ -1,7 +1,7 @@
 module Ingestion
   class PersistMatter
     def self.call(matter_payload:, source_system:, request_url:, fetched_at:, http_status:, response_sha256:)
-      snapshot = SourceSnapshot.create!(
+      snapshot = RecordSourceSnapshot.call(
         source_system: source_system,
         resource_type: "matter",
         source_id: matter_payload.fetch("MatterId").to_s,

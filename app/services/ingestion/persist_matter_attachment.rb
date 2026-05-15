@@ -1,7 +1,7 @@
 module Ingestion
   class PersistMatterAttachment
     def self.call(matter:, attachment_payload:, source_system:, request_url:, fetched_at:, http_status:, response_sha256:)
-      snapshot = SourceSnapshot.create!(
+      snapshot = RecordSourceSnapshot.call(
         source_system: source_system,
         resource_type: "matter_attachment",
         source_id: attachment_payload.fetch("MatterAttachmentId").to_s,
