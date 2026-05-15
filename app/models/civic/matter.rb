@@ -13,9 +13,23 @@ module Civic
     validates :matter_file, presence: true
 
     scope :recent_first, -> { order(agenda_date: :desc, intro_date: :desc, legistar_matter_id: :desc) }
+    scope :search, ->(query) {
+      normalized = query.to_s.strip
+      if normalized.present?
+        pattern = "%#{sanitize_sql_like(normalized)}%"
+        where(
+          "matter_file ILIKE :pattern OR title ILIKE :pattern OR name ILIKE :pattern",
+          pattern:
+        )
+      end
+    }
 
     def display_name
       matter_file.presence || title.presence || "Matter #{legistar_matter_id}"
+    end
+
+    def descriptive_title
+      title.presence || name.presence
     end
   end
 end

@@ -13,5 +13,6 @@ Rails.application.routes.draw do
 
   namespace :public do
     resources :events, only: [ :index, :show ]
+    resources :matters, only: [ :index, :show ]
   end
 end

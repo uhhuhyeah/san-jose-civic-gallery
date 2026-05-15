@@ -7,7 +7,9 @@ module Public
         legistar_event_id: 7621,
         body_name: "City Council",
         title: "Regular meeting",
-        event_date: Date.new(2026, 5, 12)
+        event_date: Date.new(2026, 5, 12),
+        agenda_status_name: "Final",
+        minutes_status_name: "Draft"
       )
 
       @event.event_items.create!(
@@ -23,7 +25,10 @@ module Public
 
       assert_response :success
       assert_includes response.body, "San Jose Civic Pulse"
+      assert_includes response.body, "Welcome to San Jose Civic Pulse"
       assert_includes response.body, "Regular meeting"
+      assert_includes response.body, "Agenda: Final"
+      assert_includes response.body, "Minutes: Draft"
     end
 
     test "shows an event" do
