@@ -51,6 +51,10 @@ Local database defaults:
 
 Override them with `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and `TEST_DB_NAME` if needed.
 
+A full inventory of runtime environment variables — including the
+Legistar API client, attachment downloader, and Active Storage R2
+settings — lives in [docs/configuration.md](./docs/configuration.md).
+
 ## Production Direction
 
 - App deploys to a Hostinger VPS via Kamal

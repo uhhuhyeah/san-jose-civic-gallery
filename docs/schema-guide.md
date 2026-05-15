@@ -20,6 +20,9 @@ Legistar Event
       -> MatterAttachments
         -> imported file
           -> extracted text
+
+Every civic row above also points back at the
+Ingestion::SourceSnapshot that produced it.
 ```
 
 In the app, those concerns are intentionally split:
@@ -28,6 +31,9 @@ In the app, those concerns are intentionally split:
 - `Ingestion::*` holds raw source snapshots and ingestion mechanics
 - `Documents::*` holds extracted document artifacts
 - `Generated::*` is reserved for future AI-generated outputs
+
+Every civic row carries a `source_system` (currently `legistar.sanjose`)
+so the schema is ready for additional sources without ID collisions.
 
 ## Source Concepts
 
@@ -120,16 +126,28 @@ Normalized official meeting records.
 
 Key fields:
 
-- `legistar_event_id`
+- `source_system` (e.g. `legistar.sanjose`)
+- `legistar_event_id` (unique per `source_system`)
 - `event_date`
 - `body_name`
 - `title`
 - `in_site_url`
+- `source_present` / `source_missing_at` (columns exist; not yet driven by sync — see note below)
+- `last_source_snapshot_id` (FK to the `Ingestion::SourceSnapshot` that produced this row)
 - agenda/minutes status fields
 
-Key relationship:
+Key relationships:
 
 - has many `Civic::EventItem`
+- belongs to `Ingestion::SourceSnapshot` via `last_source_snapshot_id`
+
+Important note:
+
+The `source_present` columns are present so retraction reconciliation can
+land later, but the current sync only fetches a sliding `$top` window of
+recent events, so reconciling against "what we just saw" would mark every
+older event as missing. Events stay `source_present: true` until that
+limitation is addressed.
 
 ### `civic_event_items` / `Civic::EventItem`
 
@@ -137,11 +155,14 @@ Normalized official agenda items within a meeting.
 
 Key fields:
 
-- `legistar_event_item_id`
+- `source_system`
+- `legistar_event_item_id` (unique per `source_system`)
 - `civic_event_id`
-- `civic_matter_id` optional
+- `civic_matter_id` optional — populated when the linked `Civic::Matter` exists locally
+- `matter_id` — the upstream Legistar matter id, indexed jointly with `source_system` so `SyncMatter` can back-link items in O(log n)
 - `source_present`
 - `source_missing_at`
+- `last_source_snapshot_id` (FK to `Ingestion::SourceSnapshot`)
 - `agenda_sequence`
 - `agenda_number`
 - `title`
@@ -153,11 +174,12 @@ Key relationships:
 
 - belongs to `Civic::Event`
 - optionally belongs to `Civic::Matter`
+- belongs to `Ingestion::SourceSnapshot` via `last_source_snapshot_id`
 
 Important note:
 
 `EventItem` is the bridge between a specific meeting and a broader legislative matter.
-Rows are retained for provenance, but normal application reads should treat `source_present = true` as the current source-backed set.
+Rows are retained for provenance, but normal application reads should treat `source_present = true` as the current source-backed set. Items can land before their linked matter is synced; the matter sync job back-fills `civic_matter_id` once the matter record exists.
 
 ### `civic_matters` / `Civic::Matter`
 
@@ -165,18 +187,21 @@ Normalized official matter records.
 
 Key fields:
 
-- `legistar_matter_id`
+- `source_system`
+- `legistar_matter_id` (unique per `source_system`)
 - `matter_file`
 - `title`
 - `name`
 - `matter_type_name`
 - `matter_status_name`
 - `requester`
+- `last_source_snapshot_id` (FK to `Ingestion::SourceSnapshot`)
 
 Key relationships:
 
 - has many `Civic::EventItem`
 - has many `Civic::MatterAttachment`
+- belongs to `Ingestion::SourceSnapshot` via `last_source_snapshot_id`
 
 Important note:
 
@@ -188,7 +213,8 @@ Normalized official matter attachment metadata.
 
 Key fields:
 
-- `legistar_matter_attachment_id`
+- `source_system`
+- `legistar_matter_attachment_id` (unique per `source_system`)
 - `civic_matter_id`
 - `name`
 - `hyperlink`
@@ -196,6 +222,7 @@ Key fields:
 - `sort_order`
 - `source_present`
 - `source_missing_at`
+- `last_source_snapshot_id` (FK to `Ingestion::SourceSnapshot`)
 
 Import-related fields:
 
@@ -208,11 +235,13 @@ Key relationships:
 
 - belongs to `Civic::Matter`
 - has one Active Storage attachment: `source_file`
-- has one `Documents::ExtractedText`
+- has many `Documents::ExtractedText` (append-only history; `latest_extracted_text` is the convenience reader)
+- belongs to `Ingestion::SourceSnapshot` via `last_source_snapshot_id`
 
 Important note:
 
-This row is attachment metadata. The actual downloaded file lives in Active Storage.
+This row is attachment metadata. The actual downloaded file lives in Active Storage. Outbound fetches of the `hyperlink` go through `Documents::SafeDownloader`, which enforces an HTTPS-only host allowlist, timeouts, a redirect cap, and a body-size ceiling.
+
 Like event items, attachments can be marked missing from the latest upstream payload without deleting the historical row.
 
 ### `document_extracted_texts` / `Documents::ExtractedText`
@@ -226,11 +255,6 @@ Key fields:
 - `extractor_version`
 - `source_file_checksum_sha256`
 - `status`
-
-Important note:
-
-This table is append-only. Each extraction attempt produces a new artifact row so extractor changes, retries, and OCR fallback can be audited over time.
-- `status`
 - `character_count`
 - `content`
 - `error_message`
@@ -241,25 +265,36 @@ Key relationship:
 
 Important note:
 
-This is extracted data, not official source data. Keep it distinct from the civic tables.
+This table is append-only. Each extraction attempt produces a new artifact row so extractor changes, retries, and a future OCR fallback can be audited over time. This is extracted data, not official source data — keep it distinct from the civic tables.
 
 ### `ingestion_source_snapshots` / `Ingestion::SourceSnapshot`
 
-Raw source payload preservation for provenance and debugging.
+Raw source payload preservation for provenance and debugging. **One row per distinct payload version** for a given identity, not one row per fetch.
 
-Key fields:
+Identity fields:
 
 - `source_system`
 - `resource_type`
 - `source_id`
+
+Payload + provenance:
+
 - `request_url`
 - `http_status`
-- `response_sha256`
-- `payload`
+- `response_sha256` — drives the dedup decision
+- `payload` (jsonb)
+
+Fetch history fields:
+
+- `fetched_at` — when this version was *first* observed (immutable)
+- `last_fetched_at` — when this version was *most recently* observed
+- `fetch_count` — how many times we've fetched this exact `response_sha256`
 
 Important note:
 
-This table is the evidence trail. If normalization logic is wrong, these records let us re-check what the source actually returned.
+`Ingestion::RecordSourceSnapshot` looks up the latest snapshot for a given identity. If the incoming `response_sha256` matches, it atomically bumps `last_fetched_at` and `fetch_count` on the existing row. Only a genuinely changed payload inserts a new row.
+
+That keeps the evidence trail intact (every distinct payload version is still preserved) while bounding growth under recurring sync schedules. If normalization logic is ever wrong, these records still let us re-check what the source actually returned and when.
 
 ## Relationship Summary
 
@@ -269,7 +304,8 @@ Core relationships:
 - one `Civic::Matter` has many `Civic::EventItem`
 - one `Civic::Matter` has many `Civic::MatterAttachment`
 - one `Civic::MatterAttachment` has one imported `source_file`
-- one `Civic::MatterAttachment` has one `Documents::ExtractedText`
+- one `Civic::MatterAttachment` has many `Documents::ExtractedText` (append-only)
+- every civic row references its `Ingestion::SourceSnapshot` via `last_source_snapshot_id`
 
 Important consequence:
 
@@ -353,10 +389,16 @@ in that window rather than silently hiding attachments.
 
 ## Known Limitations
 
-- Matter sync currently does N+1 fetches from event items
-- attachment import is not yet automatically triggered during metadata sync
-- extracted text currently assumes a PDF and local `pdftotext`
-- scanned-PDF OCR fallback does not exist yet
+- `Ingestion::SyncEventItemsForEvent` still issues one upstream `Matter`
+  HTTP fetch per linked event item (HTTP-level N+1). The downstream
+  `SyncMatter.link_event_items!` DB query is now indexed and is no
+  longer a separate N+1.
+- Event-level retraction reconciliation is not yet wired up — the
+  columns exist on `civic_events` but sync doesn't drive them, since
+  `recent_events` is a sliding window.
+- Extracted text currently assumes a PDF with embedded text and local
+  `pdftotext`.
+- Scanned-PDF OCR fallback does not exist yet.
 
 ## Contributor Tips
 

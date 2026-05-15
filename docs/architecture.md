@@ -32,6 +32,34 @@ Planned namespaces:
 - `Documents`
 - `Generated`
 
+## Source-System Dimension
+
+Every civic row carries a `source_system` identifier (currently
+`legistar.sanjose`). Uniqueness on the upstream IDs (`legistar_event_id`,
+`legistar_matter_id`, etc.) is scoped by `source_system`, and
+`Ingestion::SourceSnapshot` is keyed the same way. The schema is
+multi-source-capable today even though only one source is wired in;
+adding another Legistar tenant or a non-Legistar source is a config
+change, not a schema migration.
+
+## Outbound-Fetch Trust Boundary
+
+All outbound HTTP fetches of attachment files go through
+`Documents::SafeDownloader`. It enforces:
+
+- HTTPS-only by default (env-overridable for local dev)
+- a host allowlist re-checked on every redirect (default
+  `sanjose.legistar.com`)
+- open and read timeouts
+- a redirect cap
+- a body-size ceiling
+- streaming SHA-256 computation chunk by chunk to a `Tempfile`, so
+  even large attachments never sit fully in memory
+
+The Legistar API client (`Legistar::Client`) has its own bounded
+timeouts and a `User-Agent` header that identifies the app and a
+contact email, so Legistar can route concerns to the maintainer.
+
 ## Product Integrity Rules
 
 - Official source material is the center of gravity
