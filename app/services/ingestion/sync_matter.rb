@@ -19,7 +19,11 @@ module Ingestion
       )
 
       link_event_items!(matter:)
-      fan_out_attachments(matter:, client:, mode: sync_attachments)
+      FanOut.dispatch(
+        mode: sync_attachments,
+        inline: -> { SyncMatterAttachments.call(matter:, client:, import_files: :inline) },
+        deferred: -> { SyncMatterAttachmentsJob.perform_later(matter.id) }
+      )
 
       Result.new(matter:, snapshot:)
     end
@@ -33,25 +37,5 @@ module Ingestion
         )
     end
     private_class_method :link_event_items!
-
-    def self.fan_out_attachments(matter:, client:, mode:)
-      case normalize_mode(mode)
-      when :off
-        nil
-      when :inline
-        SyncMatterAttachments.call(matter:, client:, import_files: :inline)
-      when :deferred
-        SyncMatterAttachmentsJob.perform_later(matter.id)
-      end
-    end
-    private_class_method :fan_out_attachments
-
-    def self.normalize_mode(mode)
-      return :inline if mode == true
-      return :off if mode == false
-
-      mode
-    end
-    private_class_method :normalize_mode
   end
 end

@@ -26,7 +26,7 @@ module Ingestion
       {
         body_name: event_payload["EventBodyName"],
         title: event_payload["EventTitle"],
-        event_date: event_payload["EventDate"],
+        event_date: Coerce.date(event_payload["EventDate"], field: "EventDate"),
         event_time: event_payload["EventTime"],
         location_name: event_payload["EventLocation"],
         agenda_status_name: event_payload["EventAgendaStatusName"],
@@ -34,7 +34,7 @@ module Ingestion
         in_site_url: event_payload["EventInSiteURL"],
         agenda_file_uri: event_payload["EventAgendaFile"],
         minutes_file_uri: event_payload["EventMinutesFile"],
-        source_last_modified_at: event_payload["EventLastModifiedUtc"],
+        source_last_modified_at: Coerce.datetime(event_payload["EventLastModifiedUtc"], field: "EventLastModifiedUtc"),
         source_present: true,
         source_missing_at: nil,
         last_synced_at: fetched_at,

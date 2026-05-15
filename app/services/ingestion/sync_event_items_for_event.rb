@@ -53,23 +53,14 @@ module Ingestion
     private_class_method :reconcile_missing_items
 
     def self.fan_out_matters(matter_ids:, client:, mode:)
-      case normalize_mode(mode)
-      when :off
-        nil
-      when :inline
-        matter_ids.each { |matter_id| SyncMatter.call(matter_id:, client:, sync_attachments: :inline) }
-      when :deferred
-        matter_ids.each { |matter_id| SyncMatterJob.perform_later(matter_id) }
+      matter_ids.each do |matter_id|
+        FanOut.dispatch(
+          mode: mode,
+          inline: -> { SyncMatter.call(matter_id:, client:, sync_attachments: :inline) },
+          deferred: -> { SyncMatterJob.perform_later(matter_id) }
+        )
       end
     end
     private_class_method :fan_out_matters
-
-    def self.normalize_mode(mode)
-      return :inline if mode == true
-      return :off if mode == false
-
-      mode
-    end
-    private_class_method :normalize_mode
   end
 end

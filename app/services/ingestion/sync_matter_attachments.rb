@@ -56,24 +56,15 @@ module Ingestion
     private_class_method :should_import_attachment?
 
     def self.fan_out_import(attachment:, mode:)
-      case normalize_mode(mode)
-      when :off
-        nil
-      when :inline
-        imported_attachment = Documents::ImportMatterAttachmentFile.call(matter_attachment: attachment)
-        Documents::ExtractMatterAttachmentText.call(matter_attachment: imported_attachment) if imported_attachment.extractable_as_pdf?
-      when :deferred
-        Documents::ImportMatterAttachmentFileJob.perform_later(attachment.id)
-      end
+      FanOut.dispatch(
+        mode: mode,
+        inline: -> {
+          imported_attachment = Documents::ImportMatterAttachmentFile.call(matter_attachment: attachment)
+          Documents::ExtractMatterAttachmentText.call(matter_attachment: imported_attachment) if imported_attachment.extractable_as_pdf?
+        },
+        deferred: -> { Documents::ImportMatterAttachmentFileJob.perform_later(attachment.id) }
+      )
     end
     private_class_method :fan_out_import
-
-    def self.normalize_mode(mode)
-      return :inline if mode == true
-      return :off if mode == false
-
-      mode
-    end
-    private_class_method :normalize_mode
   end
 end

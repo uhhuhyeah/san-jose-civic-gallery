@@ -39,7 +39,7 @@ module Ingestion
         sort_order: attachment_payload["MatterAttachmentSort"],
         source_present: true,
         source_missing_at: nil,
-        source_last_modified_at: attachment_payload["MatterAttachmentLastModifiedUtc"],
+        source_last_modified_at: Coerce.datetime(attachment_payload["MatterAttachmentLastModifiedUtc"], field: "MatterAttachmentLastModifiedUtc"),
         last_synced_at: fetched_at,
         raw_source_digest: response_sha256,
         last_source_snapshot_id: snapshot.id

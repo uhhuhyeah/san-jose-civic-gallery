@@ -30,7 +30,8 @@ module Civic
     def extractable_as_pdf?
       return false unless source_file.attached?
 
-      source_file.content_type == "application/pdf" || source_file.filename.to_s.downcase.end_with?(".pdf")
+      source_file.content_type == "application/pdf" ||
+        source_file.filename.extension.to_s.downcase == "pdf"
     end
   end
 end

@@ -24,30 +24,14 @@ module Ingestion
         events << event
         snapshots << snapshot
 
-        fan_out_event_items(event:, client:, mode: sync_event_items)
+        FanOut.dispatch(
+          mode: sync_event_items,
+          inline: -> { SyncEventItemsForEvent.call(event:, client:, sync_matters: :inline) },
+          deferred: -> { SyncEventItemsForEventJob.perform_later(event.id) }
+        )
       end
 
       Result.new(events:, snapshots:)
     end
-
-    def self.fan_out_event_items(event:, client:, mode:)
-      case normalize_mode(mode)
-      when :off
-        nil
-      when :inline
-        SyncEventItemsForEvent.call(event:, client:, sync_matters: :inline)
-      when :deferred
-        SyncEventItemsForEventJob.perform_later(event.id)
-      end
-    end
-    private_class_method :fan_out_event_items
-
-    def self.normalize_mode(mode)
-      return :inline if mode == true
-      return :off if mode == false
-
-      mode
-    end
-    private_class_method :normalize_mode
   end
 end

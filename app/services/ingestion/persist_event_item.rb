@@ -45,7 +45,7 @@ module Ingestion
         matter_status: event_item_payload["EventItemMatterStatus"],
         source_present: true,
         source_missing_at: nil,
-        source_last_modified_at: event_item_payload["EventItemLastModifiedUtc"],
+        source_last_modified_at: Coerce.datetime(event_item_payload["EventItemLastModifiedUtc"], field: "EventItemLastModifiedUtc"),
         last_synced_at: fetched_at,
         raw_source_digest: response_sha256,
         last_source_snapshot_id: snapshot.id
