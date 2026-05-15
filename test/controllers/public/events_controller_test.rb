@@ -25,7 +25,7 @@ module Public
 
       assert_response :success
       assert_includes response.body, "San Jose Civic Pulse"
-      assert_includes response.body, "Follow San Jose City Hall from agenda item to source document."
+      assert_includes response.body, "Welcome to San Jose Civic Pulse"
       assert_includes response.body, "Regular meeting"
       assert_includes response.body, "Agenda: Final"
       assert_includes response.body, "Minutes: Draft"
