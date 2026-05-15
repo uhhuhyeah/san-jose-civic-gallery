@@ -23,6 +23,6 @@ class CreateCivicMatterAttachments < ActiveRecord::Migration[8.1]
     end
 
     add_index :civic_matter_attachments, :legistar_matter_attachment_id, unique: true
-    add_index :civic_matter_attachments, [:civic_matter_id, :sort_order], name: "idx_civic_matter_attachments_order"
+    add_index :civic_matter_attachments, [ :civic_matter_id, :sort_order ], name: "idx_civic_matter_attachments_order"
   end
 end

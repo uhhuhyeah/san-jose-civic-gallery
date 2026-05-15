@@ -8,8 +8,8 @@ module Documents
     def self.call(matter_attachment:)
       raise ArgumentError, "Matter attachment source file is not attached" unless matter_attachment.source_file.attached?
 
-      source_tempfile = Tempfile.new(["source", ".pdf"])
-      output_tempfile = Tempfile.new(["extracted", ".txt"])
+      source_tempfile = Tempfile.new([ "source", ".pdf" ])
+      output_tempfile = Tempfile.new([ "extracted", ".txt" ])
 
       begin
         source_tempfile.binmode

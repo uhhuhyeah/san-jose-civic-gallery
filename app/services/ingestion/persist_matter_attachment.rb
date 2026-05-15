@@ -18,7 +18,7 @@ module Ingestion
       attachment.assign_attributes(attributes_from(matter:, attachment_payload:, fetched_at:, response_sha256:))
       attachment.save!
 
-      [attachment, snapshot]
+      [ attachment, snapshot ]
     end
 
     def self.attributes_from(matter:, attachment_payload:, fetched_at:, response_sha256:)

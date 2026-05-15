@@ -15,8 +15,8 @@
 
   <dt>Official page</dt>
   <dd>
-    <% if @event.in_site_url.present? %>
-      <%= link_to @event.in_site_url, @event.in_site_url, target: "_blank", rel: "noopener" %>
+    <% if (official_page_url = official_legistar_url(@event.in_site_url)) %>
+      <%= link_to official_page_url, official_page_url, target: "_blank", rel: "noopener" %>
     <% else %>
       No official URL recorded
     <% end %>

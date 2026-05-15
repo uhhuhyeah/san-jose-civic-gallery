@@ -28,6 +28,6 @@ class CreateCivicEventItems < ActiveRecord::Migration[8.1]
     end
 
     add_index :civic_event_items, :legistar_event_item_id, unique: true
-    add_index :civic_event_items, [:civic_event_id, :agenda_sequence], name: "idx_civic_event_items_agenda_order"
+    add_index :civic_event_items, [ :civic_event_id, :agenda_sequence ], name: "idx_civic_event_items_agenda_order"
   end
 end

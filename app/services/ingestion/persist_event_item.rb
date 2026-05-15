@@ -16,7 +16,7 @@ module Ingestion
       event_item.assign_attributes(attributes_from(event:, matter:, event_item_payload:, fetched_at:, response_sha256:))
       event_item.save!
 
-      [event_item, snapshot]
+      [ event_item, snapshot ]
     end
 
     def self.attributes_from(event:, matter:, event_item_payload:, fetched_at:, response_sha256:)

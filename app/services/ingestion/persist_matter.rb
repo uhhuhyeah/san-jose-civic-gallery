@@ -16,7 +16,7 @@ module Ingestion
       matter.assign_attributes(attributes_from(matter_payload, fetched_at:, response_sha256:))
       matter.save!
 
-      [matter, snapshot]
+      [ matter, snapshot ]
     end
 
     def self.attributes_from(matter_payload, fetched_at:, response_sha256:)

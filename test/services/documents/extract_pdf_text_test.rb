@@ -22,11 +22,15 @@ module Documents
     test "extracts text with pdftotext command wrapper" do
       fake_status = Struct.new(:success?).new(true)
       original_capture3 = Open3.method(:capture3)
-      original_capture2 = Open3.method(:capture2)
       original_file_read = File.method(:read)
 
-      Open3.define_singleton_method(:capture3) { |*_args| ["", "", fake_status] }
-      Open3.define_singleton_method(:capture2) { |*_args| ["pdftotext 24.02.0\n", fake_status] }
+      Open3.define_singleton_method(:capture3) do |*args|
+        if args == [ "pdftotext", "-v" ]
+          [ "", "pdftotext 24.02.0\n", fake_status ]
+        else
+          [ "", "", fake_status ]
+        end
+      end
       File.define_singleton_method(:read) { |_path| "Extracted body text" }
 
       result = ExtractPdfText.call(matter_attachment: @attachment)
@@ -35,7 +39,6 @@ module Documents
       assert_equal "pdftotext 24.02.0", result.command_version
     ensure
       Open3.define_singleton_method(:capture3, original_capture3)
-      Open3.define_singleton_method(:capture2, original_capture2)
       File.define_singleton_method(:read, original_file_read)
     end
   end

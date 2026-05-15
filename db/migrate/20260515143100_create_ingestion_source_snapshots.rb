@@ -13,7 +13,7 @@ class CreateIngestionSourceSnapshots < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :ingestion_source_snapshots, [:source_system, :resource_type, :source_id], name: "idx_source_snapshots_identity"
+    add_index :ingestion_source_snapshots, [ :source_system, :resource_type, :source_id ], name: "idx_source_snapshots_identity"
     add_index :ingestion_source_snapshots, :fetched_at
   end
 end
