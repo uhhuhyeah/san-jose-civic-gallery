@@ -38,13 +38,19 @@
             <%= [item.matter_file, item.matter_name].compact.join(" - ") %>
           </div>
         <% end %>
-        <% if item.matter&.title.present? %>
-          <div><%= item.matter.title %></div>
-        <% end %>
-        <% if item.matter&.attachments&.any? %>
-          <div>
-            Attachments:
-            <%= item.matter.attachments.map { |attachment| attachment.name }.join(", ") %>
+        <% if item.matter %>
+          <% if item.matter.title.present? %>
+            <div><%= item.matter.title %></div>
+          <% end %>
+          <% if item.matter.attachments.any? %>
+            <div>
+              Attachments:
+              <%= item.matter.attachments.map { |attachment| attachment.name }.join(", ") %>
+            </div>
+          <% end %>
+        <% elsif item.matter_id.present? %>
+          <div class="matter-pending">
+            Linked matter sync pending (<%= item.matter_file.presence || item.matter_id %>)
           </div>
         <% end %>
         <% if item.action_name.present? || item.passed_flag_name.present? %>

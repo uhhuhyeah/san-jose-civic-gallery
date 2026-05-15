@@ -5,7 +5,9 @@ module Public
     end
 
     def show
-      @event = Civic::Event.find(params[:id])
+      @event = Civic::Event
+        .includes(event_items: { matter: :attachments })
+        .find(params[:id])
     end
   end
 end

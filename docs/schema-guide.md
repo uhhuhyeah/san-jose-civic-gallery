@@ -339,6 +339,18 @@ Today’s flow is:
 5. import attachment files into Active Storage
 6. extract text from imported PDFs with `pdftotext`
 
+### Eventual consistency between event items and matters
+
+Stages 2 and 3 are decoupled via the job queue. An `EventItem` is persisted
+with `civic_matter_id: nil` whenever its upstream `EventItemMatterId` has
+not been synced into `Civic::Matter` yet; `Ingestion::SyncMatter` back-fills
+the FK once the matter job runs.
+
+This means the public event page can render between stages 2 and 3 with
+items that have `matter_id` (the upstream legistar id) but no
+`civic_matter` row. The view renders a "Linked matter sync pending" hint
+in that window rather than silently hiding attachments.
+
 ## Known Limitations
 
 - Matter sync currently does N+1 fetches from event items
