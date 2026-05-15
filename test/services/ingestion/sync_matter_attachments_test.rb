@@ -63,7 +63,7 @@ module Ingestion
         job.fetch("arguments").first
       end
 
-      assert_equal [current_attachment.id], enqueued_attachment_ids
+      assert_equal [ current_attachment.id ], enqueued_attachment_ids
     end
   end
 end

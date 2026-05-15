@@ -58,7 +58,7 @@ module Ingestion
       assert_equal Time.zone.parse("2026-05-15 09:00:00"), @stale_item.source_missing_at
 
       current_ids = @event.event_items.pluck(:legistar_event_item_id)
-      assert_equal [129630, 129631], current_ids
+      assert_equal [ 129630, 129631 ], current_ids
 
       enqueued_matter_ids = enqueued_jobs.to_a.filter_map do |job|
         next unless job.fetch("job_class") == "Ingestion::SyncMatterJob"
@@ -66,7 +66,7 @@ module Ingestion
         job.fetch("arguments").first
       end
 
-      assert_equal [15886], enqueued_matter_ids
+      assert_equal [ 15886 ], enqueued_matter_ids
     end
   end
 end

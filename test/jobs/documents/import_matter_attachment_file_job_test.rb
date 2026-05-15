@@ -30,7 +30,7 @@ module Documents
         matter_attachment
       end
 
-      assert_enqueued_with(job: Documents::ExtractMatterAttachmentTextJob, args: [@attachment.id]) do
+      assert_enqueued_with(job: Documents::ExtractMatterAttachmentTextJob, args: [ @attachment.id ]) do
         ImportMatterAttachmentFileJob.perform_now(@attachment.id)
       end
     ensure
