@@ -3,8 +3,8 @@ module Civic
     self.table_name = "civic_matters"
 
     has_many :event_items, class_name: "Civic::EventItem", foreign_key: :civic_matter_id, inverse_of: :matter
-    has_many :attachments, -> { current_from_source.display_order }, class_name: "Civic::MatterAttachment", foreign_key: :civic_matter_id, inverse_of: :matter, dependent: :destroy
     has_many :all_attachments, -> { display_order }, class_name: "Civic::MatterAttachment", foreign_key: :civic_matter_id, inverse_of: :matter, dependent: :destroy
+    has_many :attachments, -> { current_from_source.display_order }, class_name: "Civic::MatterAttachment", foreign_key: :civic_matter_id, inverse_of: :matter
 
     validates :legistar_matter_id, presence: true, uniqueness: true
     validates :matter_file, presence: true
