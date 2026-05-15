@@ -52,7 +52,7 @@
   <section class="section-band">
     <h2>Related Meetings</h2>
     <% if @event_items.any? %>
-      <ol class="linked-list">
+      <ul class="linked-list">
         <% @event_items.each do |item| %>
           <li>
             <%= link_to item.event.display_name, public_event_path(item.event) %>
@@ -63,7 +63,7 @@
             <% end %>
           </li>
         <% end %>
-      </ol>
+      </ul>
     <% else %>
       <p>No related meeting items have been linked yet.</p>
     <% end %>

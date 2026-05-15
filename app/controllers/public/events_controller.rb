@@ -2,8 +2,9 @@ module Public
   class EventsController < ApplicationController
     def index
       @events = Civic::Event.recent_first.limit(8)
-      @lead_item = current_event_items.first
-      @watch_items = current_event_items.offset(@lead_item ? 1 : 0).limit(3)
+      featured_items = current_event_items.limit(4).to_a
+      @lead_item = featured_items.first
+      @watch_items = featured_items.drop(1)
       @matter_type_counts = Civic::Matter
         .group(:matter_type_name)
         .order(Arel.sql("COUNT(*) DESC"))

@@ -126,12 +126,16 @@ a:hover {
 }
 
 .topbar-search {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
   flex: 1 1 520px;
   max-width: 620px;
 }
 
 .topbar-search input[type="search"] {
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   height: 42px;
   padding: 0 14px;
   border: 1px solid var(--line);
@@ -140,6 +144,24 @@ a:hover {
   color: var(--ink);
   font: inherit;
   font-size: 14px;
+}
+
+.topbar-search-submit {
+  flex: 0 0 auto;
+  height: 42px;
+  padding: 0 18px;
+  border: 1px solid var(--civic);
+  border-radius: 6px;
+  background: var(--civic);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.topbar-search-submit:hover {
+  background: var(--civic-dark);
+  border-color: var(--civic-dark);
 }
 
 .topbar-nav {
@@ -238,7 +260,7 @@ a:hover {
   background: var(--paper-warm);
 }
 
-.lead-card h1 {
+.lead-card h2 {
   max-width: 760px;
   margin: 16px 0 10px;
   font-size: clamp(2.1rem, 5vw, 3.35rem);
@@ -246,7 +268,7 @@ a:hover {
   letter-spacing: 0;
 }
 
-.lead-card h1 a {
+.lead-card h2 a {
   color: var(--ink);
 }
 
@@ -660,7 +682,7 @@ dd {
 }
 
 .attachment-row header p {
-  color: var(--color-muted);
+  color: var(--muted);
   font-weight: 650;
 }
 

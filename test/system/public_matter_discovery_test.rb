@@ -63,7 +63,7 @@ class PublicMatterDiscoveryTest < ApplicationSystemTestCase
     assert_text "Linked matter sync pending"
 
     click_on "26-575"
-    assert_text "OFFICIAL MATTER"
+    assert_selector "p.eyebrow", text: /official matter/i
     assert_text "Agreement approval"
     assert_text "Related Meetings"
     assert_text "Regular meeting"
@@ -83,8 +83,10 @@ class PublicMatterDiscoveryTest < ApplicationSystemTestCase
     )
 
     visit public_matters_path
-    fill_in "Filter matters", with: "26-575"
-    click_on "Search"
+    within ".search-form" do
+      fill_in "Filter matters", with: "26-575"
+      click_on "Search"
+    end
 
     assert_text "26-575"
     assert_no_text "26-999"

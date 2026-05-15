@@ -19,7 +19,7 @@
             <span><%= @lead_item.event.event_date %></span>
             <span><%= @lead_item.agenda_number.presence || "Agenda item" %></span>
           </div>
-          <h1><%= link_to @lead_item.matter.display_name, public_matter_path(@lead_item.matter) %></h1>
+          <h2><%= link_to @lead_item.matter.display_name, public_matter_path(@lead_item.matter) %></h2>
           <p>
             <%= @lead_item.title.presence || @lead_item.matter.descriptive_title.presence || "Official agenda item linked to source materials." %>
           </p>
@@ -42,7 +42,7 @@
             <span class="pill blue">San Jose</span>
             <span>Official source records</span>
           </div>
-          <h1>Track City Hall agenda materials as they are ingested</h1>
+          <h2>Track City Hall agenda materials as they are ingested</h2>
           <p>Recent meetings, matters, attachments, and extracted document text will appear here after sync jobs run.</p>
         </div>
         <div class="lead-actions">
