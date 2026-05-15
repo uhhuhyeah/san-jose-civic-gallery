@@ -65,3 +65,18 @@ Override them with `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, an
 - Contributions should preserve provenance rather than optimize for cleverness
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) and [SECURITY.md](./SECURITY.md) before opening issues or pull requests.
+
+## First Ingestion Slice
+
+The app includes a minimal first slice for:
+
+- ingesting recent Legistar events
+- storing raw source snapshots
+- normalizing events into `Civic::Event`
+- rendering ingested events on the public site
+
+You can run the sync manually from the Rails runner:
+
+```bash
+rbenv exec ruby bin/rails runner "Ingestion::SyncRecentEvents.call"
+```

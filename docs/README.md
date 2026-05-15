@@ -7,6 +7,7 @@ This repository is intentionally documented in a compact way so contributors and
 - `README.md`: project overview and local setup
 - `CONTEXT.md`: compact implementation context
 - `architecture.md`: current architecture direction and domain boundaries
+- `schema-guide.md`: source-system and app-schema contributor guide
 
 ## Documentation Principles
 
