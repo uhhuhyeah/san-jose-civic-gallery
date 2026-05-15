@@ -13,7 +13,9 @@ module Documents
 
       begin
         source_tempfile.binmode
-        source_tempfile.write(matter_attachment.source_file.download)
+        matter_attachment.source_file.blob.download do |chunk|
+          source_tempfile.write(chunk)
+        end
         source_tempfile.flush
 
         stdout, stderr, status = Open3.capture3(

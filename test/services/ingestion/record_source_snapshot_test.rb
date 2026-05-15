@@ -52,6 +52,46 @@ module Ingestion
       end
     end
 
+    test "deduplicates by payload version even after another version has been observed" do
+      first = RecordSourceSnapshot.call(
+        source_system: "legistar.sanjose",
+        resource_type: "event",
+        source_id: "7621",
+        request_url: "https://example.test/Events/7621",
+        fetched_at: Time.zone.parse("2026-05-15 10:00:00"),
+        http_status: 200,
+        response_sha256: "sha-v1",
+        payload: { "EventId" => 7621, "EventTitle" => "Original" }
+      )
+
+      RecordSourceSnapshot.call(
+        source_system: "legistar.sanjose",
+        resource_type: "event",
+        source_id: "7621",
+        request_url: "https://example.test/Events/7621",
+        fetched_at: Time.zone.parse("2026-05-15 11:00:00"),
+        http_status: 200,
+        response_sha256: "sha-v2",
+        payload: { "EventId" => 7621, "EventTitle" => "Changed" }
+      )
+
+      assert_no_difference -> { SourceSnapshot.count } do
+        observed_again = RecordSourceSnapshot.call(
+          source_system: "legistar.sanjose",
+          resource_type: "event",
+          source_id: "7621",
+          request_url: "https://example.test/Events/7621",
+          fetched_at: Time.zone.parse("2026-05-15 12:00:00"),
+          http_status: 200,
+          response_sha256: "sha-v1",
+          payload: { "EventId" => 7621, "EventTitle" => "Original" }
+        )
+
+        assert_equal first.id, observed_again.id
+        assert_equal 2, observed_again.fetch_count
+      end
+    end
+
     test "inserts a new snapshot when the response sha changes" do
       RecordSourceSnapshot.call(
         source_system: "legistar.sanjose",

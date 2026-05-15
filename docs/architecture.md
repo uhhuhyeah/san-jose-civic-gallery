@@ -37,10 +37,26 @@ Planned namespaces:
 Every civic row carries a `source_system` identifier (currently
 `legistar.sanjose`). Uniqueness on the upstream IDs (`legistar_event_id`,
 `legistar_matter_id`, etc.) is scoped by `source_system`, and
-`Ingestion::SourceSnapshot` is keyed the same way. The schema is
-multi-source-capable today even though only one source is wired in;
-adding another Legistar tenant or a non-Legistar source is a config
-change, not a schema migration.
+`Ingestion::SourceSnapshot` is keyed the same way. Background jobs carry
+`source_system` forward instead of falling back to a global default, so
+deferred child syncs remain in the same source namespace as their parent
+records. The schema is multi-source-capable today, but only
+`legistar.sanjose` is wired in; adding another tenant or a non-Legistar
+source still needs explicit client/source configuration, not a core
+civic schema redesign.
+
+## Source Payload Versions
+
+Each normalized civic row stores a digest of the individual upstream
+payload that produced that row. Collection API responses are not reused
+as row-level digests, because one changed sibling item should not make
+every item in the collection look like a new payload version.
+
+`Ingestion::SourceSnapshot` stores one row per distinct payload version,
+uniquely keyed by `source_system`, `resource_type`, `source_id`, and
+`response_sha256`. Repeated observations atomically increment
+`fetch_count` and update `last_fetched_at`, preserving the first-seen
+timestamp while bounding recurring sync growth.
 
 ## Outbound-Fetch Trust Boundary
 
@@ -55,6 +71,12 @@ All outbound HTTP fetches of attachment files go through
 - a body-size ceiling
 - streaming SHA-256 computation chunk by chunk to a `Tempfile`, so
   even large attachments never sit fully in memory
+
+Imported attachment files are refreshed when the attachment metadata
+payload changes, including cases where Legistar reports a new modified
+timestamp while keeping the same hyperlink and filename. Local PDF text
+extraction streams Active Storage blobs into a tempfile before invoking
+`pdftotext`.
 
 The Legistar API client (`Legistar::Client`) has its own bounded
 timeouts and a `User-Agent` header that identifies the app and a

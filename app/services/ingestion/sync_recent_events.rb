@@ -19,7 +19,7 @@ module Ingestion
           request_url: response.fetch(:request_url),
           fetched_at: response.fetch(:fetched_at),
           http_status: response.fetch(:status),
-          response_sha256: response.fetch(:response_sha256)
+          response_sha256: PayloadDigest.sha256(event_payload)
         )
         events << event
         snapshots << snapshot
@@ -27,7 +27,7 @@ module Ingestion
         FanOut.dispatch(
           mode: sync_event_items,
           inline: -> { SyncEventItemsForEvent.call(event:, client:, sync_matters: :inline) },
-          deferred: -> { SyncEventItemsForEventJob.perform_later(event.id) }
+          deferred: -> { SyncEventItemsForEventJob.perform_later(event.id, source_system: client.source_system) }
         )
       end
 

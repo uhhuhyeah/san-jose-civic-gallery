@@ -3,6 +3,7 @@ module Ingestion
     Result = Struct.new(:attachments, :snapshots, keyword_init: true)
 
     def self.call(matter:, client: Legistar::Client.new, import_files: :deferred)
+      source_system = matter.source_system
       response = client.matter_attachments(matter_id: matter.legistar_matter_id)
 
       unless response[:status] == 200
@@ -18,11 +19,11 @@ module Ingestion
         attachment, snapshot = PersistMatterAttachment.call(
           matter:,
           attachment_payload:,
-          source_system: client.source_system,
+          source_system:,
           request_url: response.fetch(:request_url),
           fetched_at: response.fetch(:fetched_at),
           http_status: response.fetch(:status),
-          response_sha256: response.fetch(:response_sha256)
+          response_sha256: PayloadDigest.sha256(attachment_payload)
         )
         attachments << attachment
         snapshots << snapshot
@@ -51,7 +52,9 @@ module Ingestion
       return false if attachment.hyperlink.blank?
       return true unless attachment.imported?
 
-      attachment.previous_changes.key?("hyperlink") || attachment.previous_changes.key?("file_name")
+      attachment.previous_changes.key?("hyperlink") ||
+        attachment.previous_changes.key?("file_name") ||
+        attachment.previous_changes.key?("raw_source_digest")
     end
     private_class_method :should_import_attachment?
 

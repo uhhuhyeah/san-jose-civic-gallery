@@ -26,3 +26,8 @@
 
 - Extracted text currently assumes a PDF with embedded text. Scanned
   PDFs and an OCR fallback are not yet handled.
+
+- Imported attachment files are refreshed when Legistar attachment
+  metadata changes. A future reconciliation pass may still add stronger
+  remote file validation, such as conditional requests or periodic
+  checksum revalidation for files whose metadata has not changed.

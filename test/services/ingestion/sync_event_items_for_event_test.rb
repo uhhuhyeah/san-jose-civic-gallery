@@ -69,6 +69,14 @@ module Ingestion
       end
 
       assert_equal [ 15886 ], enqueued_matter_ids
+      assert_equal [ { "source_system" => "legistar.sanjose", "_aj_ruby2_keywords" => [ "source_system" ] } ],
+        enqueued_jobs.to_a.filter_map { |job| job.fetch("arguments").second if job.fetch("job_class") == "Ingestion::SyncMatterJob" }
+
+      first_item = @event.event_items.find_by!(legistar_event_item_id: 129630)
+      second_item = @event.event_items.find_by!(legistar_event_item_id: 129631)
+      assert_equal PayloadDigest.sha256(payload.first), first_item.raw_source_digest
+      assert_equal PayloadDigest.sha256(payload.second), second_item.raw_source_digest
+      assert_not_equal first_item.raw_source_digest, second_item.raw_source_digest
     end
   end
 end

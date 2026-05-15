@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_15_210000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_15_213000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -201,6 +201,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_210000) do
     t.string "source_system", null: false
     t.datetime "updated_at", null: false
     t.index ["fetched_at"], name: "index_ingestion_source_snapshots_on_fetched_at"
+    t.index ["source_system", "resource_type", "source_id", "response_sha256"], name: "idx_source_snapshots_unique_payload_version", unique: true
     t.index ["source_system", "resource_type", "source_id"], name: "idx_source_snapshots_identity"
   end
 

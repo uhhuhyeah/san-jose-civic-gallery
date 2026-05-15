@@ -67,5 +67,46 @@ module Ingestion
 
       assert_equal [ current_attachment.id ], enqueued_attachment_ids
     end
+
+    test "reimports an already imported attachment when source metadata changes" do
+      current_attachment = @matter.all_attachments.create!(
+        legistar_matter_attachment_id: 39135,
+        name: "Agreement",
+        hyperlink: "https://example.test/agreement.pdf",
+        raw_source_digest: "old-digest"
+      )
+      current_attachment.source_file.attach(
+        io: StringIO.new("%PDF-1.4 old"),
+        filename: "agreement.pdf",
+        content_type: "application/pdf"
+      )
+
+      client = Class.new do
+        def source_system; "legistar.sanjose"; end
+
+        def matter_attachments(matter_id:)
+          {
+            request_url: "https://example.test/Matters/#{matter_id}/Attachments",
+            status: 200,
+            fetched_at: Time.zone.parse("2026-05-15 11:00:00"),
+            response_sha256: "collection-sha",
+            payload: [
+              {
+                "MatterAttachmentId" => 39135,
+                "MatterAttachmentName" => "Agreement",
+                "MatterAttachmentHyperlink" => "https://example.test/agreement.pdf",
+                "MatterAttachmentFileName" => "agreement.pdf",
+                "MatterAttachmentDescription" => "Updated metadata",
+                "MatterAttachmentLastModifiedUtc" => "2026-05-15T10:30:00Z"
+              }
+            ]
+          }
+        end
+      end.new
+
+      assert_enqueued_jobs 1, only: Documents::ImportMatterAttachmentFileJob do
+        SyncMatterAttachments.call(matter: @matter, client:, import_files: :deferred)
+      end
+    end
   end
 end

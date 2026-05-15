@@ -15,7 +15,7 @@ module Ingestion
         request_url: response.fetch(:request_url),
         fetched_at: response.fetch(:fetched_at),
         http_status: response.fetch(:status),
-        response_sha256: response.fetch(:response_sha256)
+        response_sha256: PayloadDigest.sha256(response.fetch(:payload))
       )
 
       link_event_items!(matter:)

@@ -281,7 +281,8 @@ Payload + provenance:
 
 - `request_url`
 - `http_status`
-- `response_sha256` — drives the dedup decision
+- `response_sha256` — SHA-256 of the individual source payload after
+  canonical key ordering; drives the dedup decision
 - `payload` (jsonb)
 
 Fetch history fields:
@@ -292,9 +293,18 @@ Fetch history fields:
 
 Important note:
 
-`Ingestion::RecordSourceSnapshot` looks up the latest snapshot for a given identity. If the incoming `response_sha256` matches, it atomically bumps `last_fetched_at` and `fetch_count` on the existing row. Only a genuinely changed payload inserts a new row.
+`Ingestion::RecordSourceSnapshot` relies on a unique database index over
+`source_system`, `resource_type`, `source_id`, and `response_sha256`.
+If the incoming payload version already exists, it atomically bumps
+`last_fetched_at` and `fetch_count` on that row. Only a genuinely new
+payload version inserts a new row.
 
 That keeps the evidence trail intact (every distinct payload version is still preserved) while bounding growth under recurring sync schedules. If normalization logic is ever wrong, these records still let us re-check what the source actually returned and when.
+
+Collection endpoints such as `Events/:id/EventItems` and
+`Matters/:id/Attachments` are split into individual source payloads
+before persistence. A changed sibling item or a different collection
+order should not change the digest for an unchanged row.
 
 ## Relationship Summary
 
@@ -374,6 +384,15 @@ Today’s flow is:
 4. sync matter attachments for each linked matter
 5. import attachment files into Active Storage
 6. extract text from imported PDFs with `pdftotext`
+
+Deferred jobs pass `source_system` through the pipeline. A matter sync
+enqueued from a San Jose event item therefore writes San Jose matter
+rows even if another source is configured later.
+
+Attachment files are imported when first seen and re-imported when the
+attachment metadata payload changes. This catches upstream file refreshes
+that preserve the same hyperlink and filename but expose a new source
+modified timestamp or other metadata.
 
 ### Eventual consistency between event items and matters
 
