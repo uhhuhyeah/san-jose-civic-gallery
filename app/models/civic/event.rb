@@ -17,5 +17,11 @@ module Civic
     def display_name
       title.presence || body_name.presence || "Event #{legistar_event_id}"
     end
+
+    def listing_title
+      return title if title.present? && title != body_name
+
+      "#{body_name.presence || "Meeting"} meeting"
+    end
   end
 end

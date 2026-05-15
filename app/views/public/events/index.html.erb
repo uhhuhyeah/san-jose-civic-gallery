@@ -1,19 +1,166 @@
-<h1>San Jose Civic Pulse</h1>
+<main class="newspaper-shell">
+  <%= render "public/shared/topbar", active: :pulse %>
 
-<p>Recent civic events ingested from official San Jose legislative sources.</p>
+  <section class="front-intro">
+    <h1>Welcome to San Jose Civic Pulse</h1>
+    <p>
+      Civic Pulse organizes official meeting records, legislative matters,
+      attachments, and extracted document text so residents can see what is
+      coming up, what was acted on, and where the source material came from.
+    </p>
+  </section>
 
-<% if @events.any? %>
-  <ul>
-    <% @events.each do |event| %>
-      <li>
-        <%= link_to event.display_name, public_event_path(event) %>
-        on <%= event.event_date %>
-        <% if event.body_name.present? %>
-          (<%= event.body_name %>)
+  <section class="newspaper-hero">
+    <article class="lead-card">
+      <% if @lead_item %>
+        <div>
+          <div class="meta">
+            <span class="pill blue"><%= @lead_item.event.body_name.presence || "Meeting" %></span>
+            <span><%= @lead_item.event.event_date %></span>
+            <span><%= @lead_item.agenda_number.presence || "Agenda item" %></span>
+          </div>
+          <h1><%= link_to @lead_item.matter.display_name, public_matter_path(@lead_item.matter) %></h1>
+          <p>
+            <%= @lead_item.title.presence || @lead_item.matter.descriptive_title.presence || "Official agenda item linked to source materials." %>
+          </p>
+        </div>
+        <div class="lead-actions">
+          <div class="tags">
+            <% if @lead_item.matter.matter_type_name.present? %>
+              <span class="pill green"><%= @lead_item.matter.matter_type_name %></span>
+            <% end %>
+            <% if @lead_item.matter.matter_status_name.present? %>
+              <span class="pill gold"><%= @lead_item.matter.matter_status_name %></span>
+            <% end %>
+            <span class="pill">Official sources linked</span>
+          </div>
+          <%= link_to "Open item details", public_matter_path(@lead_item.matter), class: "source-link" %>
+        </div>
+      <% else %>
+        <div>
+          <div class="meta">
+            <span class="pill blue">San Jose</span>
+            <span>Official source records</span>
+          </div>
+          <h1>Track City Hall agenda materials as they are ingested</h1>
+          <p>Recent meetings, matters, attachments, and extracted document text will appear here after sync jobs run.</p>
+        </div>
+        <div class="lead-actions">
+          <div class="tags">
+            <span class="pill">Official records first</span>
+            <span class="pill">Generated summaries not yet enabled</span>
+          </div>
+          <%= link_to "Browse matters", public_matters_path, class: "source-link" %>
+        </div>
+      <% end %>
+    </article>
+
+    <aside class="mini-stack" aria-label="Source record counts">
+      <div class="mini-card">
+        <span class="subtle">Current source records</span>
+        <strong><%= pluralize(@stats.fetch(:meetings), "meeting") %>, <%= pluralize(@stats.fetch(:agenda_items), "agenda item") %></strong>
+        <%= link_to "View meeting calendar", "#meetings", class: "source-link" %>
+      </div>
+      <div class="mini-card">
+        <span class="subtle">Linked matters</span>
+        <strong><%= pluralize(@stats.fetch(:matters), "matter") %>, <%= pluralize(@stats.fetch(:attachments), "attachment") %></strong>
+        <%= link_to "Browse official matters", public_matters_path, class: "source-link" %>
+      </div>
+      <div class="mini-card">
+        <span class="subtle">Document processing</span>
+        <strong><%= pluralize(@stats.fetch(:imported_files), "file") %> imported, <%= pluralize(@stats.fetch(:extracted_texts), "text extraction") %></strong>
+        <span class="source-link">Source files stay separate from extracted text</span>
+      </div>
+    </aside>
+  </section>
+
+  <section class="newspaper-body">
+    <div>
+      <div class="section-title">
+        <h2>Items To Watch</h2>
+        <span>From official agenda records</span>
+      </div>
+      <div class="card">
+        <% if @watch_items.any? %>
+          <% @watch_items.each do |item| %>
+            <article class="item">
+              <div class="meta">
+                <span><%= item.event.event_date %></span>
+                <span><%= item.agenda_number.presence || "Agenda item" %></span>
+                <% if item.matter&.matter_type_name.present? %>
+                  <span class="pill gold"><%= item.matter.matter_type_name %></span>
+                <% end %>
+              </div>
+              <h3 class="item-title">
+                <%= link_to item.matter.display_name, public_matter_path(item.matter) %>
+              </h3>
+              <p><%= item.title.presence || item.matter.descriptive_title.presence || "Official agenda item linked to a matter." %></p>
+              <div class="tags">
+                <% if item.matter.attachments.any? %>
+                  <span class="pill"><%= pluralize(item.matter.attachments.size, "source attachment") %></span>
+                <% end %>
+                <%= link_to "Open official materials", public_matter_path(item.matter), class: "source-link" %>
+              </div>
+            </article>
+          <% end %>
+        <% else %>
+          <article class="item">
+            <h3 class="item-title">No linked matter items have been ingested yet</h3>
+            <p>Run the ingestion pipeline to populate agenda items, matters, and source attachments.</p>
+          </article>
         <% end %>
-      </li>
-    <% end %>
-  </ul>
-<% else %>
-  <p>No events have been ingested yet.</p>
-<% end %>
+      </div>
+
+      <div class="section-title meetings-title" id="meetings">
+        <h2>Recent Meetings</h2>
+        <span>Official source events</span>
+      </div>
+      <div class="compact-list">
+        <% if @events.any? %>
+          <% @events.each do |event| %>
+            <article class="meeting-row">
+              <time class="meeting-date" datetime="<%= event.event_date %>">
+                <span><%= event.event_date.strftime("%b") %></span>
+                <strong><%= event.event_date.day %></strong>
+                <small><%= event.event_date.year %></small>
+              </time>
+              <div>
+                <h3><%= link_to event.listing_title, public_event_path(event) %></h3>
+                <p><%= event.body_name.presence || "Unknown body" %></p>
+              </div>
+              <div class="meeting-status">
+                <span>Agenda: <%= event.agenda_status_name.presence || "Unknown" %></span>
+                <span>Minutes: <%= event.minutes_status_name.presence || "Unknown" %></span>
+              </div>
+            </article>
+          <% end %>
+        <% else %>
+          <p>No events have been ingested yet.</p>
+        <% end %>
+      </div>
+    </div>
+
+    <aside>
+      <div class="section-title">
+        <h2>Record Pulse</h2>
+        <span>Current source data</span>
+      </div>
+      <div class="topic-grid">
+        <% @matter_type_counts.each do |matter_type, count| %>
+          <div class="topic-tile">
+            <strong><%= matter_type.presence || "Unclassified" %></strong>
+            <span><%= pluralize(count, "matter") %></span>
+          </div>
+        <% end %>
+        <div class="topic-tile">
+          <strong>Attachments</strong>
+          <span><%= pluralize(@stats.fetch(:attachments), "current source file") %></span>
+        </div>
+        <div class="topic-tile">
+          <strong>Extracted Text</strong>
+          <span><%= pluralize(@stats.fetch(:extracted_texts), "successful extraction") %></span>
+        </div>
+      </div>
+    </aside>
+  </section>
+</main>

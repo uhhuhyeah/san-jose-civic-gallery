@@ -41,5 +41,13 @@ module Civic
       assert_equal [ live.id ], event.event_items.pluck(:id)
       assert_equal 2, event.all_event_items.count
     end
+
+    test "listing_title avoids repeating body-only titles" do
+      event = Event.new(body_name: "City Council", title: "City Council")
+      assert_equal "City Council meeting", event.listing_title
+
+      event.title = "Budget study session"
+      assert_equal "Budget study session", event.listing_title
+    end
   end
 end

@@ -1,0 +1,26 @@
+<header class="topbar">
+  <%= link_to root_path, class: "brand" do %>
+    <span class="mark" aria-hidden="true">
+      <%= image_tag "/icon.svg", alt: "", width: 36, height: 36 %>
+    </span>
+    <span class="brand-text">
+      <strong>San Jose Civic Pulse</strong>
+      <span>City Hall agenda intelligence</span>
+    </span>
+  <% end %>
+
+  <%= form_with url: public_matters_path, method: :get, local: true, class: "topbar-search" do |form| %>
+    <%= form.label :q, "Search agendas, matters, and staff reports", class: "sr-only", for: "global-matter-search" %>
+    <%= form.search_field :q,
+      id: "global-matter-search",
+      value: params[:q],
+      placeholder: "Search agendas, matters, and staff reports",
+      autocomplete: "off" %>
+  <% end %>
+
+  <nav class="topbar-nav" aria-label="Primary">
+    <%= link_to "Pulse", root_path, aria: { current: local_assigns[:active] == :pulse ? "page" : nil } %>
+    <%= link_to "Matters", public_matters_path, aria: { current: local_assigns[:active] == :matters ? "page" : nil } %>
+    <%= link_to "Meetings", root_path(anchor: "meetings") %>
+  </nav>
+</header>

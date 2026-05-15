@@ -1,0 +1,128 @@
+<main class="page-shell">
+  <%= render "public/shared/topbar", active: :matters %>
+
+  <p class="breadcrumb"><%= link_to "All matters", public_matters_path %></p>
+
+  <header class="page-header inset-header">
+    <p class="eyebrow">Official Matter</p>
+    <h1><%= @matter.display_name %></h1>
+    <% if @matter.descriptive_title.present? %>
+      <p><%= @matter.descriptive_title %></p>
+    <% end %>
+  </header>
+
+  <section class="section-band">
+    <h2>Official Record</h2>
+    <dl class="detail-grid">
+      <div>
+        <dt>File</dt>
+        <dd><%= @matter.matter_file %></dd>
+      </div>
+      <div>
+        <dt>Type</dt>
+        <dd><%= @matter.matter_type_name.presence || "Unknown" %></dd>
+      </div>
+      <div>
+        <dt>Status</dt>
+        <dd><%= @matter.matter_status_name.presence || "Unknown" %></dd>
+      </div>
+      <div>
+        <dt>Body</dt>
+        <dd><%= @matter.body_name.presence || "Unknown" %></dd>
+      </div>
+      <div>
+        <dt>Requester</dt>
+        <dd><%= @matter.requester.presence || "Unknown" %></dd>
+      </div>
+      <div>
+        <dt>Last synced</dt>
+        <dd><%= @matter.last_synced_at&.to_fs(:long) || "Unknown" %></dd>
+      </div>
+      <div>
+        <dt>Introduced</dt>
+        <dd><%= @matter.intro_date || "Unknown" %></dd>
+      </div>
+      <div>
+        <dt>Agenda date</dt>
+        <dd><%= @matter.agenda_date || "Unknown" %></dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="section-band">
+    <h2>Related Meetings</h2>
+    <% if @event_items.any? %>
+      <ol class="linked-list">
+        <% @event_items.each do |item| %>
+          <li>
+            <%= link_to item.event.display_name, public_event_path(item.event) %>
+            <span><%= item.event.event_date %></span>
+            <strong><%= item.display_name %></strong>
+            <% if item.title.present? && item.title != item.display_name %>
+              <p><%= item.title %></p>
+            <% end %>
+          </li>
+        <% end %>
+      </ol>
+    <% else %>
+      <p>No related meeting items have been linked yet.</p>
+    <% end %>
+  </section>
+
+  <section class="section-band">
+    <h2>Official Attachments</h2>
+    <% if @matter.attachments.any? %>
+      <div class="attachment-list">
+        <% @matter.attachments.each do |attachment| %>
+          <% latest_text = attachment.latest_extracted_text %>
+          <article class="attachment-row" id="attachment-<%= attachment.id %>">
+            <header>
+              <h3><%= attachment.name %></h3>
+              <p>
+                <%= attachment_import_status(attachment) %>
+                <span aria-hidden="true">/</span>
+                <%= attachment_extraction_status(attachment) %>
+              </p>
+            </header>
+
+            <dl class="record-facts">
+              <div>
+                <dt>Filename</dt>
+                <dd><%= attachment.file_name.presence || "Unknown" %></dd>
+              </div>
+              <div>
+                <dt>Checksum</dt>
+                <dd><%= attachment.source_file_checksum_sha256&.first(12) || "Unavailable" %></dd>
+              </div>
+              <div>
+                <dt>Official source</dt>
+                <dd>
+                  <% if (source_url = official_source_url(attachment.hyperlink)) %>
+                    <%= link_to "Open source document", source_url, target: "_blank", rel: "noopener" %>
+                  <% else %>
+                    No official document link recorded
+                  <% end %>
+                </dd>
+              </div>
+            </dl>
+
+            <% if latest_text&.status == "ok" && latest_text.content.present? %>
+              <section class="extracted-text-preview">
+                <h4>Extracted Text Preview</h4>
+                <p><%= extracted_text_preview(latest_text) %></p>
+              </section>
+            <% elsif latest_text&.status == "error" %>
+              <p class="status-note">Text extraction failed. The official attachment remains available through the source link when present.</p>
+            <% elsif latest_text&.status == "empty" %>
+              <p class="status-note">Extraction completed, but no embedded text was found.</p>
+            <% else %>
+              <p class="status-note">No extracted text has been stored for this attachment yet.</p>
+            <% end %>
+          </article>
+        <% end %>
+      </div>
+    <% else %>
+      <p>No current attachments have been ingested for this matter.</p>
+    <% end %>
+  </section>
+</main>

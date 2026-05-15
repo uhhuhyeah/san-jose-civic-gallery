@@ -1,68 +1,99 @@
-<h1><%= @event.display_name %></h1>
+<main class="page-shell">
+  <%= render "public/shared/topbar", active: :pulse %>
 
-<dl>
-  <dt>Body</dt>
-  <dd><%= @event.body_name.presence || "Unknown" %></dd>
+  <p class="breadcrumb"><%= link_to "All meetings", root_path %></p>
 
-  <dt>Date</dt>
-  <dd><%= @event.event_date %></dd>
+  <header class="page-header inset-header">
+    <p class="eyebrow">Official Meeting</p>
+    <h1><%= @event.display_name %></h1>
+  </header>
 
-  <dt>Agenda status</dt>
-  <dd><%= @event.agenda_status_name.presence || "Unknown" %></dd>
+  <section class="section-band">
+    <h2>Meeting Record</h2>
+    <dl class="detail-grid">
+      <div>
+        <dt>Body</dt>
+        <dd><%= @event.body_name.presence || "Unknown" %></dd>
+      </div>
 
-  <dt>Minutes status</dt>
-  <dd><%= @event.minutes_status_name.presence || "Unknown" %></dd>
+      <div>
+        <dt>Date</dt>
+        <dd><%= @event.event_date %></dd>
+      </div>
 
-  <dt>Official page</dt>
-  <dd>
-    <% if (official_page_url = official_legistar_url(@event.in_site_url)) %>
-      <%= link_to official_page_url, official_page_url, target: "_blank", rel: "noopener" %>
+      <div>
+        <dt>Agenda status</dt>
+        <dd><%= @event.agenda_status_name.presence || "Unknown" %></dd>
+      </div>
+
+      <div>
+        <dt>Minutes status</dt>
+        <dd><%= @event.minutes_status_name.presence || "Unknown" %></dd>
+      </div>
+
+      <div>
+        <dt>Official page</dt>
+        <dd>
+          <% if (official_page_url = official_source_url(@event.in_site_url)) %>
+            <%= link_to "Open official meeting page", official_page_url, target: "_blank", rel: "noopener" %>
+          <% else %>
+            No official URL recorded
+          <% end %>
+        </dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="section-band">
+    <h2>Agenda Items</h2>
+
+    <% if @event.event_items.any? %>
+      <ol class="agenda-list">
+        <% @event.event_items.each do |item| %>
+          <li>
+            <header>
+              <strong><%= item.display_name %></strong>
+              <% if item.matter %>
+                <%= link_to item.matter.display_name, public_matter_path(item.matter), class: "matter-link" %>
+              <% end %>
+            </header>
+            <% if item.title.present? && item.title != item.display_name %>
+              <p><%= item.title %></p>
+            <% end %>
+            <% if item.matter_file.present? || item.matter_name.present? %>
+              <p class="record-meta">
+                <%= [item.matter_file, item.matter_name].compact.join(" - ") %>
+              </p>
+            <% end %>
+            <% if item.matter %>
+              <% if item.matter.title.present? %>
+                <p><%= item.matter.title %></p>
+              <% end %>
+              <% if item.matter.attachments.any? %>
+                <div class="inline-attachments">
+                  <span>Attachments</span>
+                  <ul>
+                    <% item.matter.attachments.each do |attachment| %>
+                      <li><%= link_to attachment.name, public_matter_path(item.matter, anchor: "attachment-#{attachment.id}") %></li>
+                    <% end %>
+                  </ul>
+                </div>
+              <% end %>
+            <% elsif item.matter_id.present? %>
+              <p class="matter-pending">
+                Linked matter sync pending (<%= item.matter_file.presence || item.matter_id %>)
+              </p>
+            <% end %>
+            <% if item.action_name.present? || item.passed_flag_name.present? %>
+              <p class="record-meta">
+                <%= [item.action_name, item.passed_flag_name].compact.join(" / ") %>
+              </p>
+            <% end %>
+          </li>
+        <% end %>
+      </ol>
     <% else %>
-      No official URL recorded
+      <p>No event items have been ingested yet.</p>
     <% end %>
-  </dd>
-</dl>
-
-<h2>Agenda Items</h2>
-
-<% if @event.event_items.any? %>
-  <ol>
-    <% @event.event_items.each do |item| %>
-      <li>
-        <strong><%= item.display_name %></strong>
-        <% if item.title.present? && item.title != item.display_name %>
-          <div><%= item.title %></div>
-        <% end %>
-        <% if item.matter_file.present? || item.matter_name.present? %>
-          <div>
-            <%= [item.matter_file, item.matter_name].compact.join(" - ") %>
-          </div>
-        <% end %>
-        <% if item.matter %>
-          <% if item.matter.title.present? %>
-            <div><%= item.matter.title %></div>
-          <% end %>
-          <% if item.matter.attachments.any? %>
-            <div>
-              Attachments:
-              <%= item.matter.attachments.map { |attachment| attachment.name }.join(", ") %>
-            </div>
-          <% end %>
-        <% elsif item.matter_id.present? %>
-          <div class="matter-pending">
-            Linked matter sync pending (<%= item.matter_file.presence || item.matter_id %>)
-          </div>
-        <% end %>
-        <% if item.action_name.present? || item.passed_flag_name.present? %>
-          <div>
-            <%= [item.action_name, item.passed_flag_name].compact.join(" / ") %>
-          </div>
-        <% end %>
-      </li>
-    <% end %>
-  </ol>
-<% else %>
-  <p>No event items have been ingested yet.</p>
-<% end %>
-
-<p><%= link_to "Back to events", root_path %></p>
+  </section>
+</main>

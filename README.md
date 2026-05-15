@@ -92,3 +92,17 @@ That command now persists recent events and fans out downstream sync stages thro
 ```bash
 rbenv exec ruby bin/rails runner "Ingestion::SyncRecentEvents.call(sync_event_items: :inline)"
 ```
+
+## Tests
+
+Run the Rails unit, controller, model, and service tests with:
+
+```bash
+rbenv exec ruby bin/rails test
+```
+
+Run browser-level public flow tests with:
+
+```bash
+rbenv exec ruby bin/rails test:system
+```

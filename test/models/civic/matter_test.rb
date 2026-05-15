@@ -41,5 +41,16 @@ module Civic
       assert_equal [ live.id ], matter.attachments.pluck(:id)
       assert_equal 2, matter.all_attachments.count
     end
+
+    test "searches by matter file title and name" do
+      file_match = Matter.create!(legistar_matter_id: 88003, matter_file: "26-702", title: "Budget action")
+      title_match = Matter.create!(legistar_matter_id: 88004, matter_file: "26-703", title: "Library agreement")
+      name_match = Matter.create!(legistar_matter_id: 88005, matter_file: "26-704", name: "Parks master plan")
+      Matter.create!(legistar_matter_id: 88006, matter_file: "26-705", title: "Airport contract")
+
+      assert_equal [ file_match.id ], Matter.search("26-702").pluck(:id)
+      assert_equal [ title_match.id ], Matter.search("library").pluck(:id)
+      assert_equal [ name_match.id ], Matter.search("parks").pluck(:id)
+    end
   end
 end

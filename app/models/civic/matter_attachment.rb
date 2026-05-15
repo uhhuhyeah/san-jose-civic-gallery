@@ -27,6 +27,12 @@ module Civic
       latest_extracted_text
     end
 
+    def extraction_status
+      return "not_imported" unless imported?
+
+      latest_extracted_text&.status || "pending"
+    end
+
     def extractable_as_pdf?
       return false unless source_file.attached?
 

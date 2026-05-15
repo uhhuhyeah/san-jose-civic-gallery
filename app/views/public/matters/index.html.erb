@@ -1,0 +1,52 @@
+<main class="newspaper-shell">
+  <%= render "public/shared/topbar", active: :matters %>
+
+  <header class="page-header inset-header">
+    <p class="eyebrow">Official Records</p>
+    <h1>Matters</h1>
+    <p>Browse legislative files linked from recent San Jose meetings.</p>
+  </header>
+
+  <%= form_with url: public_matters_path, method: :get, local: true, class: "search-form inset-panel" do |form| %>
+    <%= form.label :q, "Filter matters", for: "matter-filter-q" %>
+    <div class="search-row">
+      <%= form.search_field :q, id: "matter-filter-q", value: @query, placeholder: "Matter file, title, or name" %>
+      <%= form.submit "Search" %>
+      <% if @query.present? %>
+        <%= link_to "Clear", public_matters_path, class: "button-secondary" %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if @matters.any? %>
+    <section class="record-list inset-panel" aria-label="Matters">
+      <% @matters.each do |matter| %>
+        <article class="record-row">
+          <div>
+            <h2><%= link_to matter.display_name, public_matter_path(matter) %></h2>
+            <% if matter.descriptive_title.present? %>
+              <p><%= matter.descriptive_title %></p>
+            <% end %>
+            <p class="record-meta">
+              <%= [matter.matter_type_name, matter.matter_status_name, matter.body_name].compact_blank.join(" / ") %>
+            </p>
+          </div>
+          <dl class="record-facts">
+            <div>
+              <dt>Agenda date</dt>
+              <dd><%= matter.agenda_date || "Unknown" %></dd>
+            </div>
+            <div>
+              <dt>Attachments</dt>
+              <dd><%= matter.attachments.size %></dd>
+            </div>
+          </dl>
+        </article>
+      <% end %>
+    </section>
+  <% elsif @query.present? %>
+    <p class="empty-state inset-panel">No matters matched "<%= @query %>".</p>
+  <% else %>
+    <p class="empty-state inset-panel">No matters have been ingested yet.</p>
+  <% end %>
+</main>
