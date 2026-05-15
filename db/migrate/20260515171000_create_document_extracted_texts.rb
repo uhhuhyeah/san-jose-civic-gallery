@@ -8,11 +8,12 @@ class CreateDocumentExtractedTexts < ActiveRecord::Migration[8.1]
       t.integer :character_count
       t.string :status, null: false, default: "pending"
       t.text :error_message
+      t.string :source_file_checksum_sha256
       t.text :content
 
       t.timestamps
     end
 
-    add_index :document_extracted_texts, :civic_matter_attachment_id, unique: true, name: "idx_document_extracted_texts_attachment"
+    add_index :document_extracted_texts, [ :civic_matter_attachment_id, :created_at ], name: "idx_document_extracted_texts_attachment_history"
   end
 end

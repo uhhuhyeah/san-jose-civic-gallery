@@ -2,7 +2,7 @@ module Ingestion
   class SyncRecentEvents
     Result = Struct.new(:events, :snapshots, keyword_init: true)
 
-    def self.call(limit: 10, body_name: "City Council", client: Legistar::Client.new, sync_event_items: true)
+    def self.call(limit: 10, body_name: "City Council", client: Legistar::Client.new, sync_event_items: :deferred)
       response = client.recent_events(limit:, body_name:)
 
       unless response[:status] == 200
@@ -23,10 +23,30 @@ module Ingestion
         events << event
         snapshots << snapshot
 
-        SyncEventItemsForEvent.call(event:, client:) if sync_event_items
+        fan_out_event_items(event:, client:, mode: sync_event_items)
       end
 
       Result.new(events:, snapshots:)
     end
+
+    def self.fan_out_event_items(event:, client:, mode:)
+      case normalize_mode(mode)
+      when :off
+        nil
+      when :inline
+        SyncEventItemsForEvent.call(event:, client:, sync_matters: :inline)
+      when :deferred
+        SyncEventItemsForEventJob.perform_later(event.id)
+      end
+    end
+    private_class_method :fan_out_event_items
+
+    def self.normalize_mode(mode)
+      return :inline if mode == true
+      return :off if mode == false
+
+      mode
+    end
+    private_class_method :normalize_mode
   end
 end

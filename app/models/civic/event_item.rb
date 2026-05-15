@@ -8,6 +8,7 @@ module Civic
     validates :legistar_event_item_id, presence: true, uniqueness: true
     validates :event, presence: true
 
+    scope :current_from_source, -> { where(source_present: true) }
     scope :agenda_order, -> { order(:agenda_sequence, :minutes_sequence, :legistar_event_item_id) }
 
     def display_name

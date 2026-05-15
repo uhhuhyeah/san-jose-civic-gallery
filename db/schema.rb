@@ -64,11 +64,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_171000) do
     t.string "passed_flag_name"
     t.string "raw_source_digest"
     t.integer "roll_call_flag"
+    t.datetime "source_missing_at"
+    t.boolean "source_present", default: true, null: false
     t.datetime "source_last_modified_at"
     t.string "tally"
     t.text "title"
     t.datetime "updated_at", null: false
     t.index ["civic_event_id", "agenda_sequence"], name: "idx_civic_event_items_agenda_order"
+    t.index ["civic_event_id", "source_present"], name: "idx_civic_event_items_source_presence"
     t.index ["civic_event_id"], name: "index_civic_event_items_on_civic_event_id"
     t.index ["civic_matter_id"], name: "index_civic_event_items_on_civic_matter_id"
     t.index ["legistar_event_item_id"], name: "index_civic_event_items_on_legistar_event_item_id", unique: true
@@ -117,9 +120,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_171000) do
     t.string "source_file_checksum_sha256"
     t.text "source_file_import_error"
     t.datetime "source_file_imported_at"
+    t.datetime "source_missing_at"
+    t.boolean "source_present", default: true, null: false
     t.datetime "source_last_modified_at"
     t.datetime "updated_at", null: false
     t.index ["civic_matter_id", "sort_order"], name: "idx_civic_matter_attachments_order"
+    t.index ["civic_matter_id", "source_present"], name: "idx_civic_matter_attachments_source_presence"
     t.index ["civic_matter_id"], name: "index_civic_matter_attachments_on_civic_matter_id"
     t.index ["legistar_matter_attachment_id"], name: "idx_on_legistar_matter_attachment_id_112c601288", unique: true
   end
@@ -158,9 +164,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_171000) do
     t.datetime "extracted_at"
     t.string "extractor_name", null: false
     t.string "extractor_version"
+    t.string "source_file_checksum_sha256"
     t.string "status", default: "pending", null: false
     t.datetime "updated_at", null: false
-    t.index ["civic_matter_attachment_id"], name: "idx_document_extracted_texts_attachment", unique: true
+    t.index ["civic_matter_attachment_id", "created_at"], name: "idx_document_extracted_texts_attachment_history"
     t.index ["civic_matter_attachment_id"], name: "index_document_extracted_texts_on_civic_matter_attachment_id"
   end
 

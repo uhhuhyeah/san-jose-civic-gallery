@@ -20,6 +20,8 @@ class CreateCivicEventItems < ActiveRecord::Migration[8.1]
       t.text :matter_name
       t.string :matter_type
       t.string :matter_status
+      t.boolean :source_present, null: false, default: true
+      t.datetime :source_missing_at
       t.datetime :source_last_modified_at
       t.datetime :last_synced_at
       t.string :raw_source_digest
@@ -29,5 +31,6 @@ class CreateCivicEventItems < ActiveRecord::Migration[8.1]
 
     add_index :civic_event_items, :legistar_event_item_id, unique: true
     add_index :civic_event_items, [ :civic_event_id, :agenda_sequence ], name: "idx_civic_event_items_agenda_order"
+    add_index :civic_event_items, [ :civic_event_id, :source_present ], name: "idx_civic_event_items_source_presence"
   end
 end

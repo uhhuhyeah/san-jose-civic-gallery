@@ -73,10 +73,18 @@ The app includes a minimal first slice for:
 - ingesting recent Legistar events
 - storing raw source snapshots
 - normalizing events into `Civic::Event`
+- reconciling event items and matter attachments against the latest source payloads
+- importing attachment files and extracting PDF text through background jobs
 - rendering ingested events on the public site
 
 You can run the sync manually from the Rails runner:
 
 ```bash
 rbenv exec ruby bin/rails runner "Ingestion::SyncRecentEvents.call"
+```
+
+That command now persists recent events and fans out downstream sync stages through jobs. For a single blocking run during local development, use:
+
+```bash
+rbenv exec ruby bin/rails runner "Ingestion::SyncRecentEvents.call(sync_event_items: :inline)"
 ```

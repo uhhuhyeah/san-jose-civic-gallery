@@ -140,6 +140,8 @@ Key fields:
 - `legistar_event_item_id`
 - `civic_event_id`
 - `civic_matter_id` optional
+- `source_present`
+- `source_missing_at`
 - `agenda_sequence`
 - `agenda_number`
 - `title`
@@ -155,6 +157,7 @@ Key relationships:
 Important note:
 
 `EventItem` is the bridge between a specific meeting and a broader legislative matter.
+Rows are retained for provenance, but normal application reads should treat `source_present = true` as the current source-backed set.
 
 ### `civic_matters` / `Civic::Matter`
 
@@ -191,6 +194,8 @@ Key fields:
 - `hyperlink`
 - `file_name`
 - `sort_order`
+- `source_present`
+- `source_missing_at`
 
 Import-related fields:
 
@@ -208,6 +213,7 @@ Key relationships:
 Important note:
 
 This row is attachment metadata. The actual downloaded file lives in Active Storage.
+Like event items, attachments can be marked missing from the latest upstream payload without deleting the historical row.
 
 ### `document_extracted_texts` / `Documents::ExtractedText`
 
@@ -218,6 +224,12 @@ Key fields:
 - `civic_matter_attachment_id`
 - `extractor_name`
 - `extractor_version`
+- `source_file_checksum_sha256`
+- `status`
+
+Important note:
+
+This table is append-only. Each extraction attempt produces a new artifact row so extractor changes, retries, and OCR fallback can be audited over time.
 - `status`
 - `character_count`
 - `content`

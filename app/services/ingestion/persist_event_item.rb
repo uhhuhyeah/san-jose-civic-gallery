@@ -40,6 +40,8 @@ module Ingestion
         matter_name: event_item_payload["EventItemMatterName"],
         matter_type: event_item_payload["EventItemMatterType"],
         matter_status: event_item_payload["EventItemMatterStatus"],
+        source_present: true,
+        source_missing_at: nil,
         source_last_modified_at: event_item_payload["EventItemLastModifiedUtc"],
         last_synced_at: fetched_at,
         raw_source_digest: response_sha256
