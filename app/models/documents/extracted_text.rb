@@ -19,8 +19,12 @@ module Documents
       vector = "to_tsvector('english', coalesce(#{table_name}.content, ''))"
       headline_options = "StartSel=<mark>, StopSel=</mark>, MaxWords=24, MinWords=8, ShortWord=3"
 
-      successful
+      latest_ok_per_attachment = successful
         .with_content
+        .select("DISTINCT ON (civic_matter_attachment_id) id")
+        .order(:civic_matter_attachment_id, created_at: :desc, id: :desc)
+
+      where(id: latest_ok_per_attachment)
         .where("#{vector} @@ #{tsquery}")
         .select(
           "#{table_name}.*",

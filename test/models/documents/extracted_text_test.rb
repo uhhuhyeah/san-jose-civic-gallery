@@ -41,5 +41,26 @@ module Documents
       assert_equal [ match.id ], results.map(&:id)
       assert_includes results.first.search_snippet, "<mark>library</mark>"
     end
+
+    test "search returns only the latest successful extraction per attachment" do
+      @attachment.extracted_texts.create!(
+        extractor_name: "pdftotext",
+        status: "ok",
+        content: "Older revision mentioning library outreach funding.",
+        character_count: 51,
+        created_at: 2.days.ago
+      )
+      latest = @attachment.extracted_texts.create!(
+        extractor_name: "pdftotext",
+        status: "ok",
+        content: "Latest revision mentioning library outreach funding.",
+        character_count: 52,
+        created_at: 1.day.ago
+      )
+
+      results = ExtractedText.search("library outreach").to_a
+
+      assert_equal [ latest.id ], results.map(&:id)
+    end
   end
 end

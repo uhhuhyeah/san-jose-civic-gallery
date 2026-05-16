@@ -3,12 +3,12 @@ module Public
     def index
       @query = params[:q].to_s.strip
       @document_matches = document_matches_for(@query)
-      document_matter_ids = @document_matches.map { |match| match.matter_attachment.matter.id }
-      @matters = Civic::Matter
-        .includes(:attachments)
-        .where(id: matching_matter_ids(@query, document_matter_ids))
-        .recent_first
-        .limit(50)
+      document_matter_ids = @document_matches.map { |match| match.matter_attachment.matter.id }.uniq
+
+      scope = Civic::Matter.includes(:attachments)
+      scope = scope.where(id: matching_matter_ids(@query, document_matter_ids)) if @query.present?
+
+      @matters = scope.recent_first.limit(50)
       @document_matches_by_matter_id = @document_matches.group_by { |match| match.matter_attachment.matter.id }
     end
 
@@ -40,10 +40,10 @@ module Public
     end
 
     def matching_matter_ids(query, document_matter_ids)
-      metadata_match_ids = Civic::Matter.search(query).select(:id)
-      return metadata_match_ids if document_matter_ids.empty?
+      metadata_matches = Civic::Matter.search(query)
+      return metadata_matches.select(:id) if document_matter_ids.empty?
 
-      Civic::Matter.where(id: metadata_match_ids).or(Civic::Matter.where(id: document_matter_ids)).select(:id)
+      metadata_matches.or(Civic::Matter.where(id: document_matter_ids)).select(:id)
     end
   end
 end
