@@ -60,6 +60,38 @@ module Public
       assert_not_includes response.body, "26-999"
     end
 
+    test "finds matters by successful extracted document text" do
+      other = Civic::Matter.create!(
+        legistar_matter_id: 15887,
+        matter_file: "26-999",
+        title: "Unrelated zoning item"
+      )
+      other.all_attachments.create!(
+        legistar_matter_attachment_id: 39136,
+        name: "Zoning memo"
+      ).extracted_texts.create!(
+        extractor_name: "pdftotext",
+        status: "ok",
+        content: "This document mentions airport noise only.",
+        character_count: 42
+      )
+      @attachment.extracted_texts.create!(
+        extractor_name: "pdftotext",
+        status: "ok",
+        content: "This staff report describes library outreach funding.",
+        character_count: 52
+      )
+
+      get public_matters_url(q: "library outreach")
+
+      assert_response :success
+      assert_includes response.body, "26-575"
+      assert_includes response.body, "Extracted document text matches"
+      assert_includes response.body, "Agreement PDF"
+      assert_includes response.body, "library"
+      assert_not_includes response.body, "26-999"
+    end
+
     test "shows matter with related meetings and attachment status" do
       @attachment.source_file.attach(
         io: StringIO.new("%PDF-1.4 fake"),

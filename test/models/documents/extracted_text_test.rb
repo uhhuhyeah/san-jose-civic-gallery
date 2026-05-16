@@ -21,5 +21,25 @@ module Documents
       assert_includes extracted_text.errors[:matter_attachment], "must exist"
       assert_includes extracted_text.errors[:extractor_name], "can't be blank"
     end
+
+    test "search finds successful extracted text with ranked snippets" do
+      match = @attachment.extracted_texts.create!(
+        extractor_name: "pdftotext",
+        status: "ok",
+        content: "The service agreement includes library outreach and resident access provisions.",
+        character_count: 78
+      )
+      @attachment.extracted_texts.create!(
+        extractor_name: "pdftotext",
+        status: "error",
+        content: "library outreach",
+        character_count: 16
+      )
+
+      results = ExtractedText.search("library outreach").to_a
+
+      assert_equal [ match.id ], results.map(&:id)
+      assert_includes results.first.search_snippet, "<mark>library</mark>"
+    end
   end
 end

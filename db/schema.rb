@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_15_213000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_16_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -183,6 +183,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_213000) do
     t.string "source_file_checksum_sha256"
     t.string "status", default: "pending", null: false
     t.datetime "updated_at", null: false
+    t.index "to_tsvector('english'::regconfig, COALESCE(content, ''::text))", name: "idx_document_extracted_texts_content_search", where: "((status)::text = 'ok'::text)", using: :gin
     t.index ["civic_matter_attachment_id", "created_at"], name: "idx_document_extracted_texts_attachment_history"
     t.index ["civic_matter_attachment_id"], name: "index_document_extracted_texts_on_civic_matter_attachment_id"
   end
