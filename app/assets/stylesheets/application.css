@@ -547,6 +547,47 @@ a:hover {
   color: var(--muted);
 }
 
+.document-search-hits {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f2f6f6;
+}
+
+.document-search-hits p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.document-search-hits ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.document-search-hits li {
+  color: var(--muted);
+}
+
+.document-search-hits span {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink);
+  font-size: 0.92rem;
+}
+
+.document-search-hits mark {
+  padding: 0 2px;
+  background: #fff1b8;
+  color: inherit;
+}
+
 .record-facts,
 .detail-grid {
   display: grid;

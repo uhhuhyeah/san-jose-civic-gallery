@@ -8,9 +8,9 @@
   </header>
 
   <%= form_with url: public_matters_path, method: :get, local: true, class: "search-form inset-panel" do |form| %>
-    <%= form.label :q, "Filter matters", for: "matter-filter-q" %>
+    <%= form.label :q, "Search matters and extracted document text", for: "matter-filter-q" %>
     <div class="search-row">
-      <%= form.search_field :q, id: "matter-filter-q", value: @query, placeholder: "Matter file, title, or name" %>
+      <%= form.search_field :q, id: "matter-filter-q", value: @query, placeholder: "Matter file, title, name, or document text" %>
       <%= form.submit "Search" %>
       <% if @query.present? %>
         <%= link_to "Clear", public_matters_path, class: "button-secondary" %>
@@ -30,6 +30,19 @@
             <p class="record-meta">
               <%= [matter.matter_type_name, matter.matter_status_name, matter.body_name].compact_blank.join(" / ") %>
             </p>
+            <% if (document_matches = @document_matches_by_matter_id[matter.id]).present? %>
+              <div class="document-search-hits">
+                <p>Extracted document text matches</p>
+                <ul>
+                  <% document_matches.first(2).each do |match| %>
+                    <li>
+                      <%= link_to match.matter_attachment.name, public_matter_path(matter, anchor: "attachment-#{match.matter_attachment.id}") %>
+                      <span><%= document_search_snippet(match) %></span>
+                    </li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
           </div>
           <dl class="record-facts">
             <div>

@@ -4,6 +4,7 @@ module ApplicationHelper
     www.sanjoseca.gov
   ].freeze
   EXTRACTED_TEXT_PREVIEW_LENGTH = 1_200
+  DOCUMENT_SEARCH_SNIPPET_LENGTH = 320
 
   def official_source_url(raw_url)
     return if raw_url.blank?
@@ -47,5 +48,13 @@ module ApplicationHelper
     return "" if extracted_text&.content.blank?
 
     truncate(extracted_text.content.squish, length: EXTRACTED_TEXT_PREVIEW_LENGTH, separator: " ")
+  end
+
+  def document_search_snippet(extracted_text)
+    if (snippet = extracted_text.try(:search_snippet).presence)
+      sanitize(snippet, tags: %w[mark], attributes: [])
+    else
+      sanitize(truncate(extracted_text&.content.to_s.squish, length: DOCUMENT_SEARCH_SNIPPET_LENGTH, separator: " "))
+    end
   end
 end

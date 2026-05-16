@@ -84,12 +84,25 @@ class PublicMatterDiscoveryTest < ApplicationSystemTestCase
 
     visit public_matters_path
     within ".search-form" do
-      fill_in "Filter matters", with: "26-575"
+      fill_in "Search matters and extracted document text", with: "26-575"
       click_on "Search"
     end
 
     assert_text "26-575"
     assert_no_text "26-999"
+  end
+
+  test "visitor searches extracted document text from the matters index" do
+    visit public_matters_path
+    within ".search-form" do
+      fill_in "Search matters and extracted document text", with: "city service contract"
+      click_on "Search"
+    end
+
+    assert_text "26-575"
+    assert_text "Extracted document text matches"
+    assert_text "Agreement PDF"
+    assert_text "city service contract"
   end
 
   test "visitor sees not-imported and extraction-error states" do
