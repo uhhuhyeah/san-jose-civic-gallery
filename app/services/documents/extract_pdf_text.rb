@@ -1,8 +1,12 @@
 require "open3"
 require "tempfile"
+require "timeout"
 
 module Documents
   class ExtractPdfText
+    EXTRACTOR_NAME = "pdftotext".freeze
+    DEFAULT_TIMEOUT_SECONDS = 120
+
     Result = Struct.new(:text, :command_version, :extractor_name, keyword_init: true)
 
     def self.call(matter_attachment:)
@@ -18,10 +22,11 @@ module Documents
         end
         source_tempfile.flush
 
-        stdout, stderr, status = Open3.capture3(
-          "pdftotext",
-          source_tempfile.path,
-          output_tempfile.path
+        timeout_seconds = Integer(ENV.fetch("PDFTOTEXT_TIMEOUT_SECONDS", DEFAULT_TIMEOUT_SECONDS))
+
+        stdout, stderr, status = capture3_with_timeout(
+          "pdftotext", source_tempfile.path, output_tempfile.path,
+          timeout_seconds:
         )
 
         unless status.success?
@@ -34,12 +39,21 @@ module Documents
         Result.new(
           text: File.read(output_tempfile.path),
           command_version: version_output.lines.first.to_s.strip,
-          extractor_name: "pdftotext"
+          extractor_name: EXTRACTOR_NAME
         )
       ensure
         source_tempfile.close!
         output_tempfile.close!
       end
     end
+
+    def self.capture3_with_timeout(*command_args, timeout_seconds:)
+      Timeout.timeout(timeout_seconds) do
+        Open3.capture3(*command_args)
+      end
+    rescue Timeout::Error
+      raise "pdftotext timed out after #{timeout_seconds}s"
+    end
+    private_class_method :capture3_with_timeout
   end
 end

@@ -32,7 +32,7 @@ module ApplicationHelper
   def attachment_extraction_status(attachment)
     case attachment.extraction_status
     when "ok"
-      return "OCR text available" if attachment.latest_extracted_text&.extractor_name == "ocrmypdf"
+      return "OCR text available" if attachment.latest_extracted_text&.extractor_name == Documents::OcrPdfText::EXTRACTOR_NAME
 
       "Extracted text available"
     when "empty"

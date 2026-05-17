@@ -19,45 +19,73 @@ module Documents
       )
     end
 
-    test "extracts OCR sidecar text with ocrmypdf command wrapper" do
-      fake_status = Struct.new(:success?).new(true)
-      original_capture3 = Open3.method(:capture3)
-      original_file_read = File.method(:read)
-
-      Open3.define_singleton_method(:capture3) do |*args|
-        if args == [ "ocrmypdf", "--version" ]
-          [ "ocrmypdf 16.10.0\n", "", fake_status ]
-        else
-          [ "", "", fake_status ]
-        end
-      end
-      File.define_singleton_method(:read) { |_path| "OCR body text" }
+    test "extracts OCR sidecar text and reports the command version" do
+      stub_run_ocr { |sidecar_path:, **_| File.write(sidecar_path, "OCR body text") }
+      stub_capture_version("ocrmypdf 16.10.0")
 
       result = OcrPdfText.call(matter_attachment: @attachment)
 
       assert_equal "OCR body text", result.text
       assert_equal "ocrmypdf 16.10.0", result.command_version
-      assert_equal "ocrmypdf", result.extractor_name
-    ensure
-      Open3.define_singleton_method(:capture3, original_capture3)
-      File.define_singleton_method(:read, original_file_read)
+      assert_equal OcrPdfText::EXTRACTOR_NAME, result.extractor_name
+    end
+
+    test "returns an empty sidecar text without raising when OCR finds nothing" do
+      stub_run_ocr { |sidecar_path:, **_| File.write(sidecar_path, "") }
+      stub_capture_version("ocrmypdf 16.10.0")
+
+      result = OcrPdfText.call(matter_attachment: @attachment)
+
+      assert_equal "", result.text
     end
 
     test "raises a clear error when ocrmypdf fails" do
-      fake_status = Struct.new(:success?).new(false)
-      original_capture3 = Open3.method(:capture3)
-
-      Open3.define_singleton_method(:capture3) do |*_args|
-        [ "", "bad scan", fake_status ]
-      end
+      stub_run_ocr { |**_| raise "ocrmypdf failed: bad scan" }
 
       error = assert_raises(RuntimeError) do
         OcrPdfText.call(matter_attachment: @attachment)
       end
 
       assert_match(/ocrmypdf failed: bad scan/, error.message)
-    ensure
-      Open3.define_singleton_method(:capture3, original_capture3)
+    end
+
+    test "translates missing-binary SystemCallError into a friendly unavailable message" do
+      stub_run_ocr { |**_| raise Errno::ENOENT, "ocrmypdf" }
+
+      error = assert_raises(RuntimeError) do
+        OcrPdfText.call(matter_attachment: @attachment)
+      end
+
+      assert_match(/ocrmypdf unavailable/, error.message)
+    end
+
+    test "translates permission-denied SystemCallError into a friendly unavailable message" do
+      stub_run_ocr { |**_| raise Errno::EACCES, "ocrmypdf" }
+
+      error = assert_raises(RuntimeError) do
+        OcrPdfText.call(matter_attachment: @attachment)
+      end
+
+      assert_match(/ocrmypdf unavailable/, error.message)
+    end
+
+    private
+
+    def stub_run_ocr(&block)
+      original = OcrPdfText.method(:run_ocr)
+      OcrPdfText.define_singleton_method(:run_ocr, &block)
+      @run_ocr_restorer = -> { OcrPdfText.define_singleton_method(:run_ocr, original) }
+    end
+
+    def stub_capture_version(version)
+      original = OcrPdfText.method(:capture_version)
+      OcrPdfText.define_singleton_method(:capture_version) { |_command| version }
+      @capture_version_restorer = -> { OcrPdfText.define_singleton_method(:capture_version, original) }
+    end
+
+    def teardown
+      @run_ocr_restorer&.call
+      @capture_version_restorer&.call
     end
   end
 end

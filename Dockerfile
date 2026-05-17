@@ -14,9 +14,14 @@ FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 # Rails app lives here
 WORKDIR /rails
 
-# Install base packages
+# Install base packages. poppler-utils provides pdftotext for embedded PDF
+# text extraction; ocrmypdf (plus tesseract language data) powers scanned-PDF
+# OCR fallback. Keep language packs aligned with OCR_PDF_LANGUAGES below.
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libjemalloc2 libvips postgresql-client && \
+    apt-get install --no-install-recommends -y \
+      curl libjemalloc2 libvips postgresql-client \
+      poppler-utils ocrmypdf \
+      tesseract-ocr-eng tesseract-ocr-spa tesseract-ocr-vie && \
     ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
@@ -25,7 +30,8 @@ ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
     BUNDLE_WITHOUT="development" \
-    LD_PRELOAD="/usr/local/lib/libjemalloc.so"
+    LD_PRELOAD="/usr/local/lib/libjemalloc.so" \
+    OCR_PDF_LANGUAGES="eng+spa+vie"
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build

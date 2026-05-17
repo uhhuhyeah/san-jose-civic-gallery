@@ -1,6 +1,6 @@
 module Documents
   class ExtractMatterAttachmentTextJob < ApplicationJob
-    queue_as :default
+    queue_as :slow_extract
 
     def perform(civic_matter_attachment_id)
       matter_attachment = Civic::MatterAttachment.find(civic_matter_attachment_id)
