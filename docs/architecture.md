@@ -76,7 +76,9 @@ Imported attachment files are refreshed when the attachment metadata
 payload changes, including cases where Legistar reports a new modified
 timestamp while keeping the same hyperlink and filename. Local PDF text
 extraction streams Active Storage blobs into a tempfile before invoking
-`pdftotext`.
+`pdftotext`; when embedded text is empty, scanned-PDF fallback runs the
+local `ocrmypdf` CLI and stores the sidecar text as another extracted
+artifact.
 
 The Legistar API client (`Legistar::Client`) has its own bounded
 timeouts and a `User-Agent` header that identifies the app and a

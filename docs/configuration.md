@@ -52,3 +52,23 @@ conservative for an outbound-fetch trust boundary.
 | `LEGISTAR_ATTACHMENT_READ_TIMEOUT` | `30` (seconds) | Read timeout. |
 
 A redirect cap of three is enforced in code (not env-configurable).
+
+## Document extraction
+
+Imported PDFs are first processed with the local `pdftotext` CLI. When
+that returns no embedded text, the extraction pipeline falls back to
+local OCR with `ocrmypdf`. Both run synchronously inside the
+`slow_extract` Solid Queue worker (see `config/queue.yml`) so long
+OCR jobs cannot starve the default queue.
+
+When a re-import produces a file whose SHA-256 already has a successful
+prior extraction (`status: "ok"`) or a definitive OCR result
+(`extractor_name: "ocrmypdf"` with `status: "empty"`), the pipeline
+returns that prior row instead of re-running either tool.
+
+| Variable | Default | Notes |
+| --- | --- | --- |
+| `OCR_PDF_COMMAND` | `ocrmypdf` | Command name or absolute path used for scanned-PDF OCR. The command must support `--sidecar` and `--version`. |
+| `OCR_PDF_LANGUAGES` | `eng` | Passed to `ocrmypdf --language`. For San Jose civic records, `eng+spa+vie` is the recommended production value and requires the matching `tesseract-ocr-*` language packs (already installed in the production `Dockerfile`). |
+| `OCR_PDF_TIMEOUT_SECONDS` | `600` | Wall-clock timeout for a single OCR run. On timeout the orchestrator sends `SIGTERM`, then `SIGKILL` after 5 seconds. |
+| `PDFTOTEXT_TIMEOUT_SECONDS` | `120` | Wall-clock timeout for a single `pdftotext` run. |

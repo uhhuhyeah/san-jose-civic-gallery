@@ -62,7 +62,10 @@ class ApplicationHelperTest < ActionView::TestCase
 
     assert_equal "Text extraction pending", attachment_extraction_status(attachment)
 
-    attachment.extracted_texts.create!(extractor_name: "pdftotext", status: "empty")
+    attachment.extracted_texts.create!(extractor_name: Documents::ExtractPdfText::EXTRACTOR_NAME, status: "empty")
     assert_equal "Extraction completed with no text", attachment_extraction_status(attachment)
+
+    attachment.extracted_texts.create!(extractor_name: Documents::OcrPdfText::EXTRACTOR_NAME, status: "ok", content: "OCR text")
+    assert_equal "OCR text available", attachment_extraction_status(attachment)
   end
 end
