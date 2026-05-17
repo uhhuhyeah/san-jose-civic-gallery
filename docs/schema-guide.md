@@ -402,6 +402,13 @@ with `civic_matter_id: nil` whenever its upstream `EventItemMatterId` has
 not been synced into `Civic::Matter` yet; `Ingestion::SyncMatter` back-fills
 the FK once the matter job runs.
 
+When an event item references a matter that already exists locally,
+`Ingestion::SyncEventItemsForEvent` links the item immediately and only
+fans out a matter refresh if the local matter is missing or older than
+the configured freshness window. The default window is 12 hours; passing
+`matter_refresh_after: nil` preserves always-refresh behavior for
+manual or diagnostic runs.
+
 This means the public event page can render between stages 2 and 3 with
 items that have `matter_id` (the upstream legistar id) but no
 `civic_matter` row. The view renders a "Linked matter sync pending" hint
