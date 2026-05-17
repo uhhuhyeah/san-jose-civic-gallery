@@ -18,7 +18,8 @@ module Documents
     test "persists extracted text metadata and content as append-only artifacts" do
       result = ExtractPdfText::Result.new(
         text: "Hello world",
-        command_version: "pdftotext 24.02.0"
+        command_version: "pdftotext 24.02.0",
+        extractor_name: "pdftotext"
       )
 
       record = PersistExtractedText.call(

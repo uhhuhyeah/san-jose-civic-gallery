@@ -52,3 +52,13 @@ conservative for an outbound-fetch trust boundary.
 | `LEGISTAR_ATTACHMENT_READ_TIMEOUT` | `30` (seconds) | Read timeout. |
 
 A redirect cap of three is enforced in code (not env-configurable).
+
+## Document extraction
+
+Imported PDFs are first processed with the local `pdftotext` CLI. When
+that returns no embedded text, the extraction pipeline falls back to
+local OCR with `ocrmypdf`.
+
+| Variable | Default | Notes |
+| --- | --- | --- |
+| `OCR_PDF_COMMAND` | `ocrmypdf` | Command name or absolute path used for scanned-PDF OCR. The command must support `--sidecar` and `--version`. |

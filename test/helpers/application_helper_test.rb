@@ -64,5 +64,8 @@ class ApplicationHelperTest < ActionView::TestCase
 
     attachment.extracted_texts.create!(extractor_name: "pdftotext", status: "empty")
     assert_equal "Extraction completed with no text", attachment_extraction_status(attachment)
+
+    attachment.extracted_texts.create!(extractor_name: "ocrmypdf", status: "ok", content: "OCR text")
+    assert_equal "OCR text available", attachment_extraction_status(attachment)
   end
 end

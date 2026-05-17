@@ -37,6 +37,7 @@ module Documents
 
       assert_equal "Extracted body text", result.text
       assert_equal "pdftotext 24.02.0", result.command_version
+      assert_equal "pdftotext", result.extractor_name
     ensure
       Open3.define_singleton_method(:capture3, original_capture3)
       File.define_singleton_method(:read, original_file_read)

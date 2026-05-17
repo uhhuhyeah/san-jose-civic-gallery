@@ -265,7 +265,7 @@ Key relationship:
 
 Important note:
 
-This table is append-only. Each extraction attempt produces a new artifact row so extractor changes, retries, and a future OCR fallback can be audited over time. This is extracted data, not official source data — keep it distinct from the civic tables.
+This table is append-only. Each extraction attempt produces a new artifact row so extractor changes and retries can be audited over time. `pdftotext` rows come from embedded PDF text; `ocrmypdf` rows come from scanned-PDF OCR fallback. This is extracted data, not official source data — keep it distinct from the civic tables.
 
 ### `ingestion_source_snapshots` / `Ingestion::SourceSnapshot`
 
@@ -384,6 +384,7 @@ Today’s flow is:
 4. sync matter attachments for each linked matter
 5. import attachment files into Active Storage
 6. extract text from imported PDFs with `pdftotext`
+7. fall back to local OCR with `ocrmypdf` when embedded text is empty
 
 Deferred jobs pass `source_system` through the pipeline. A matter sync
 enqueued from a San Jose event item therefore writes San Jose matter
@@ -415,9 +416,8 @@ in that window rather than silently hiding attachments.
 - Event-level retraction reconciliation is not yet wired up — the
   columns exist on `civic_events` but sync doesn't drive them, since
   `recent_events` is a sliding window.
-- Extracted text currently assumes a PDF with embedded text and local
-  `pdftotext`.
-- Scanned-PDF OCR fallback does not exist yet.
+- Extracted text uses local CLI tools (`pdftotext`, then `ocrmypdf` for
+  scanned-PDF fallback). Production hosts need those binaries installed.
 
 ## Contributor Tips
 

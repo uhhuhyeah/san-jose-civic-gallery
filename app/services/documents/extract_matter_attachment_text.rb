@@ -1,17 +1,23 @@
 module Documents
   class ExtractMatterAttachmentText
-    def self.call(matter_attachment:)
-      extraction_result = ExtractPdfText.call(matter_attachment:)
-      PersistExtractedText.call(matter_attachment:, extraction_result:)
+    def self.call(matter_attachment:, embedded_extractor: ExtractPdfText, ocr_extractor: OcrPdfText)
+      active_extractor_name = "pdftotext"
+      embedded_result = embedded_extractor.call(matter_attachment:)
+      embedded_record = PersistExtractedText.call(matter_attachment:, extraction_result: embedded_result)
+      return embedded_record if embedded_result.text.present?
+
+      active_extractor_name = "ocrmypdf"
+      ocr_result = ocr_extractor.call(matter_attachment:)
+      PersistExtractedText.call(matter_attachment:, extraction_result: ocr_result)
     rescue StandardError => error
-      record_failure(matter_attachment:, error:)
+      record_failure(matter_attachment:, error:, extractor_name: active_extractor_name)
       raise error
     end
 
-    def self.record_failure(matter_attachment:, error:)
+    def self.record_failure(matter_attachment:, error:, extractor_name:)
       Documents::ExtractedText.create!(
         civic_matter_attachment_id: matter_attachment.id,
-        extractor_name: "pdftotext",
+        extractor_name:,
         extracted_at: Time.current,
         status: "error",
         source_file_checksum_sha256: matter_attachment.source_file_checksum_sha256,

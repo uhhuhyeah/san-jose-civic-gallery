@@ -3,7 +3,7 @@ module Documents
     def self.call(matter_attachment:, extraction_result:)
       ExtractedText.create!(
         civic_matter_attachment_id: matter_attachment.id,
-        extractor_name: "pdftotext",
+        extractor_name: extraction_result.extractor_name,
         extractor_version: extraction_result.command_version,
         content: extraction_result.text,
         extracted_at: Time.current,
