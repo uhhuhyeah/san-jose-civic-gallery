@@ -8,6 +8,8 @@ This repository is intentionally documented in a compact way so contributors and
 - `CONTEXT.md`: compact implementation context
 - `architecture.md`: current architecture direction and domain boundaries
 - `schema-guide.md`: source-system and app-schema contributor guide
+- `document-backfill.md`: operator workflow for importing and extracting
+  historical matter attachments
 
 ## Documentation Principles
 
