@@ -133,12 +133,7 @@
                 <% if content["document_status"] == "draft" %>
                   <p class="status-note">The source text indicates this attachment appears to be a draft document.</p>
                 <% end %>
-                <%#
-                  AI-generated content originating from arbitrary public PDFs.
-                  Always render with <%= %> so Rails auto-escapes; never wrap
-                  these fields in raw() or .html_safe — a poisoned PDF can
-                  induce the model to emit HTML/script strings.
-                %>
+                <%# AI-generated content originates from arbitrary public PDFs. Always render these fields escaped. %>
                 <% if content["summary"].present? %>
                   <p><%= content["summary"] %></p>
                 <% else %>

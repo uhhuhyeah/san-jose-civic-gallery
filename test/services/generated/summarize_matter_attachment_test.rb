@@ -25,7 +25,7 @@ module Generated
       assert_equal extracted_text, result.artifact.source_artifact
       assert_equal "attachment_summary", result.artifact.kind
       assert_equal "test-model", result.artifact.model_identifier
-      assert_equal "attachment_summary_v2", result.artifact.prompt_version
+      assert_equal "attachment_summary_v3", result.artifact.prompt_version
       assert_equal "The agreement funds library outreach.", @attachment.extracted_texts.first.content
       assert_equal "Summary from fake model", result.artifact.content.fetch("summary")
       assert_equal "draft", result.artifact.content.fetch("document_status")
