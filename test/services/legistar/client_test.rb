@@ -125,7 +125,7 @@ module Legistar
       assert_equal 200, result[:status]
       assert_equal "EventBodyName eq 'Mayor''s Office' and EventDate ge datetime'2026-05-01T00:00:00' and EventDate lt datetime'2026-06-01T00:00:00'",
         params.fetch("$filter")
-      assert_equal "EventDate asc", params.fetch("$orderby")
+      assert_equal "EventDate asc, EventId asc", params.fetch("$orderby")
       assert_equal "50", params.fetch("$top")
       assert_equal "100", params.fetch("$skip")
     ensure

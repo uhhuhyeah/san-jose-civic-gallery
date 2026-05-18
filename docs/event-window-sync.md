@@ -41,3 +41,27 @@ Use half-open ranges so adjacent runs do not overlap:
 2026-05-01 <= EventDate < 2026-06-01
 2026-06-01 <= EventDate < 2026-07-01
 ```
+
+## Caveats
+
+**Events that move dates between windows can briefly appear missing.**
+Reconciliation uses the locally stored `event_date` to decide which
+window an event belongs to. If Legistar moves an event from May 5 to
+June 5:
+
+- The May window run fetches Legistar's current May contents, does not
+  see the moved event, and marks it `source_present: false` against its
+  old (May) local date.
+- The June window run sees it in source, calls `PersistEvent` (which
+  updates `event_date` to June 5 and sets `source_present: true`), and
+  the row is restored.
+
+To minimize the window of incorrect state, run adjacent date windows
+back-to-back rather than interleaving days. The bounded sync is
+idempotent, so re-running a window that already restored an event is
+safe.
+
+**Server pagination is bounded.** The service raises after
+`MAX_PAGES = 200` requests as a safety net against an upstream that
+ignores `$skip` and returns full pages indefinitely. At the default
+`PAGE_SIZE = 100`, this caps a single run at 20,000 events.

@@ -37,7 +37,9 @@ module Legistar
           "EventDate ge #{odata_datetime(start_date)}",
           "EventDate lt #{odata_datetime(end_date)}"
         ].join(" and "),
-        "$orderby" => "EventDate asc",
+        # Secondary EventId key keeps pagination stable when multiple
+        # events share the same EventDate.
+        "$orderby" => "EventDate asc, EventId asc",
         "$top" => limit,
         "$skip" => skip
       }

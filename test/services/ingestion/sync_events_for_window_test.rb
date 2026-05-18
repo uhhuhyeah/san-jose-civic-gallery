@@ -81,6 +81,11 @@ module Ingestion
       assert_nil event.source_missing_at
     end
 
+    # Cross-class regression guard: prove that the older sliding-window
+    # sync still does not mark older local events missing, since
+    # SyncEventsForWindow's existence makes it tempting to "unify"
+    # reconciliation into SyncRecentEvents — which would silently nuke
+    # history.
     test "recent events sync does not mark older local events missing" do
       older_event = Civic::Event.create!(
         legistar_event_id: 7003,
@@ -123,7 +128,88 @@ module Ingestion
       end
     end
 
+    test "invalid start_date raises a helpful error" do
+      error = assert_raises(ArgumentError) do
+        SyncEventsForWindow.call(
+          body_name: "City Council",
+          start_date: "yesterday",
+          end_date: @end_date,
+          client: window_client(pages: [])
+        )
+      end
+
+      assert_match(/start_date must be a YYYY-MM-DD date/, error.message)
+    end
+
+    test "missing_events return value reflects post-update source_present and timestamp" do
+      stale = Civic::Event.create!(
+        legistar_event_id: 7100,
+        body_name: "City Council",
+        event_date: Date.new(2026, 5, 10),
+        source_present: true
+      )
+
+      result = SyncEventsForWindow.call(
+        body_name: "City Council",
+        start_date: @start_date,
+        end_date: @end_date,
+        client: window_client(pages: [ [] ]),
+        sync_event_items: false
+      )
+
+      assert_equal [ stale.id ], result.missing_events.map(&:id)
+      assert_not result.missing_events.first.source_present
+      assert_not_nil result.missing_events.first.source_missing_at
+    end
+
+    test "aborts pagination when the server keeps returning full pages" do
+      infinite_client = Class.new do
+        def source_system = "legistar.sanjose"
+
+        def events_for_window(body_name:, start_date:, end_date:, limit:, skip:)
+          {
+            request_url: "https://example.test/Events?$skip=#{skip}",
+            status: 200,
+            fetched_at: Time.current,
+            payload: Array.new(limit) do |i|
+              {
+                "EventId" => 8000 + skip + i,
+                "EventBodyName" => body_name,
+                "EventDate" => "2026-05-05T00:00:00"
+              }
+            end
+          }
+        end
+      end.new
+
+      with_max_pages(3) do
+        error = assert_raises(RuntimeError) do
+          SyncEventsForWindow.call(
+            body_name: "City Council",
+            start_date: @start_date,
+            end_date: @end_date,
+            client: infinite_client,
+            page_size: 1,
+            sync_event_items: false
+          )
+        end
+
+        assert_match(/exceeded MAX_PAGES=3/, error.message)
+      end
+    end
+
     private
+
+    def with_max_pages(value)
+      original = SyncEventsForWindow.const_get(:MAX_PAGES)
+      SyncEventsForWindow.send(:remove_const, :MAX_PAGES)
+      SyncEventsForWindow.const_set(:MAX_PAGES, value)
+      yield
+    ensure
+      SyncEventsForWindow.send(:remove_const, :MAX_PAGES)
+      SyncEventsForWindow.const_set(:MAX_PAGES, original)
+    end
+
 
     def event_payload(event_id, event_date)
       {
