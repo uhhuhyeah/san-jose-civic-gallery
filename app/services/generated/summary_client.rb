@@ -3,6 +3,21 @@ require "net/http"
 require "uri"
 
 module Generated
+  # SummaryClient calls an OpenAI-compatible /chat/completions endpoint
+  # and returns a parsed JSON Response.
+  #
+  # Alternate clients (fakes for tests, alternative providers) must
+  # honor the same duck-typed contract:
+  #
+  #   - call(system_prompt:, user_prompt:) -> Response
+  #   - model_name        -> String, used for provenance and idempotency
+  #   - max_input_chars   -> Integer, used by the prompt builder to
+  #                          truncate extracted text before sending
+  #
+  # The returned Response must expose:
+  #
+  #   - content    -> Hash with the keys named in REQUIRED_CONTENT_KEYS
+  #   - model_name -> String matching the calling client's model_name
   class SummaryClient
     Response = Data.define(:content, :model_name)
 
@@ -12,6 +27,7 @@ module Generated
     DEFAULT_API_BASE = "https://api.openai.com/v1"
     DEFAULT_MODEL = "gpt-4o-mini"
     DEFAULT_TIMEOUT_SECONDS = 30
+    REQUIRED_CONTENT_KEYS = %w[summary key_points limitations].freeze
 
     attr_reader :model_name, :max_input_chars
 
@@ -35,6 +51,7 @@ module Generated
       response = post_chat_completion(system_prompt:, user_prompt:)
       raw_content = response.dig("choices", 0, "message", "content").to_s
       parsed_content = JSON.parse(raw_content)
+      validate_content_shape!(parsed_content)
 
       Response.new(content: parsed_content, model_name:)
     rescue JSON::ParserError => error
@@ -44,6 +61,17 @@ module Generated
     private
 
     attr_reader :api_key, :api_base, :timeout_seconds
+
+    def validate_content_shape!(parsed_content)
+      unless parsed_content.is_a?(Hash)
+        raise RequestError, "Summary model returned non-object JSON; expected an object with keys #{REQUIRED_CONTENT_KEYS.join(', ')}"
+      end
+
+      missing = REQUIRED_CONTENT_KEYS - parsed_content.keys
+      return if missing.empty?
+
+      raise RequestError, "Summary model response is missing required keys: #{missing.join(', ')}"
+    end
 
     def post_chat_completion(system_prompt:, user_prompt:)
       uri = URI.join(api_base.end_with?("/") ? api_base : "#{api_base}/", "chat/completions")

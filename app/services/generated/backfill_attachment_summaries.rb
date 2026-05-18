@@ -42,24 +42,28 @@ module Generated
     attr_reader :limit, :dry_run, :client, :force
 
     def candidate_attachments
-      base_scope = Civic::MatterAttachment
+      scope = Civic::MatterAttachment
         .joins(:extracted_texts)
         .merge(Documents::ExtractedText.successful.with_content)
         .includes(:matter)
         .distinct
         .order(:id)
 
-      attachments = force ? base_scope : base_scope.reject { |attachment| generated_for_current_model?(attachment) }
-      attachments.first(limit)
+      scope = scope.where.not(id: already_succeeded_target_ids) unless force
+
+      scope.limit(limit).to_a
     end
 
-    def generated_for_current_model?(attachment)
-      attachment.generated_artifacts.exists?(
-        kind: SummarizeMatterAttachment::KIND,
-        model_identifier: client_model_name,
-        prompt_version: SummarizeMatterAttachment::PROMPT::VERSION,
-        status: "succeeded"
-      )
+    def already_succeeded_target_ids
+      Generated::Artifact
+        .where(
+          target_type: "Civic::MatterAttachment",
+          kind: SummarizeMatterAttachment::KIND,
+          model_identifier: client_model_name,
+          prompt_version: SummarizeMatterAttachment::PROMPT::VERSION,
+          status: "succeeded"
+        )
+        .select(:target_id)
     end
 
     def client_model_name

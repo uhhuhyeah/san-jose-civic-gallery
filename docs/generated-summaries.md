@@ -65,3 +65,36 @@ Each attempt writes a `Generated::Artifact` row with target, source
 artifact, model identifier, prompt version, input digest, status,
 content, and error details. This keeps provider and model experiments
 auditable.
+
+## Provenance and idempotency
+
+`Generated::Artifact` rows are unique per `(target, kind,
+model_identifier, prompt_version, input_sha256)`. `input_sha256` hashes
+the actual text sent to the model after truncation, so:
+
+- regenerating with the same model, prompt version, and extracted
+  content reuses the existing artifact
+- changing the model identifier, prompt version, or extracted content
+  produces a fresh artifact alongside the old one
+
+`input_metadata` records the source extractor, source file checksum,
+the extracted character count, the character count and SHA-256 of the
+content actually sent to the model, and a `truncated` flag. When
+`truncated` is true, a `…[truncated]` marker is appended to the sent
+text so the model can note the cutoff in its `limitations`.
+
+## Known limitations
+
+**Prompt injection.** Extracted text comes from arbitrary public PDFs
+and may contain content crafted to manipulate the model. The prompt
+wraps the extracted text in `<source_text>` ... `</source_text>` tags
+and tells the system prompt that anything inside the tags is data, not
+instructions. This raises the bar but is not bulletproof — treat all
+generated summaries as assistive, surface them with explicit
+"generated" labels in UI, and prefer the underlying official records
+for anything load-bearing.
+
+**Response shape is validated, but not content quality.** The client
+rejects responses that aren't JSON or that omit the required
+`summary` / `key_points` / `limitations` keys, but does not score
+quality. Run small batches and spot-check before scaling.

@@ -72,7 +72,64 @@ module Generated
       assert_equal "budget exceeded", result.artifact.error_message
     end
 
+    test "identical content from a new extracted_text reuses the existing artifact" do
+      extracted_text(content: "Identical content.", created_at: 2.days.ago)
+      first = SummarizeMatterAttachment.call(matter_attachment: @attachment, client: @client)
+
+      # New extraction row, same content — same input_sha256, no new API call.
+      extracted_text(content: "Identical content.")
+      second = SummarizeMatterAttachment.call(matter_attachment: @attachment, client: @client)
+
+      assert_equal first.artifact, second.artifact
+      assert_equal true, second.skipped
+      assert_equal 1, @client.calls
+      assert_equal 1, Artifact.count
+    end
+
+    test "records truncation provenance in input_metadata" do
+      long_content = "x" * 3_000  # client.max_input_chars = 2_000
+      extracted_text(content: long_content)
+
+      result = SummarizeMatterAttachment.call(matter_attachment: @attachment, client: @client)
+
+      assert_equal true, result.artifact.input_metadata["truncated"]
+      assert_equal 3_000, result.artifact.input_metadata["extracted_character_count"]
+      # 2_000 truncated + TRUNCATION_MARKER length
+      sent_chars = result.artifact.input_metadata["sent_character_count"]
+      assert_operator sent_chars, :>, 2_000
+      assert_operator sent_chars, :<, 3_000
+      assert_kind_of String, result.artifact.input_metadata["sent_content_sha256"]
+    end
+
+    test "bookkeeping failure re-raises the original error rather than swallowing it" do
+      extracted_text(content: "Content.")
+      failing_client = FakeSummaryClient.new(error: RuntimeError.new("budget exceeded"))
+
+      always_failing_artifact = Artifact.new
+      always_failing_artifact.define_singleton_method(:save!) do
+        raise ActiveRecord::RecordInvalid.new(self)
+      end
+
+      replacement = ->(**_kwargs) { always_failing_artifact }
+      with_stubbed_class_method(Artifact, :find_or_initialize_by, replacement) do
+        error = assert_raises(RuntimeError) do
+          SummarizeMatterAttachment.call(matter_attachment: @attachment, client: failing_client)
+        end
+        assert_equal "budget exceeded", error.message
+      end
+    end
+
     private
+
+    # Replace a class method with the given replacement for the duration of
+    # the block, then restore the original. Used to inject a stub without
+    # pulling in minitest/mock (which is not bundled).
+    def with_stubbed_class_method(klass, method_name, replacement)
+      klass.define_singleton_method(method_name, &replacement)
+      yield
+    ensure
+      klass.singleton_class.remove_method(method_name)
+    end
 
     def extracted_text(content:, created_at: Time.current)
       @attachment.extracted_texts.create!(

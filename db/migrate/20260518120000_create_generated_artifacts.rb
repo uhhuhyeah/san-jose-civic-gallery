@@ -7,7 +7,7 @@ class CreateGeneratedArtifacts < ActiveRecord::Migration[8.1]
       t.bigint :source_artifact_id
       t.string :kind, null: false
       t.string :status, null: false, default: "pending"
-      t.string :model_name, null: false
+      t.string :model_identifier, null: false
       t.string :prompt_version, null: false
       t.string :input_sha256, null: false
       t.jsonb :content, null: false, default: {}
@@ -21,7 +21,7 @@ class CreateGeneratedArtifacts < ActiveRecord::Migration[8.1]
     add_index :generated_artifacts, [ :target_type, :target_id ], name: "idx_generated_artifacts_target"
     add_index :generated_artifacts, [ :source_artifact_type, :source_artifact_id ], name: "idx_generated_artifacts_source"
     add_index :generated_artifacts,
-      [ :target_type, :target_id, :kind, :model_name, :prompt_version, :input_sha256 ],
+      [ :target_type, :target_id, :kind, :model_identifier, :prompt_version, :input_sha256 ],
       unique: true,
       name: "idx_generated_artifacts_idempotency"
   end
