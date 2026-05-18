@@ -1,16 +1,28 @@
 require "digest"
 require "net/http"
+require "time"
 require "uri"
 
 module Documents
   class SafeDownloader
-    DEFAULT_ALLOWED_HOSTS = %w[sanjose.legistar.com].freeze
+    DEFAULT_ALLOWED_HOSTS = %w[
+      sanjose.legistar.com
+      legistar.granicus.com
+    ].freeze
     DEFAULT_MAX_BYTES = 100 * 1024 * 1024
     DEFAULT_OPEN_TIMEOUT = 5
     DEFAULT_READ_TIMEOUT = 30
     MAX_REDIRECTS = 3
 
-    Result = Struct.new(:checksum_sha256, :byte_size, :content_type, :final_url, keyword_init: true)
+    Result = Struct.new(
+      :checksum_sha256,
+      :byte_size,
+      :content_type,
+      :final_url,
+      :etag,
+      :last_modified_at,
+      keyword_init: true
+    )
 
     class Error < StandardError; end
     class DisallowedHostError < Error; end
@@ -88,7 +100,9 @@ module Documents
         checksum_sha256: digest.hexdigest,
         byte_size: byte_count,
         content_type: response["Content-Type"],
-        final_url: final_url
+        final_url: final_url,
+        etag: response["ETag"],
+        last_modified_at: parse_http_time(response["Last-Modified"])
       )
     end
 
@@ -116,6 +130,14 @@ module Documents
       return DEFAULT_ALLOWED_HOSTS if configured.blank?
 
       configured.split(",").map(&:strip).reject(&:empty?)
+    end
+
+    def parse_http_time(value)
+      return if value.blank?
+
+      Time.httpdate(value)
+    rescue ArgumentError
+      nil
     end
 
     def allow_http?

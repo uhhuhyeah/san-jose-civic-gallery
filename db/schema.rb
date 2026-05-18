@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_16_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_17_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -129,8 +129,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_16_120000) do
     t.integer "sort_order"
     t.bigint "source_file_byte_size"
     t.string "source_file_checksum_sha256"
+    t.string "source_file_etag"
+    t.string "source_file_final_url"
     t.text "source_file_import_error"
     t.datetime "source_file_imported_at"
+    t.datetime "source_file_last_modified_at"
+    t.datetime "source_file_validated_at"
+    t.text "source_file_validation_error"
     t.datetime "source_last_modified_at"
     t.datetime "source_missing_at"
     t.boolean "source_present", default: true, null: false
@@ -140,6 +145,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_16_120000) do
     t.index ["civic_matter_id", "source_present"], name: "idx_civic_matter_attachments_source_presence"
     t.index ["civic_matter_id"], name: "index_civic_matter_attachments_on_civic_matter_id"
     t.index ["last_source_snapshot_id"], name: "index_civic_matter_attachments_on_last_source_snapshot_id"
+    t.index ["source_file_validated_at", "source_file_imported_at"], name: "idx_civic_matter_attachments_file_validation"
     t.index ["source_system", "legistar_matter_attachment_id"], name: "idx_civic_matter_attachments_unique_per_source", unique: true
   end
 

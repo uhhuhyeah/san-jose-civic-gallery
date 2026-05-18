@@ -35,6 +35,11 @@ module Documents
           source_file_imported_at: Time.current,
           source_file_checksum_sha256: result.checksum_sha256,
           source_file_byte_size: result.byte_size,
+          source_file_final_url: result.final_url,
+          source_file_etag: result.etag,
+          source_file_last_modified_at: result.last_modified_at,
+          source_file_validated_at: Time.current,
+          source_file_validation_error: nil,
           source_file_import_error: nil
         )
 

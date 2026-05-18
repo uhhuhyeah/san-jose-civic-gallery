@@ -40,7 +40,14 @@ module Documents
     test "streams body to io, computes sha256, returns byte size and content type" do
       body = "%PDF-1.4 fake pdf body"
 
-      stub_http_with(SafeDownloaderTest.fake_success(headers: { "Content-Type" => "application/pdf" }, chunks: [ body ])) do
+      stub_http_with(SafeDownloaderTest.fake_success(
+        headers: {
+          "Content-Type" => "application/pdf",
+          "ETag" => "\"abc\"",
+          "Last-Modified" => "Fri, 08 May 2026 21:29:53 GMT"
+        },
+        chunks: [ body ]
+      )) do
         io = StringIO.new
         result = SafeDownloader.call(url: "https://sanjose.legistar.com/file.pdf", io:)
 
@@ -48,6 +55,8 @@ module Documents
         assert_equal body.bytesize, result.byte_size
         assert_equal "application/pdf", result.content_type
         assert_equal Digest::SHA256.hexdigest(body), result.checksum_sha256
+        assert_equal "\"abc\"", result.etag
+        assert_equal Time.httpdate("Fri, 08 May 2026 21:29:53 GMT"), result.last_modified_at
       end
     end
 
@@ -130,6 +139,15 @@ module Documents
       end
     ensure
       ENV.delete("LEGISTAR_ATTACHMENT_ALLOWED_HOSTS")
+    end
+
+    test "allows direct granicus attachment host by default" do
+      stub_http_with(SafeDownloaderTest.fake_success(headers: {}, chunks: [ "body" ])) do
+        io = StringIO.new
+        SafeDownloader.call(url: "https://legistar.granicus.com/sanjose/attachments/file.pdf", io:)
+
+        assert_equal "body", io.string
+      end
     end
 
     def self.fake_success(headers:, chunks:)

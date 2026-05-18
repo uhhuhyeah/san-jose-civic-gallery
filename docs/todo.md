@@ -25,9 +25,8 @@
   `ocrmypdf` for scanned PDFs when embedded text is empty.
 
 - Imported attachment files are refreshed when Legistar attachment
-  metadata changes. A future reconciliation pass may still add stronger
-  remote file validation, such as conditional requests or periodic
-  checksum revalidation for files whose metadata has not changed.
+  metadata changes and can be periodically revalidated against remote
+  file metadata with `documents:revalidate_attachments`.
 
 ## Operational Backfill
 
