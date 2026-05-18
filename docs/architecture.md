@@ -80,6 +80,11 @@ extraction streams Active Storage blobs into a tempfile before invoking
 local `ocrmypdf` CLI and stores the sidecar text as another extracted
 artifact.
 
+Imported attachment files can also be revalidated by probing the remote
+file with `HEAD`. When ETag, Last-Modified, or Content-Length indicate a
+change, the app re-imports the file through the same safe downloader and
+refreshes checksum metadata.
+
 The Legistar API client (`Legistar::Client`) has its own bounded
 timeouts and a `User-Agent` header that identifies the app and a
 contact email, so Legistar can route concerns to the maintainer.

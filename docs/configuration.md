@@ -45,7 +45,7 @@ conservative for an outbound-fetch trust boundary.
 
 | Variable | Default | Notes |
 | --- | --- | --- |
-| `LEGISTAR_ATTACHMENT_ALLOWED_HOSTS` | `sanjose.legistar.com` | Comma-separated allowlist. The host is re-checked on every redirect. |
+| `LEGISTAR_ATTACHMENT_ALLOWED_HOSTS` | `sanjose.legistar.com,legistar.granicus.com` | Comma-separated allowlist. The host is re-checked on every redirect. |
 | `LEGISTAR_ATTACHMENT_ALLOW_HTTP` | unset | Set to `"true"` to allow plain HTTP. HTTPS only by default. |
 | `LEGISTAR_ATTACHMENT_MAX_BYTES` | `104857600` (100 MB) | Hard cap on response body size. Both the `Content-Length` header and the running byte count are checked. |
 | `LEGISTAR_ATTACHMENT_OPEN_TIMEOUT` | `5` (seconds) | Connect timeout. |

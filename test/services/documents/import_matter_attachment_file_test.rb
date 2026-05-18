@@ -29,6 +29,7 @@ module Documents
       assert_equal Digest::SHA256.hexdigest(body), @attachment.source_file_checksum_sha256
       assert_nil @attachment.source_file_import_error
       assert_not_nil @attachment.source_file_imported_at
+      assert_not_nil @attachment.source_file_validated_at
       assert_equal "agreement.pdf", @attachment.source_file.filename.to_s
       assert_equal "application/pdf", @attachment.source_file.content_type
     end
@@ -79,7 +80,9 @@ module Documents
             checksum_sha256: Digest::SHA256.hexdigest(body),
             byte_size: body.bytesize,
             content_type: content_type,
-            final_url: url
+            final_url: url,
+            etag: "\"abc\"",
+            last_modified_at: Time.zone.parse("2026-05-08 21:29:53")
           )
         end
       end

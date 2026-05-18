@@ -3,21 +3,18 @@ require "net/http"
 require "uri"
 
 module Documents
-  class SafeDownloader
-    DEFAULT_ALLOWED_HOSTS = %w[sanjose.legistar.com].freeze
+  class SafeDownloader < SafeHttpClient
     DEFAULT_MAX_BYTES = 100 * 1024 * 1024
-    DEFAULT_OPEN_TIMEOUT = 5
-    DEFAULT_READ_TIMEOUT = 30
-    MAX_REDIRECTS = 3
 
-    Result = Struct.new(:checksum_sha256, :byte_size, :content_type, :final_url, keyword_init: true)
-
-    class Error < StandardError; end
-    class DisallowedHostError < Error; end
-    class DisallowedSchemeError < Error; end
-    class TooLargeError < Error; end
-    class TooManyRedirectsError < Error; end
-    class HttpError < Error; end
+    Result = Struct.new(
+      :checksum_sha256,
+      :byte_size,
+      :content_type,
+      :final_url,
+      :etag,
+      :last_modified_at,
+      keyword_init: true
+    )
 
     def self.call(url:, io:)
       new.call(url:, io:)
@@ -30,17 +27,7 @@ module Documents
     private
 
     def download(url:, io:, redirects_remaining:)
-      uri = parse_uri(url)
-      validate_scheme!(uri)
-      validate_host!(uri)
-
-      Net::HTTP.start(
-        uri.host,
-        uri.port,
-        use_ssl: uri.scheme == "https",
-        open_timeout: open_timeout,
-        read_timeout: read_timeout
-      ) do |http|
+      with_connection(url:) do |http, uri|
         request = Net::HTTP::Get.new(uri)
         request["User-Agent"] = user_agent
         request["Accept"] = "*/*"
@@ -50,12 +37,7 @@ module Documents
           when Net::HTTPSuccess
             return stream_body(response:, io:, final_url: uri.to_s)
           when Net::HTTPRedirection
-            raise TooManyRedirectsError, "Too many redirects following #{url}" if redirects_remaining <= 0
-
-            location = response["Location"]
-            raise HttpError, "Redirect from #{url} missing Location header" if location.blank?
-
-            redirect_url = URI.join(url, location).to_s
+            redirect_url = resolve_redirect(original_url: url, response:, redirects_remaining:)
             return download(url: redirect_url, io:, redirects_remaining: redirects_remaining - 1)
           else
             raise HttpError, "HTTP #{response.code} from #{url}"
@@ -88,38 +70,10 @@ module Documents
         checksum_sha256: digest.hexdigest,
         byte_size: byte_count,
         content_type: response["Content-Type"],
-        final_url: final_url
+        final_url: final_url,
+        etag: response["ETag"],
+        last_modified_at: parse_http_time(response["Last-Modified"])
       )
-    end
-
-    def parse_uri(url)
-      URI.parse(url)
-    rescue URI::InvalidURIError => error
-      raise Error, "Invalid URL #{url.inspect}: #{error.message}"
-    end
-
-    def validate_scheme!(uri)
-      return if uri.is_a?(URI::HTTPS)
-      return if uri.is_a?(URI::HTTP) && allow_http?
-
-      raise DisallowedSchemeError, "Only HTTPS URLs are allowed: #{uri}"
-    end
-
-    def validate_host!(uri)
-      return if allowed_hosts.include?(uri.host)
-
-      raise DisallowedHostError, "Host #{uri.host.inspect} is not in the allowlist"
-    end
-
-    def allowed_hosts
-      configured = ENV["LEGISTAR_ATTACHMENT_ALLOWED_HOSTS"]
-      return DEFAULT_ALLOWED_HOSTS if configured.blank?
-
-      configured.split(",").map(&:strip).reject(&:empty?)
-    end
-
-    def allow_http?
-      ENV["LEGISTAR_ATTACHMENT_ALLOW_HTTP"] == "true"
     end
 
     def max_bytes
@@ -128,20 +82,6 @@ module Documents
 
       parsed = Integer(raw, exception: false)
       parsed&.positive? ? parsed : DEFAULT_MAX_BYTES
-    end
-
-    def open_timeout
-      raw = ENV["LEGISTAR_ATTACHMENT_OPEN_TIMEOUT"]
-      Integer(raw, exception: false) || DEFAULT_OPEN_TIMEOUT
-    end
-
-    def read_timeout
-      raw = ENV["LEGISTAR_ATTACHMENT_READ_TIMEOUT"]
-      Integer(raw, exception: false) || DEFAULT_READ_TIMEOUT
-    end
-
-    def user_agent
-      ENV.fetch("LEGISTAR_USER_AGENT", "SanJoseCivicPulse/1.0 (+mail@davidamcclain.com)")
     end
   end
 end
