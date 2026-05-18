@@ -54,6 +54,10 @@ module ApplicationHelper
     truncate(extracted_text.content.squish, length: EXTRACTED_TEXT_PREVIEW_LENGTH, separator: " ")
   end
 
+  # Filter in Ruby (not via Generated::Artifact.succeeded.for_kind) so the
+  # controller preload on :generated_artifacts is preserved. Adding scoped
+  # queries here would issue a fresh SELECT per attachment and reintroduce
+  # the N+1 the preload was added to avoid.
   def attachment_summary_artifact(attachment)
     attachment
       .generated_artifacts
@@ -65,8 +69,8 @@ module ApplicationHelper
       .max_by { |artifact| [ artifact.generated_at || artifact.created_at, artifact.id ] }
   end
 
-  def attachment_summary_state(attachment)
-    return :available if attachment_summary_artifact(attachment)
+  def attachment_summary_state(attachment, summary_artifact = attachment_summary_artifact(attachment))
+    return :available if summary_artifact
 
     latest_text = attachment.latest_extracted_text
     return :pending if latest_text&.status == "ok" && latest_text.content.present?
@@ -74,8 +78,8 @@ module ApplicationHelper
     :not_available
   end
 
-  def attachment_summary_status_text(attachment)
-    case attachment_summary_state(attachment)
+  def attachment_summary_status_text(attachment, summary_artifact = attachment_summary_artifact(attachment))
+    case attachment_summary_state(attachment, summary_artifact)
     when :available
       "Generated summary available"
     when :pending
@@ -85,7 +89,9 @@ module ApplicationHelper
     end
   end
 
-  def attachment_summary_unavailable_reason(attachment)
+  # Only meaningful when the state is :not_available — the view branches on
+  # :available and :pending before calling this.
+  def attachment_summary_not_available_reason(attachment)
     latest_text = attachment.latest_extracted_text
 
     return "The source file has not been imported yet." unless attachment.imported?

@@ -84,7 +84,7 @@
                 <span aria-hidden="true">/</span>
                 <%= attachment_extraction_status(attachment) %>
                 <span aria-hidden="true">/</span>
-                <%= attachment_summary_status_text(attachment) %>
+                <%= attachment_summary_status_text(attachment, summary_artifact) %>
               </p>
             </header>
 
@@ -125,7 +125,7 @@
             <section class="generated-summary">
               <header>
                 <h4>Generated Summary</h4>
-                <span><%= attachment_summary_status_text(attachment) %></span>
+                <span><%= attachment_summary_status_text(attachment, summary_artifact) %></span>
               </header>
 
               <% if summary_artifact %>
@@ -133,7 +133,17 @@
                 <% if content["document_status"] == "draft" %>
                   <p class="status-note">The source text indicates this attachment appears to be a draft document.</p>
                 <% end %>
-                <p><%= content["summary"] %></p>
+                <%#
+                  AI-generated content originating from arbitrary public PDFs.
+                  Always render with <%= %> so Rails auto-escapes; never wrap
+                  these fields in raw() or .html_safe — a poisoned PDF can
+                  induce the model to emit HTML/script strings.
+                %>
+                <% if content["summary"].present? %>
+                  <p><%= content["summary"] %></p>
+                <% else %>
+                  <p class="status-note">The model returned an empty summary; review the official source document.</p>
+                <% end %>
 
                 <% if content["key_points"].present? %>
                   <h5>Key points</h5>
@@ -166,10 +176,10 @@
                     Review the official source document before relying on this summary.
                   </em>
                 </p>
-              <% elsif attachment_summary_state(attachment) == :pending %>
+              <% elsif attachment_summary_state(attachment, summary_artifact) == :pending %>
                 <p class="status-note">This attachment has extracted text, but a generated summary has not been added yet.</p>
               <% else %>
-                <p class="status-note"><%= attachment_summary_unavailable_reason(attachment) %></p>
+                <p class="status-note"><%= attachment_summary_not_available_reason(attachment) %></p>
               <% end %>
             </section>
           </article>

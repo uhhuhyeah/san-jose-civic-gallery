@@ -200,6 +200,39 @@ module Public
       assert_includes response.body, "The source file has not been imported yet."
     end
 
+    test "shows a fallback note when a succeeded summary has blank summary text" do
+      @attachment.source_file.attach(
+        io: StringIO.new("%PDF-1.4 fake"),
+        filename: "agreement.pdf",
+        content_type: "application/pdf"
+      )
+      extracted_text = @attachment.extracted_texts.create!(
+        extractor_name: "pdftotext",
+        status: "ok",
+        content: "This agreement authorizes a city service contract.",
+        character_count: 51
+      )
+      @attachment.generated_artifacts.create!(
+        source_artifact: extracted_text,
+        kind: Generated::SummarizeMatterAttachment::KIND,
+        status: "succeeded",
+        model_identifier: "gpt-4o-mini",
+        prompt_version: Generated::SummarizeMatterAttachment::PROMPT::VERSION,
+        input_sha256: "blank-summary",
+        content: {
+          "summary" => "",
+          "key_points" => [],
+          "limitations" => [],
+          "document_status" => "unknown"
+        }
+      )
+
+      get public_matter_url(@matter)
+
+      assert_response :success
+      assert_includes response.body, "The model returned an empty summary; review the official source document."
+    end
+
     test "shows sanjoseca.gov attachment hyperlinks as official source documents" do
       @attachment.update!(
         hyperlink: "https://www.sanjoseca.gov/your-government/appointees/city-clerk/language-access-for-city-council-and-council-committee-meetings",

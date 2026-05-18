@@ -114,7 +114,7 @@ class ApplicationHelperTest < ActionView::TestCase
     matter = Civic::Matter.create!(legistar_matter_id: 90004, matter_file: "26-903")
     attachment = matter.all_attachments.create!(legistar_matter_attachment_id: 91004, name: "Agreement")
 
-    assert_equal "The source file has not been imported yet.", attachment_summary_unavailable_reason(attachment)
+    assert_equal "The source file has not been imported yet.", attachment_summary_not_available_reason(attachment)
 
     attachment.source_file.attach(
       io: StringIO.new("%PDF-1.4 fake"),
@@ -122,9 +122,9 @@ class ApplicationHelperTest < ActionView::TestCase
       content_type: "application/pdf"
     )
     attachment.extracted_texts.create!(extractor_name: "pdftotext", status: "empty")
-    assert_equal "Extraction completed, but no usable text was found.", attachment_summary_unavailable_reason(attachment)
+    assert_equal "Extraction completed, but no usable text was found.", attachment_summary_not_available_reason(attachment)
 
     attachment.extracted_texts.create!(extractor_name: "pdftotext", status: "error", error_message: "boom")
-    assert_equal "Text extraction failed for this attachment.", attachment_summary_unavailable_reason(attachment)
+    assert_equal "Text extraction failed for this attachment.", attachment_summary_not_available_reason(attachment)
   end
 end

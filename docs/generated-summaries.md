@@ -118,6 +118,11 @@ under the official attachment metadata and extracted text preview.
   extraction has not run, extraction failed, or extraction found no
   usable text.
 
+Failed `Generated::Artifact` rows (status `failed`, e.g. the model call
+errored) are not surfaced publicly; the UI treats them the same as
+`pending` until a successful artifact exists. Operators see failures
+via the rake task output and the artifact rows.
+
 Generated summary content may become an additional search signal later,
 especially via tags/topics derived from generated artifacts. Keep that
 separate from official-record search and label it as generated-derived
