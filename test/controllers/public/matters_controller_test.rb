@@ -169,6 +169,8 @@ module Public
       assert_includes response.body, "This appears to be a draft agreement summary."
       assert_includes response.body, "The source text indicates this attachment appears to be a draft document."
       assert_includes response.body, "Review the official source document before relying on this summary."
+      assert_not_includes response.body, "poisoned PDF"
+      assert_not_includes response.body, "Rails auto-escapes"
       assert_includes response.body, "Open source document"
     end
 

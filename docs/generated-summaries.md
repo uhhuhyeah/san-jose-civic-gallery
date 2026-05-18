@@ -220,3 +220,26 @@ Decision:
   `GENERATED_SUMMARY_MODEL`.
 - Use OpenRouter primarily for local model evaluation and optional future
   fallback testing.
+
+### QA notes: 2026-05-18
+
+We ran the production summary task locally with direct OpenAI
+`gpt-4o-mini` against the only attachment in the local database with an
+imported source file and successful extracted text:
+
+```bash
+RUN=true LIMIT=10 bin/rails generated:summarize_attachments
+```
+
+The initial `attachment_summary_v2` output surfaced two quality issues:
+
+- The model returned `document_status: draft`, but the summary text did
+  not explicitly say the document appeared to be a draft.
+- The model treated an unfilled consultant name-change placeholder as if
+  a completed name change had occurred.
+
+The prompt was tightened and bumped to `attachment_summary_v3` so future
+artifacts are distinct. The v3 prompt now requires draft language in the
+summary itself and tells the model to treat blank fields, underscore
+lines, bracketed placeholders, and unfilled form options as missing
+information rather than completed facts.
