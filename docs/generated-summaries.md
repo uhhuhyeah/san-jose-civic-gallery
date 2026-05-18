@@ -100,3 +100,30 @@ rejects responses that aren't JSON or that omit required keys. It stores
 `key_points` and `limitations` into arrays and normalizing
 `document_status` to `draft`, `final`, or `unknown`. It does not score
 quality. Run small batches and spot-check before scaling.
+
+## Public UI states
+
+Matter attachment pages show generated summaries as an assistive layer
+under the official attachment metadata and extracted text preview.
+
+- `Generated summary available`: a successful current
+  `attachment_summary` artifact exists for the attachment and prompt
+  version. The UI displays the summary, key points, limitations,
+  document status when useful, model identifier, and a reminder to
+  review the official source document.
+- `Generated summary pending`: the attachment has successful extracted
+  text but no current successful generated summary. Run
+  `RUN=true bin/rails generated:summarize_attachments` to produce it.
+- `Generated summary not available`: the source file is not imported,
+  extraction has not run, extraction failed, or extraction found no
+  usable text.
+
+Failed `Generated::Artifact` rows (status `failed`, e.g. the model call
+errored) are not surfaced publicly; the UI treats them the same as
+`pending` until a successful artifact exists. Operators see failures
+via the rake task output and the artifact rows.
+
+Generated summary content may become an additional search signal later,
+especially via tags/topics derived from generated artifacts. Keep that
+separate from official-record search and label it as generated-derived
+ranking or filtering.

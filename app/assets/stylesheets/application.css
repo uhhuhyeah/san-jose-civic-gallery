@@ -745,6 +745,59 @@ dd {
   color: var(--ink);
 }
 
+.generated-summary {
+  margin-top: 4px;
+  padding: 14px;
+  background: #fbfbf8;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.generated-summary header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.generated-summary h4,
+.generated-summary h5 {
+  margin: 0;
+}
+
+.generated-summary h4 {
+  font-size: 0.95rem;
+}
+
+.generated-summary h5 {
+  margin-top: 12px;
+  font-size: 0.86rem;
+}
+
+.generated-summary header span,
+.generated-summary-note {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.generated-summary p {
+  margin: 8px 0 0;
+}
+
+.generated-summary ul {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.generated-summary-note {
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
 .empty-state {
   padding: 18px;
   border: 1px solid var(--line);

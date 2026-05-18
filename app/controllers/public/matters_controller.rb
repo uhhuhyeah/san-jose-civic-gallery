@@ -18,7 +18,8 @@ module Public
           event_items: :event,
           attachments: [
             { source_file_attachment: :blob },
-            { extracted_texts: [] }
+            { extracted_texts: [] },
+            { generated_artifacts: [] }
           ]
         )
         .find(params[:id])
