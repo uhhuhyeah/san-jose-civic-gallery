@@ -5,14 +5,15 @@ module Documents
     DEFAULT_LIMIT = 100
     DEFAULT_REVALIDATE_AFTER = 30.days
 
-    def self.call(limit: DEFAULT_LIMIT, dry_run: true, revalidate_after: DEFAULT_REVALIDATE_AFTER)
-      new(limit:, dry_run:, revalidate_after:).call
+    def self.call(limit: DEFAULT_LIMIT, dry_run: true, revalidate_after: DEFAULT_REVALIDATE_AFTER, retry_errors: false)
+      new(limit:, dry_run:, revalidate_after:, retry_errors:).call
     end
 
-    def initialize(limit:, dry_run:, revalidate_after:)
+    def initialize(limit:, dry_run:, revalidate_after:, retry_errors:)
       @limit = [ limit.to_i, 0 ].max
       @dry_run = dry_run
       @revalidate_after = revalidate_after
+      @retry_errors = retry_errors
     end
 
     def call
@@ -32,11 +33,14 @@ module Documents
       scope = Civic::MatterAttachment
         .current_from_source
         .imported
+        .includes(:matter)
         .where(source_file_import_error: nil)
         .where.not(hyperlink: nil)
         .where.not(hyperlink: "")
         .order(Arel.sql("source_file_validated_at ASC NULLS FIRST"), :id)
         .limit(@limit)
+
+      scope = scope.where(source_file_validation_error: nil) unless @retry_errors
 
       return scope if @revalidate_after.nil?
 

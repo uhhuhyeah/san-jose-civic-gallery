@@ -36,6 +36,26 @@ module Documents
       assert_equal 1, result.enqueued
     end
 
+    test "skips attachments with prior validation errors by default" do
+      due = imported_attachment(39_139, validated_at: 45.days.ago)
+      errored = imported_attachment(39_140, validated_at: 45.days.ago)
+      errored.update!(source_file_validation_error: "Net::HTTPNotFound: 404")
+
+      result = BackfillAttachmentRevalidations.call(limit: 10, dry_run: true)
+
+      assert_equal [ due.id ], result.candidates.map(&:id)
+    end
+
+    test "retry_errors includes attachments whose previous revalidation failed" do
+      due = imported_attachment(39_141, validated_at: 45.days.ago)
+      errored = imported_attachment(39_142, validated_at: 45.days.ago)
+      errored.update!(source_file_validation_error: "Net::HTTPNotFound: 404")
+
+      result = BackfillAttachmentRevalidations.call(limit: 10, dry_run: true, retry_errors: true)
+
+      assert_equal [ due.id, errored.id ].sort, result.candidates.map(&:id).sort
+    end
+
     private
 
     def imported_attachment(legistar_id, validated_at:)

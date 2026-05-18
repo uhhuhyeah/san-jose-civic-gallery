@@ -2,7 +2,12 @@ namespace :documents do
   desc "Revalidate imported attachment files. Set RUN=true to enqueue jobs."
   task revalidate_attachments: :environment do
     revalidate_after = if ENV["REVALIDATE_AFTER_DAYS"].present?
-      ENV["REVALIDATE_AFTER_DAYS"].to_i.days
+      raw = ENV["REVALIDATE_AFTER_DAYS"]
+      days = Integer(raw, exception: false)
+      unless days && days >= 0
+        abort "REVALIDATE_AFTER_DAYS must be a non-negative integer (got #{raw.inspect})"
+      end
+      days.days
     else
       Documents::BackfillAttachmentRevalidations::DEFAULT_REVALIDATE_AFTER
     end
@@ -10,7 +15,8 @@ namespace :documents do
     result = Documents::BackfillAttachmentRevalidations.call(
       limit: ENV.fetch("LIMIT", Documents::BackfillAttachmentRevalidations::DEFAULT_LIMIT),
       dry_run: ENV.fetch("RUN", "false") != "true",
-      revalidate_after:
+      revalidate_after:,
+      retry_errors: ENV["RETRY_ERRORS"] == "true"
     )
 
     mode = result.dry_run ? "dry-run" : "enqueue"
