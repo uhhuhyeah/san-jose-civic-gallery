@@ -12,6 +12,8 @@ This repository is intentionally documented in a compact way so contributors and
   historical matter attachments
 - `attachment-revalidation.md`: operator workflow for validating
   imported attachment files against remote source metadata
+- `event-window-sync.md`: bounded event sync and missing-event
+  reconciliation workflow
 
 ## Documentation Principles
 

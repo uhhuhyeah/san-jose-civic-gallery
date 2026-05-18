@@ -143,11 +143,10 @@ Key relationships:
 
 Important note:
 
-The `source_present` columns are present so retraction reconciliation can
-land later, but the current sync only fetches a sliding `$top` window of
-recent events, so reconciling against "what we just saw" would mark every
-older event as missing. Events stay `source_present: true` until that
-limitation is addressed.
+The default recent sync only fetches a sliding `$top` window of recent
+events and does not mark older events missing. Use bounded event window
+sync for retraction reconciliation: it fetches an explicit body/date
+window and only marks local events missing inside that same window.
 
 ### `civic_event_items` / `Civic::EventItem`
 
