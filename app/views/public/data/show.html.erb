@@ -1,0 +1,208 @@
+<% content_for(:title) { "Data Health · San Jose Civic Pulse" } %>
+<main class="newspaper-shell">
+  <%= render "public/shared/topbar", active: :data %>
+
+  <header class="page-header inset-header">
+    <p class="eyebrow">Transparency</p>
+    <h1>Data Health</h1>
+    <p>What we've ingested from Legistar and how reliable the processing pipeline has been.</p>
+  </header>
+
+  <% if @snapshot.empty? %>
+    <section class="inset-panel data-empty">
+      <h2>No data ingested yet</h2>
+      <p>
+        Once an operator runs ingestion (for example,
+        <code>bin/rails ingestion:sync_recent_events</code>),
+        this page will fill in with current counts, freshness, and
+        reliability rates.
+      </p>
+    </section>
+  <% else %>
+    <section class="inset-panel data-summary">
+      <p class="data-freshness">
+        <% case @snapshot.freshness_level %>
+        <% when :green %>
+          <span class="data-freshness-dot green" aria-hidden="true"></span>
+          Synced <%= time_ago_in_words(@snapshot.last_synced_at) %> ago
+        <% when :amber %>
+          <span class="data-freshness-dot amber" aria-hidden="true"></span>
+          Synced <%= time_ago_in_words(@snapshot.last_synced_at) %> ago
+        <% when :red %>
+          <span class="data-freshness-dot red" aria-hidden="true"></span>
+          Synced <%= time_ago_in_words(@snapshot.last_synced_at) %> ago
+        <% else %>
+          <span class="data-freshness-dot unknown" aria-hidden="true"></span>
+          Last sync unknown
+        <% end %>
+        <span class="data-source">Source: Legistar</span>
+      </p>
+    </section>
+
+    <section class="inset-panel data-section">
+      <h2>What we have</h2>
+      <dl class="data-stats">
+        <div>
+          <dt>Matters</dt>
+          <dd>
+            <strong><%= number_with_delimiter(@snapshot.matter_count) %></strong>
+            <% if (range = @snapshot.matter_date_range) %>
+              <span>covering <%= range.first.iso8601 %> — <%= range.last.iso8601 %></span>
+            <% end %>
+          </dd>
+        </div>
+        <div>
+          <dt>Events</dt>
+          <dd>
+            <strong><%= number_with_delimiter(@snapshot.event_count) %></strong>
+            <% bodies = @snapshot.events_by_body %>
+            <% if bodies[:top].any? %>
+              <span>
+                <%= bodies[:top].map { |body, count| "#{body} (#{number_with_delimiter(count)})" }.join(", ") %><%
+                  if bodies[:other_body_count].positive? %>, <%= pluralize(bodies[:other_body_count], "other") %> (<%= number_with_delimiter(bodies[:other_count]) %>)<% end %>
+              </span>
+            <% end %>
+          </dd>
+        </div>
+        <div>
+          <dt>Attachments</dt>
+          <dd>
+            <strong><%= number_with_delimiter(@snapshot.attachment_count) %></strong>
+          </dd>
+        </div>
+        <% if (matter = @snapshot.most_recent_matter) %>
+          <div>
+            <dt>Most recent matter</dt>
+            <dd>
+              <strong><%= matter.matter_file %></strong>
+              <span>agenda <%= matter.agenda_date.iso8601 %></span>
+            </dd>
+          </div>
+        <% end %>
+      </dl>
+    </section>
+
+    <section class="inset-panel data-section">
+      <h2>Freshness</h2>
+      <dl class="data-stats">
+        <div>
+          <dt>Last sync</dt>
+          <dd>
+            <% if @snapshot.last_synced_at %>
+              <strong><%= time_ago_in_words(@snapshot.last_synced_at) %> ago</strong>
+              <span><%= @snapshot.last_synced_at.utc.iso8601 %></span>
+            <% else %>
+              <strong>—</strong>
+            <% end %>
+          </dd>
+        </div>
+        <div>
+          <dt>Synced in the last 24 hours</dt>
+          <dd>
+            <strong><%= pluralize(@snapshot.matters_synced_since(1.day.ago), "matter") %></strong>,
+            <strong><%= pluralize(@snapshot.events_synced_since(1.day.ago), "event") %></strong>
+          </dd>
+        </div>
+        <div>
+          <dt>Synced in the last 7 days</dt>
+          <dd>
+            <strong><%= pluralize(@snapshot.matters_synced_since(7.days.ago), "matter") %></strong>,
+            <strong><%= pluralize(@snapshot.events_synced_since(7.days.ago), "event") %></strong>
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="inset-panel data-section">
+      <h2>Reliability</h2>
+      <p class="data-section-note">
+        Each rate is out of <%= number_with_delimiter(@snapshot.import_eligible_count) %>
+        current attachments with a source link, so the percentages
+        reflect end-to-end pipeline coverage rather than per-stage success.
+      </p>
+      <%= render "rate",
+        label: "Attachments with imported source files",
+        numerator: @snapshot.imported_count,
+        denominator: @snapshot.import_eligible_count %>
+      <%= render "rate",
+        label: "Attachments with extracted text",
+        numerator: @snapshot.pdf_extracted_count,
+        denominator: @snapshot.import_eligible_count %>
+      <%= render "rate",
+        label: "Attachments with AI summaries",
+        numerator: @snapshot.summarized_count,
+        denominator: @snapshot.import_eligible_count %>
+    </section>
+
+    <section class="inset-panel data-section">
+      <h2>Reconciliation</h2>
+      <dl class="data-stats">
+        <div>
+          <dt>Events removed by source in the last 30 days</dt>
+          <dd><strong><%= number_with_delimiter(@snapshot.events_removed_since(30.days.ago)) %></strong></dd>
+        </div>
+        <div>
+          <dt>Attachments removed by source in the last 30 days</dt>
+          <dd><strong><%= number_with_delimiter(@snapshot.attachments_removed_since(30.days.ago)) %></strong></dd>
+        </div>
+      </dl>
+    </section>
+  <% end %>
+
+  <section class="inset-panel data-about">
+    <h2>About this page</h2>
+    <p>
+      This page reports what's been ingested from Legistar and how
+      complete the processing pipeline has been.
+    </p>
+    <p>The data on this page comes from three Legistar hosts:</p>
+    <ul>
+      <li>
+        <code>webapi.legistar.com/v1/sanjose</code>
+        <ul>
+          <li>
+            Legistar API, the primary source for matters, events, and attachment metadata.
+          </li>
+        </ul>
+      </li>
+      <li>
+        <code>sanjose.legistar.com</code>
+        <ul>
+          <li>
+            The public Legistar site that attachment hyperlinks point to.
+          </li>
+        </ul>
+      </li>
+      <li>
+        <code>legistar.granicus.com</code>
+        <ul>
+          <li>
+            The Granicus CDN that <code>sanjose.legistar.com</code> redirects attachment downloads to.
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <p>
+      Read more about the project:
+      <a href="https://github.com/uhhuhyeah/san-jose-civic-pulse/blob/main/docs/architecture.md">architecture</a>
+      and
+      <a href="https://github.com/uhhuhyeah/san-jose-civic-pulse/blob/main/docs/generated-summaries.md">generated summaries</a>
+      documentation.
+    </p>
+  </section>
+  <section class="inset-panel data-about">  
+    <p>
+      <span class="generated-summary-note-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="16" height="16" focusable="false">
+          <path d="M12 3 2 21h20L12 3Z" fill="none" stroke="currentColor" stroke-width="2" />
+          <path d="M12 9v5" stroke="currentColor" stroke-width="2" />
+          <circle cx="12" cy="17" r="1" fill="currentColor" />
+        </svg>
+      </span>         
+      Generated summaries are AI-produced and may contain errors. Always review the official
+      source document before relying on them.
+    </p>
+  </section>
+
+  <%= render "public/shared/footer" %>
+</main>

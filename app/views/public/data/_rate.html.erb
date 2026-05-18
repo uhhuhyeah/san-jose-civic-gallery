@@ -1,0 +1,18 @@
+<%
+  percent = denominator.positive? ? (numerator.to_f / denominator * 100).round : nil
+  filled = percent ? (percent / 10.0).round : 0
+  bar = ("█" * filled) + ("░" * (10 - filled))
+%>
+<div class="data-rate">
+  <div class="data-rate-label"><%= label %></div>
+  <div class="data-rate-meter" aria-hidden="true"><%= bar %></div>
+  <div class="data-rate-value">
+    <% if percent %>
+      <strong><%= percent %>%</strong>
+      <span>(<%= number_with_delimiter(numerator) %> / <%= number_with_delimiter(denominator) %>)</span>
+    <% else %>
+      <strong>—</strong>
+      <span>(0 eligible)</span>
+    <% end %>
+  </div>
+</div>

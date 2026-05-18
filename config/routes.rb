@@ -15,4 +15,9 @@ Rails.application.routes.draw do
     resources :events, only: [ :index, :show ]
     resources :matters, only: [ :index, :show ]
   end
+
+  # Public transparency page. Lives at root path (not under /public)
+  # for discoverability; controller stays in Public:: for organizational
+  # consistency with the other front-end controllers.
+  get "data", to: "public/data#show", as: :data
 end
