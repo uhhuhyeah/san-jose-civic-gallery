@@ -46,12 +46,26 @@ class PublicMatterDiscoveryTest < ApplicationSystemTestCase
       filename: "agreement.pdf",
       content_type: "application/pdf"
     )
-    @attachment.extracted_texts.create!(
+    extracted_text = @attachment.extracted_texts.create!(
       extractor_name: "pdftotext",
       status: "ok",
       content: "This agreement authorizes a city service contract with clear official source material.",
       character_count: 84,
       extracted_at: Time.current
+    )
+    @attachment.generated_artifacts.create!(
+      source_artifact: extracted_text,
+      kind: Generated::SummarizeMatterAttachment::KIND,
+      status: "succeeded",
+      model_identifier: "gpt-4o-mini",
+      prompt_version: Generated::SummarizeMatterAttachment::PROMPT::VERSION,
+      input_sha256: "abc123",
+      content: {
+        "summary" => "This generated summary helps visitors decide whether to review the agreement.",
+        "key_points" => [ "Authorizes a city service contract." ],
+        "limitations" => [ "Generated from extracted text." ],
+        "document_status" => "unknown"
+      }
     )
   end
 
@@ -73,6 +87,9 @@ class PublicMatterDiscoveryTest < ApplicationSystemTestCase
     assert_text "Extracted text available"
     assert_text "Extracted Text Preview"
     assert_text "This agreement authorizes"
+    assert_text "Generated Summary"
+    assert_text "Generated summary available"
+    assert_text "This generated summary helps visitors decide whether to review the agreement."
   end
 
   test "visitor searches matters by file number" do
@@ -135,5 +152,6 @@ class PublicMatterDiscoveryTest < ApplicationSystemTestCase
     assert_text "Text extraction not available"
     assert_text failed.name
     assert_text "Text extraction failed"
+    assert_text "Generated summary not available"
   end
 end

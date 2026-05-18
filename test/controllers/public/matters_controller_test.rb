@@ -132,12 +132,26 @@ module Public
         filename: "agreement.pdf",
         content_type: "application/pdf"
       )
-      @attachment.extracted_texts.create!(
+      extracted_text = @attachment.extracted_texts.create!(
         extractor_name: "pdftotext",
         status: "ok",
         content: "This agreement authorizes a city service contract.",
         character_count: 51,
         extracted_at: Time.current
+      )
+      @attachment.generated_artifacts.create!(
+        source_artifact: extracted_text,
+        kind: Generated::SummarizeMatterAttachment::KIND,
+        status: "succeeded",
+        model_identifier: "gpt-4o-mini",
+        prompt_version: Generated::SummarizeMatterAttachment::PROMPT::VERSION,
+        input_sha256: "abc123",
+        content: {
+          "summary" => "This appears to be a draft agreement summary.",
+          "key_points" => [ "Authorizes a city service contract." ],
+          "limitations" => [ "Generated from extracted text." ],
+          "document_status" => "draft"
+        }
       )
 
       get public_matter_url(@matter)
@@ -150,7 +164,40 @@ module Public
       assert_includes response.body, "File imported"
       assert_includes response.body, "Extracted Text Preview"
       assert_includes response.body, "This agreement authorizes"
+      assert_includes response.body, "Generated Summary"
+      assert_includes response.body, "Generated summary available"
+      assert_includes response.body, "This appears to be a draft agreement summary."
+      assert_includes response.body, "The source text indicates this attachment appears to be a draft document."
+      assert_includes response.body, "Review the official source document before relying on this summary."
       assert_includes response.body, "Open source document"
+    end
+
+    test "shows generated summary pending when extracted text exists without a summary" do
+      @attachment.source_file.attach(
+        io: StringIO.new("%PDF-1.4 fake"),
+        filename: "agreement.pdf",
+        content_type: "application/pdf"
+      )
+      @attachment.extracted_texts.create!(
+        extractor_name: "pdftotext",
+        status: "ok",
+        content: "This agreement authorizes a city service contract.",
+        character_count: 51
+      )
+
+      get public_matter_url(@matter)
+
+      assert_response :success
+      assert_includes response.body, "Generated summary pending"
+      assert_includes response.body, "This attachment has extracted text, but a generated summary has not been added yet."
+    end
+
+    test "shows generated summary unavailable reason when source file is not imported" do
+      get public_matter_url(@matter)
+
+      assert_response :success
+      assert_includes response.body, "Generated summary not available"
+      assert_includes response.body, "The source file has not been imported yet."
     end
 
     test "shows sanjoseca.gov attachment hyperlinks as official source documents" do

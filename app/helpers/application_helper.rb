@@ -5,6 +5,8 @@ module ApplicationHelper
   ].freeze
   EXTRACTED_TEXT_PREVIEW_LENGTH = 1_200
   DOCUMENT_SEARCH_SNIPPET_LENGTH = 320
+  GENERATED_SUMMARY_KIND = Generated::SummarizeMatterAttachment::KIND
+  GENERATED_SUMMARY_PROMPT_VERSION = Generated::SummarizeMatterAttachment::PROMPT::VERSION
 
   def official_source_url(raw_url)
     return if raw_url.blank?
@@ -50,6 +52,47 @@ module ApplicationHelper
     return "" if extracted_text&.content.blank?
 
     truncate(extracted_text.content.squish, length: EXTRACTED_TEXT_PREVIEW_LENGTH, separator: " ")
+  end
+
+  def attachment_summary_artifact(attachment)
+    attachment
+      .generated_artifacts
+      .select do |artifact|
+        artifact.kind == GENERATED_SUMMARY_KIND &&
+          artifact.prompt_version == GENERATED_SUMMARY_PROMPT_VERSION &&
+          artifact.status == "succeeded"
+      end
+      .max_by { |artifact| [ artifact.generated_at || artifact.created_at, artifact.id ] }
+  end
+
+  def attachment_summary_state(attachment)
+    return :available if attachment_summary_artifact(attachment)
+
+    latest_text = attachment.latest_extracted_text
+    return :pending if latest_text&.status == "ok" && latest_text.content.present?
+
+    :not_available
+  end
+
+  def attachment_summary_status_text(attachment)
+    case attachment_summary_state(attachment)
+    when :available
+      "Generated summary available"
+    when :pending
+      "Generated summary pending"
+    else
+      "Generated summary not available"
+    end
+  end
+
+  def attachment_summary_unavailable_reason(attachment)
+    latest_text = attachment.latest_extracted_text
+
+    return "The source file has not been imported yet." unless attachment.imported?
+    return "Text extraction failed for this attachment." if latest_text&.status == "error"
+    return "Extraction completed, but no usable text was found." if latest_text&.status == "empty"
+
+    "No extracted text is available yet."
   end
 
   def document_search_snippet(extracted_text)
