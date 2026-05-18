@@ -22,6 +22,6 @@
   <nav class="topbar-nav" aria-label="Primary">
     <%= link_to "Pulse", root_path, aria: { current: local_assigns[:active] == :pulse ? "page" : nil } %>
     <%= link_to "Matters", public_matters_path, aria: { current: local_assigns[:active] == :matters ? "page" : nil } %>
-    <%= link_to "Meetings", root_path(anchor: "meetings") %>
+    <%= link_to "Meetings", public_meetings_path, aria: { current: local_assigns[:active] == :meetings ? "page" : nil } %>
   </nav>
 </header>

@@ -1,7 +1,7 @@
 <main class="page-shell">
-  <%= render "public/shared/topbar", active: :pulse %>
+  <%= render "public/shared/topbar", active: :meetings %>
 
-  <p class="breadcrumb"><%= link_to "All meetings", root_path %></p>
+  <p class="breadcrumb"><%= link_to "All meetings", public_meetings_path(month: @event.event_date.strftime("%Y-%m")) %></p>
 
   <header class="page-header inset-header">
     <p class="eyebrow">Official Meeting</p>

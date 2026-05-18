@@ -634,6 +634,64 @@ dd {
   font-weight: 700;
 }
 
+.meeting-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: stretch;
+  margin-bottom: 24px;
+}
+
+.meeting-controls .search-form,
+.meeting-picker-form {
+  margin-bottom: 0;
+}
+
+.meeting-controls .search-form {
+  flex: 1 1 520px;
+}
+
+.meeting-picker-form {
+  flex: 0 0 320px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+}
+
+.meeting-picker-form label:not(.sr-only) {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.meeting-picker-form > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.meeting-picker-form select {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  font: inherit;
+}
+
+.meeting-picker-form input[type="submit"] {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--civic);
+  border-radius: 6px;
+  background: var(--civic);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+}
+
 .search-row {
   display: flex;
   flex-wrap: wrap;
@@ -646,6 +704,15 @@ dd {
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 6px;
+  font: inherit;
+}
+
+.search-row select {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
   font: inherit;
 }
 
@@ -700,6 +767,42 @@ dd {
 .matter-pending {
   color: #75520b;
   font-weight: 650;
+}
+
+.meeting-month-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.meeting-preview {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.meeting-preview span {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.meeting-preview ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.meeting-preview li span {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink);
+  font-size: 0.92rem;
+  font-weight: 400;
 }
 
 .inline-attachments {

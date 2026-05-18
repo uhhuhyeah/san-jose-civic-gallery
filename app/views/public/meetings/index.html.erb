@@ -1,0 +1,118 @@
+<main class="newspaper-shell">
+  <%= render "public/shared/topbar", active: :meetings %>
+
+  <header class="page-header inset-header">
+    <p class="eyebrow">Official Meetings</p>
+    <h1>Meetings</h1>
+    <p>Use meeting agendas as an entry point into what City Hall is talking about this month.</p>
+  </header>
+
+  <section class="inset-panel meeting-month-nav" aria-label="Meeting month navigation">
+    <%= link_to "Previous month", public_meetings_path(month: (@month - 1.month).strftime("%Y-%m"), q: @query.presence, body_name: @body_name.presence), class: "button-secondary" %>
+    <strong><%= @month.strftime("%B %Y") %></strong>
+    <%= link_to "Next month", public_meetings_path(month: (@month + 1.month).strftime("%Y-%m"), q: @query.presence, body_name: @body_name.presence), class: "button-secondary" %>
+  </section>
+
+  <div class="meeting-controls">
+    <%= form_with url: public_meetings_path, method: :get, local: true, class: "meeting-picker-form inset-panel" do |form| %>
+      <%= form.hidden_field :q, value: @query if @query.present? %>
+      <%= form.hidden_field :body_name, value: @body_name if @body_name.present? %>
+      <%= form.label :month_number, "Meeting month", for: "meeting-month-number" %>
+      <div>
+        <%= form.select :month_number,
+          options_for_select(Date::MONTHNAMES.each_with_index.filter_map { |name, index| [ name, index ] if name }, @month.month),
+          {},
+          id: "meeting-month-number",
+          aria: { label: "Month" } %>
+        <%= form.label :year, "Year", class: "sr-only", for: "meeting-year" %>
+        <%= form.select :year,
+          options_for_select(@year_options, @month.year),
+          {},
+          id: "meeting-year",
+          aria: { label: "Year" } %>
+        <%= form.submit "Go" %>
+      </div>
+    <% end %>
+
+    <%= form_with url: public_meetings_path, method: :get, local: true, class: "search-form inset-panel" do |form| %>
+      <%= form.hidden_field :year, value: @month.year %>
+      <%= form.hidden_field :month_number, value: @month.month %>
+      <%= form.label :q, "Search meetings, agenda items, and linked matters", for: "meeting-filter-q" %>
+      <div class="search-row">
+        <%= form.search_field :q, id: "meeting-filter-q", value: @query, placeholder: "Meeting title, agenda item, matter file, or topic" %>
+        <%= form.select :body_name,
+          options_for_select([ [ "All bodies", "" ] ] + @body_options.map { |body| [ body, body ] }, @body_name),
+          {},
+          aria: { label: "Filter by body" } %>
+        <%= form.submit "Search" %>
+        <% if @query.present? || @body_name.present? %>
+          <%= link_to "Clear", public_meetings_path(month: @month.strftime("%Y-%m")), class: "button-secondary" %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <% if @events.any? %>
+    <section class="record-list inset-panel" aria-label="Meetings">
+      <% @events.each do |event| %>
+        <% linked_items = event.event_items.select(&:matter) %>
+        <% attachment_count = linked_items.sum { |item| item.matter.attachments.size } %>
+        <article class="record-row">
+          <div>
+            <h2><%= link_to event.listing_title, public_event_path(event) %></h2>
+            <p class="record-meta">
+              <%= [event.body_name, event.location_name].compact_blank.join(" / ") %>
+            </p>
+            <% if event.event_items.any? %>
+              <div class="meeting-preview">
+                <span>Agenda items</span>
+                <ul>
+                  <% event.event_items.first(3).each do |item| %>
+                    <li>
+                      <% if item.matter %>
+                        <%= link_to item.display_name, public_matter_path(item.matter) %>
+                      <% else %>
+                        <%= item.display_name %>
+                      <% end %>
+                      <% if item.title.present? && item.title != item.display_name %>
+                        <span><%= item.title %></span>
+                      <% end %>
+                    </li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+          </div>
+          <dl class="record-facts">
+            <div>
+              <dt>Date</dt>
+              <dd><%= event.event_date %></dd>
+            </div>
+            <div>
+              <dt>Agenda</dt>
+              <dd><%= event.agenda_status_name.presence || "Unknown" %></dd>
+            </div>
+            <div>
+              <dt>Minutes</dt>
+              <dd><%= event.minutes_status_name.presence || "Unknown" %></dd>
+            </div>
+            <div>
+              <dt>Linked matters</dt>
+              <dd><%= linked_items.size %></dd>
+            </div>
+            <div>
+              <dt>Attachments</dt>
+              <dd><%= attachment_count %></dd>
+            </div>
+          </dl>
+        </article>
+      <% end %>
+    </section>
+  <% elsif @query.present? || @body_name.present? %>
+    <p class="empty-state inset-panel">No meetings matched the selected filters for <%= @month.strftime("%B %Y") %>.</p>
+  <% else %>
+    <p class="empty-state inset-panel">No meetings have been ingested for <%= @month.strftime("%B %Y") %>.</p>
+  <% end %>
+
+  <%= render "public/shared/footer" %>
+</main>
