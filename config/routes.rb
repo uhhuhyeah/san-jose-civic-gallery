@@ -12,6 +12,7 @@ Rails.application.routes.draw do
   root "public/events#index"
 
   namespace :public do
+    get "meetings", to: "meetings#index"
     resources :events, only: [ :index, :show ]
     resources :matters, only: [ :index, :show ]
   end

@@ -59,7 +59,7 @@
       <div class="mini-card">
         <span class="subtle">Current source records</span>
         <strong><%= pluralize(@stats.fetch(:meetings), "meeting") %>, <%= pluralize(@stats.fetch(:agenda_items), "agenda item") %></strong>
-        <%= link_to "View meeting calendar", "#meetings", class: "source-link" %>
+        <%= link_to "View meeting calendar", public_meetings_path, class: "source-link" %>
       </div>
       <div class="mini-card">
         <span class="subtle">Linked matters</span>

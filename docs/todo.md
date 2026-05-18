@@ -36,12 +36,7 @@
 
 ## Public navigation
 
-- Add a dedicated `/public/meetings` browser in the same spirit as
-  `/public/matters`.
-  - Product question: help residents answer "What is City Hall talking
-    about this month?" using meetings as the entry point.
-  - Initial shape: date/month navigation, body/committee filtering,
-    agenda/minutes status, linked matter counts, and clear links into
-    meeting detail and matter pages.
-  - Keep `Pulse` as the overview/dashboard. `Meetings` should become a
-    real list/search surface instead of an anchor into the Pulse page.
+- The dedicated `/public/meetings` browser is in place for month-based
+  meeting discovery.
+  - Follow-up: add richer "what changed since last sync" signals once
+    production ingestion cadence is known.

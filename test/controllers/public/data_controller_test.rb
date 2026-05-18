@@ -92,6 +92,7 @@ module Public
       assert_response :success
       assert_includes response.body, "Data Health"
       assert_includes response.body, data_path
+      assert_includes response.body, public_meetings_path
     end
   end
 end

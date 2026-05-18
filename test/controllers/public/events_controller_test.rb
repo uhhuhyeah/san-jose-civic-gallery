@@ -35,6 +35,7 @@ module Public
       get public_event_url(@event)
 
       assert_response :success
+      assert_includes response.body, public_meetings_path(month: "2026-05")
       assert_includes response.body, "Regular meeting"
       assert_includes response.body, "City Council"
       assert_includes response.body, "Public Comment"

@@ -72,6 +72,13 @@ class PublicMatterDiscoveryTest < ApplicationSystemTestCase
   test "visitor navigates from meeting to matter and sees document evidence" do
     visit root_path
 
+    within ".topbar-nav" do
+      click_on "Meetings"
+    end
+    assert_current_path public_meetings_path
+    assert_text "what City Hall is talking about this month"
+    assert_text "Regular meeting"
+
     click_on "Regular meeting"
     assert_text "Agenda Items"
     assert_text "Linked matter sync pending"
