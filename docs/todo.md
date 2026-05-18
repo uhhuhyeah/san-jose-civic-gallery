@@ -23,14 +23,13 @@
   metadata changes and can be periodically revalidated against remote
   file metadata with `documents:revalidate_attachments`.
 
-## Operational Backfill
+## Generated summaries
 
-- Document backfill will be needed once the app goes live or ingests a
-  larger historical window.
-  - Likely shape: a resumable task that finds attachments without an
-    imported source file, imports them in bounded batches, then enqueues
-    extraction/OCR for imported PDFs without current successful text.
-  - Requirements: rate limits, idempotency, progress logging, retry
-    visibility, and controls for date/body/matter-file slices.
-  - Keep this separate from request-time public UI work; backfill should
-    run as an operator workflow over the existing ingestion services.
+- Attachment summaries now have a generated-artifact foundation and a
+  local operator task.
+  - Next: run small batches against candidate models and compare quality,
+    cost, and failure modes.
+  - Then: add public UI only with explicit generated labels and source
+    provenance links.
+  - Later: compose matter-level summaries from official matter/event
+    fields plus generated attachment summaries.

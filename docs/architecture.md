@@ -85,6 +85,12 @@ file with `HEAD`. When ETag, Last-Modified, or Content-Length indicate a
 change, the app re-imports the file through the same safe downloader and
 refreshes checksum metadata.
 
+Generated attachment summaries are stored as separate `Generated::Artifact`
+rows. Each artifact records its target, source extracted-text artifact,
+model identifier, prompt version, input digest, generated content, and
+status. This lets the app compare providers or models without changing
+official or extracted records.
+
 The Legistar API client (`Legistar::Client`) has its own bounded
 timeouts and a `User-Agent` header that identifies the app and a
 contact email, so Legistar can route concerns to the maintainer.

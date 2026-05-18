@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_17_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_18_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -192,6 +192,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_17_120000) do
     t.index "to_tsvector('english'::regconfig, COALESCE(content, ''::text))", name: "idx_document_extracted_texts_content_search", where: "((status)::text = 'ok'::text)", using: :gin
     t.index ["civic_matter_attachment_id", "created_at"], name: "idx_document_extracted_texts_attachment_history"
     t.index ["civic_matter_attachment_id"], name: "index_document_extracted_texts_on_civic_matter_attachment_id"
+  end
+
+  create_table "generated_artifacts", force: :cascade do |t|
+    t.jsonb "content", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.datetime "generated_at"
+    t.jsonb "input_metadata", default: {}, null: false
+    t.string "input_sha256", null: false
+    t.string "kind", null: false
+    t.string "model_identifier", null: false
+    t.string "prompt_version", null: false
+    t.bigint "source_artifact_id"
+    t.string "source_artifact_type"
+    t.string "status", default: "pending", null: false
+    t.bigint "target_id", null: false
+    t.string "target_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["source_artifact_type", "source_artifact_id"], name: "idx_generated_artifacts_source"
+    t.index ["target_type", "target_id", "kind", "model_identifier", "prompt_version", "input_sha256"], name: "idx_generated_artifacts_idempotency", unique: true
+    t.index ["target_type", "target_id"], name: "idx_generated_artifacts_target"
   end
 
   create_table "ingestion_source_snapshots", force: :cascade do |t|

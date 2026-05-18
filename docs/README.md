@@ -14,6 +14,8 @@ This repository is intentionally documented in a compact way so contributors and
   imported attachment files against remote source metadata
 - `event-window-sync.md`: bounded event sync and missing-event
   reconciliation workflow
+- `generated-summaries.md`: operator workflow for creating generated
+  attachment summaries from extracted text
 
 ## Documentation Principles
 
