@@ -14,13 +14,22 @@ export GENERATED_SUMMARY_API_BASE=https://api.openai.com/v1
 export GENERATED_SUMMARY_MODEL=gpt-4o-mini
 ```
 
-For an OpenRouter-style endpoint, point the same client at that API
-base and model name:
+For an OpenRouter-style endpoint, keep the application setting name
+provider-neutral: put the active provider key in
+`GENERATED_SUMMARY_API_KEY`, then point the same client at that API base
+and model name:
 
 ```bash
+export GENERATED_SUMMARY_API_KEY=...
 export GENERATED_SUMMARY_API_BASE=https://openrouter.ai/api/v1
-export GENERATED_SUMMARY_MODEL=provider/model-name
+export GENERATED_SUMMARY_MODEL=openai/gpt-4o-mini
 ```
+
+Use direct OpenAI by default for fewer routing variables. Use
+OpenRouter when provider-level spend caps, model comparison, or easier
+fallback testing are more important than minimizing provider layers.
+Generated artifacts record `model_identifier`, prompt version, input
+digest, usage metadata, and status either way.
 
 Optional controls:
 
@@ -127,3 +136,87 @@ Generated summary content may become an additional search signal later,
 especially via tags/topics derived from generated artifacts. Keep that
 separate from official-record search and label it as generated-derived
 ranking or filtering.
+
+## Local model evaluation
+
+Use `script/evaluate_generated_summaries` to compare model output
+without writing `Generated::Artifact` rows. The script loads `.env.local`,
+uses the same attachment summary prompt, and writes JSON and Markdown
+reports to `tmp/generated_summary_evals/`.
+
+Dry-run the selected attachments without calling a model:
+
+```bash
+LIMIT=5 script/evaluate_generated_summaries
+```
+
+Call the configured model:
+
+```bash
+RUN=true LIMIT=3 EVAL_MODEL=openai/gpt-4o-mini script/evaluate_generated_summaries
+```
+
+For OpenRouter, set `OPENROUTER_API_KEY` in `.env.local` and pass an
+OpenRouter model id with `EVAL_MODEL`. When `EVAL_MODEL` and
+`OPENROUTER_API_KEY` are both present, the script uses OpenRouter even
+if `.env.local` also contains `GENERATED_SUMMARY_API_KEY`. You can also
+set `EVAL_PROVIDER=openrouter` explicitly. The script defaults the API
+base to `https://openrouter.ai/api/v1` for OpenRouter runs.
+
+Useful controls:
+
+- `ATTACHMENT_IDS=1,2,3`: evaluate specific attachments
+- `FORCE=true`: include attachments that already have successful
+  summaries for the selected model and prompt
+- `EVAL_MAX_INPUT_CHARS=18000`: override prompt truncation
+- `EVAL_TIMEOUT_SECONDS=60`: override request timeout
+- `EVAL_INPUT_USD_PER_1M` and `EVAL_OUTPUT_USD_PER_1M`: optionally
+  estimate cost from returned token usage
+
+### Evaluation notes: 2026-05-18
+
+We ran a one-document OpenRouter evaluation against attachment `23`
+(`26-578`, First Amendment to the Brown Marketing Strategies/CENTRIC
+consultant agreement). Full JSON and Markdown reports were written under
+`tmp/generated_summary_evals/` and are intentionally not committed.
+
+Models tested:
+
+- `openai/gpt-4o-mini`
+- `openai/gpt-4o`
+- `deepseek/deepseek-chat-v3.1`
+- `deepseek/deepseek-v4-flash`
+- `qwen/qwen3-235b-a22b-2507`
+- `google/gemini-3.1-flash-lite`
+- `moonshotai/kimi-k2.6`
+
+Outcome:
+
+- Keep `openai/gpt-4o-mini` as the default baseline for now. It
+  produced clean JSON, correctly handled draft status, and was cheap
+  enough for expected summary batches.
+- `deepseek/deepseek-chat-v3.1` produced a strong summary with useful
+  limitations, but was slower and cost roughly twice the tested
+  `gpt-4o-mini` run.
+- `deepseek/deepseek-v4-flash` was cheaper than `gpt-4o-mini` and
+  detailed, but its summary did not explicitly say the document appeared
+  to be a draft even though `document_status` was `draft`. Keep it as a
+  candidate for broader testing, not the default.
+- `google/gemini-3.1-flash-lite` was fast and clean but produced a
+  thinner summary.
+- `openai/gpt-4o` was much more expensive without a clear quality gain
+  on this sample.
+- `moonshotai/kimi-k2.6` produced the most detailed output, but was too
+  slow and expensive for default batch use.
+- `qwen/qwen3-235b-a22b-2507` failed during this run because the
+  endpoint returned malformed JSON.
+
+Decision:
+
+- Keep production defaulted to direct OpenAI `gpt-4o-mini` for fewer
+  provider-routing variables.
+- Keep the production client provider-neutral through
+  `GENERATED_SUMMARY_API_BASE`, `GENERATED_SUMMARY_API_KEY`, and
+  `GENERATED_SUMMARY_MODEL`.
+- Use OpenRouter primarily for local model evaluation and optional future
+  fallback testing.

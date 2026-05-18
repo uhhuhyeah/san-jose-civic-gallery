@@ -1,0 +1,331 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative "../config/environment"
+require "fileutils"
+require "json"
+
+class GeneratedSummaryEvaluator
+  DEFAULT_LIMIT = 3
+  OPENROUTER_API_BASE = "https://openrouter.ai/api/v1"
+  OUTPUT_DIR = Rails.root.join("tmp/generated_summary_evals")
+
+  def self.call
+    new.call
+  end
+
+  def initialize
+    load_dotenv_local
+    @limit = positive_integer_env("LIMIT", DEFAULT_LIMIT)
+    @run = ENV.fetch("RUN", "false") == "true"
+    @force = ENV.fetch("FORCE", "false") == "true"
+    @attachment_ids = parse_ids(ENV["ATTACHMENT_IDS"])
+    @started_at = Time.current
+  end
+
+  def call
+    validate_configuration!
+    FileUtils.mkdir_p(OUTPUT_DIR)
+
+    rows = candidates.map { |attachment| evaluate_attachment(attachment) }
+    report = build_report(rows)
+    write_report(report)
+    print_summary(report)
+  end
+
+  private
+
+  attr_reader :limit, :run, :force, :attachment_ids, :started_at
+
+  def load_dotenv_local
+    path = Rails.root.join(".env.local")
+    return unless path.file?
+
+    path.each_line do |line|
+      stripped = line.strip
+      next if stripped.blank? || stripped.start_with?("#")
+
+      key, value = stripped.split("=", 2)
+      next if key.blank? || value.nil? || ENV.key?(key)
+
+      ENV[key] = value.gsub(/\A['"]|['"]\z/, "")
+    end
+  end
+
+  def validate_configuration!
+    return unless run
+
+    raise "Set OPENROUTER_API_KEY, EVAL_API_KEY, or GENERATED_SUMMARY_API_KEY before RUN=true" if api_key.blank?
+
+    if using_openrouter? && model_name.blank?
+      raise "Set EVAL_MODEL or GENERATED_SUMMARY_MODEL to an OpenRouter model id, for example openai/gpt-4o-mini"
+    end
+  end
+
+  def candidates
+    scope = Civic::MatterAttachment
+      .joins(:extracted_texts)
+      .merge(Documents::ExtractedText.successful.with_content)
+      .includes(:matter, :extracted_texts)
+      .distinct
+      .order(:id)
+
+    scope = scope.where(id: attachment_ids) if attachment_ids.any?
+    scope = scope.where.not(id: already_succeeded_target_ids) unless force
+    scope.limit(limit).to_a
+  end
+
+  def evaluate_attachment(attachment)
+    extracted_text = attachment.extracted_texts.successful.with_content.recent_first.first
+    prompt = Generated::SummarizeMatterAttachment::PROMPT.build(
+      matter_attachment: attachment,
+      extracted_text:,
+      max_input_chars: max_input_chars
+    )
+
+    row = base_row(attachment, extracted_text, prompt)
+    return row unless run
+
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    response = client.call(system_prompt: prompt[:system_prompt], user_prompt: prompt[:user_prompt])
+    elapsed_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
+    row.merge(
+      status: "succeeded",
+      elapsed_ms:,
+      content: response.content,
+      usage_metadata: response.usage_metadata,
+      estimated_cost_usd: estimated_cost(response.usage_metadata)
+    )
+  rescue StandardError => error
+    row.merge(
+      status: "failed",
+      error_class: error.class.name,
+      error_message: error.message
+    )
+  end
+
+  def base_row(attachment, extracted_text, prompt)
+    {
+      attachment_id: attachment.id,
+      matter_file: attachment.matter.matter_file,
+      matter_title: attachment.matter.title.presence || attachment.matter.name,
+      attachment_name: attachment.name,
+      model_identifier: model_name,
+      prompt_version: Generated::SummarizeMatterAttachment::PROMPT::VERSION,
+      source_artifact_id: extracted_text.id,
+      extractor_name: extracted_text.extractor_name,
+      extracted_character_count: extracted_text.character_count,
+      sent_character_count: prompt[:sent_character_count],
+      sent_content_sha256: prompt[:sent_content_sha256],
+      truncated: prompt[:truncated],
+      status: run ? "pending" : "dry_run"
+    }
+  end
+
+  def client
+    @client ||= Generated::SummaryClient.new(
+      api_key:,
+      api_base:,
+      model_name:,
+      timeout_seconds: timeout_seconds,
+      max_input_chars:
+    )
+  end
+
+  def build_report(rows)
+    {
+      generated_at: started_at.iso8601,
+      run:,
+      force:,
+      limit:,
+      attachment_ids:,
+      api_base:,
+      model_identifier: model_name,
+      prompt_version: Generated::SummarizeMatterAttachment::PROMPT::VERSION,
+      max_input_chars:,
+      pricing: pricing,
+      rows:
+    }
+  end
+
+  def write_report(report)
+    basename = "#{started_at.strftime('%Y%m%d-%H%M%S')}-#{safe_filename(model_name)}"
+    json_path = OUTPUT_DIR.join("#{basename}.json")
+    markdown_path = OUTPUT_DIR.join("#{basename}.md")
+
+    json_path.write(JSON.pretty_generate(report))
+    markdown_path.write(markdown_report(report))
+
+    @json_path = json_path
+    @markdown_path = markdown_path
+  end
+
+  def markdown_report(report)
+    lines = [
+      "# Generated Summary Evaluation",
+      "",
+      "- Generated at: #{report.fetch(:generated_at)}",
+      "- Run mode: #{report.fetch(:run) ? 'model calls enabled' : 'dry run'}",
+      "- Model: #{report.fetch(:model_identifier)}",
+      "- API base: #{report.fetch(:api_base)}",
+      "- Prompt: #{report.fetch(:prompt_version)}",
+      "- Max input chars: #{report.fetch(:max_input_chars)}",
+      ""
+    ]
+
+    report.fetch(:rows).each do |row|
+      lines.concat(markdown_row(row))
+    end
+
+    lines.join("\n")
+  end
+
+  def markdown_row(row)
+    lines = [
+      "## Attachment #{row.fetch(:attachment_id)}: #{row.fetch(:attachment_name)}",
+      "",
+      "- Matter: #{row.fetch(:matter_file)} #{row.fetch(:matter_title)}",
+      "- Status: #{row.fetch(:status)}",
+      "- Sent characters: #{row.fetch(:sent_character_count)}#{row.fetch(:truncated) ? ' (truncated)' : ''}"
+    ]
+
+    if row[:status] == "succeeded"
+      content = row.fetch(:content)
+      lines.concat([
+        "- Elapsed: #{row.fetch(:elapsed_ms)} ms",
+        "- Usage: #{row.fetch(:usage_metadata)}",
+        "- Estimated cost: #{row.fetch(:estimated_cost_usd).inspect}",
+        "",
+        "Summary:",
+        "",
+        content.fetch("summary", ""),
+        "",
+        "Key points:",
+        *Array(content["key_points"]).map { |point| "- #{point}" },
+        "",
+        "Limitations:",
+        *Array(content["limitations"]).map { |limitation| "- #{limitation}" },
+        "",
+        "Review rubric:",
+        "",
+        "- [ ] Factual claims are supported by source text",
+        "- [ ] Draft/final/unknown status looks correct",
+        "- [ ] Summary helps decide whether to inspect the source",
+        "- [ ] Limitations are honest about sparse or truncated text",
+        "- [ ] No obvious hallucinated dates, votes, amounts, parties, or outcomes"
+      ])
+    elsif row[:status] == "failed"
+      lines.concat([
+        "- Error: #{row.fetch(:error_class)}: #{row.fetch(:error_message)}"
+      ])
+    end
+
+    lines << ""
+    lines
+  end
+
+  def print_summary(report)
+    counts = report.fetch(:rows).each_with_object(Hash.new(0)) do |row, grouped|
+      grouped[row.fetch(:status)] += 1
+    end
+    puts "Generated summary evaluation #{run ? 'completed' : 'dry run'}"
+    puts "Model: #{model_name}"
+    puts "Prompt: #{Generated::SummarizeMatterAttachment::PROMPT::VERSION}"
+    puts "Rows: #{report.fetch(:rows).size}"
+    counts.each { |status, count| puts "#{status}: #{count}" }
+    puts "JSON: #{@json_path}"
+    puts "Markdown: #{@markdown_path}"
+  end
+
+  def already_succeeded_target_ids
+    Generated::Artifact
+      .where(
+        target_type: "Civic::MatterAttachment",
+        kind: Generated::SummarizeMatterAttachment::KIND,
+        model_identifier: model_name,
+        prompt_version: Generated::SummarizeMatterAttachment::PROMPT::VERSION,
+        status: "succeeded"
+      )
+      .select(:target_id)
+  end
+
+  def api_key
+    ENV["EVAL_API_KEY"].presence ||
+      (using_openrouter? ? ENV["OPENROUTER_API_KEY"].presence : ENV["GENERATED_SUMMARY_API_KEY"].presence) ||
+      ENV["OPENROUTER_API_KEY"].presence
+  end
+
+  def api_base
+    ENV["EVAL_API_BASE"].presence ||
+      (using_openrouter? ? OPENROUTER_API_BASE : ENV["GENERATED_SUMMARY_API_BASE"].presence) ||
+      Generated::SummaryClient::DEFAULT_API_BASE
+  end
+
+  def model_name
+    @model_name ||= ENV["EVAL_MODEL"].presence || ENV["GENERATED_SUMMARY_MODEL"].presence || (using_openrouter? ? nil : Generated::SummaryClient::DEFAULT_MODEL)
+  end
+
+  def using_openrouter?
+    ENV["EVAL_PROVIDER"] == "openrouter" ||
+      (
+        ENV["OPENROUTER_API_KEY"].present? &&
+        ENV["EVAL_API_KEY"].blank? &&
+        (ENV["GENERATED_SUMMARY_API_KEY"].blank? || ENV["EVAL_MODEL"].present?)
+      )
+  end
+
+  def max_input_chars
+    positive_integer_env("EVAL_MAX_INPUT_CHARS", ENV.fetch("GENERATED_SUMMARY_MAX_INPUT_CHARS", Generated::Prompts::AttachmentSummaryV1::DEFAULT_MAX_INPUT_CHARS).to_i)
+  end
+
+  def timeout_seconds
+    positive_integer_env("EVAL_TIMEOUT_SECONDS", ENV.fetch("GENERATED_SUMMARY_TIMEOUT_SECONDS", Generated::SummaryClient::DEFAULT_TIMEOUT_SECONDS).to_i)
+  end
+
+  def estimated_cost(usage)
+    prompt_tokens = usage["prompt_tokens"].to_i
+    completion_tokens = usage["completion_tokens"].to_i
+    return usage["cost"].to_f if usage["cost"].present?
+    return nil unless input_price_per_million && output_price_per_million
+
+    ((prompt_tokens * input_price_per_million) + (completion_tokens * output_price_per_million)) / 1_000_000.0
+  end
+
+  def pricing
+    {
+      input_usd_per_1m_tokens: input_price_per_million,
+      output_usd_per_1m_tokens: output_price_per_million
+    }
+  end
+
+  def input_price_per_million
+    Float(ENV["EVAL_INPUT_USD_PER_1M"], exception: false)
+  end
+
+  def output_price_per_million
+    Float(ENV["EVAL_OUTPUT_USD_PER_1M"], exception: false)
+  end
+
+  def positive_integer_env(name, default)
+    value = ENV[name]
+    return default if value.blank?
+
+    parsed = Integer(value, exception: false)
+    raise "#{name} must be a positive integer" unless parsed&.positive?
+
+    parsed
+  end
+
+  def parse_ids(value)
+    value.to_s.split(",").filter_map do |raw|
+      parsed = Integer(raw.strip, exception: false)
+      parsed if parsed&.positive?
+    end
+  end
+
+  def safe_filename(value)
+    value.to_s.gsub(/[^a-zA-Z0-9._-]+/, "-").delete_prefix("-").delete_suffix("-")
+  end
+end
+
+GeneratedSummaryEvaluator.call
