@@ -266,6 +266,34 @@ Important note:
 
 This table is append-only. Each extraction attempt produces a new artifact row so extractor changes and retries can be audited over time. `pdftotext` rows come from embedded PDF text; `ocrmypdf` rows come from scanned-PDF OCR fallback. This is extracted data, not official source data — keep it distinct from the civic tables.
 
+### `generated_artifacts` / `Generated::Artifact`
+
+AI-produced or heuristic generated content.
+
+Key fields:
+
+- `target_type` / `target_id` — the official or app record being
+  described, initially `Civic::MatterAttachment`
+- `source_artifact_type` / `source_artifact_id` — the extracted artifact
+  used as input, initially `Documents::ExtractedText`
+- `kind` — generated artifact type, for example `attachment_summary`
+- `status`
+- `model_identifier`
+- `prompt_version`
+- `input_sha256`
+- `content` (jsonb)
+- `input_metadata` (jsonb)
+- `generated_at`
+- `error_message`
+
+Important note:
+
+Generated artifacts are separate from both official civic records and
+extracted document artifacts. They are idempotent by target, kind, model
+identifier, prompt version, and input digest so a changed model, prompt,
+or source input can produce a new auditable artifact without overwriting
+prior results.
+
 ### `ingestion_source_snapshots` / `Ingestion::SourceSnapshot`
 
 Raw source payload preservation for provenance and debugging. **One row per distinct payload version** for a given identity, not one row per fetch.
@@ -360,12 +388,14 @@ Examples:
 
 ### Generated
 
-Reserved for `Generated::*`
+Stored in `Generated::*`
 
 Meaning:
 
 - AI-produced or heuristic interpretation
 - useful, but never the official record
+- traceable to the source artifact and model configuration that produced
+  it
 
 Examples:
 

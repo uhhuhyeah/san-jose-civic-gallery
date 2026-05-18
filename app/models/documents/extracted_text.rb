@@ -3,6 +3,7 @@ module Documents
     self.table_name = "document_extracted_texts"
 
     belongs_to :matter_attachment, class_name: "Civic::MatterAttachment", foreign_key: :civic_matter_attachment_id, inverse_of: :extracted_texts
+    has_many :generated_artifacts, as: :source_artifact, class_name: "Generated::Artifact", dependent: :nullify
     scope :recent_first, -> { order(created_at: :desc, id: :desc) }
     scope :successful, -> { where(status: "ok") }
     scope :with_content, -> { where.not(content: [ nil, "" ]) }

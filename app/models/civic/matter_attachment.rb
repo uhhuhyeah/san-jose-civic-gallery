@@ -6,6 +6,7 @@ module Civic
     belongs_to :last_source_snapshot, class_name: "Ingestion::SourceSnapshot", optional: true
     has_one_attached :source_file
     has_many :extracted_texts, -> { recent_first }, class_name: "Documents::ExtractedText", foreign_key: :civic_matter_attachment_id, inverse_of: :matter_attachment, dependent: :destroy
+    has_many :generated_artifacts, as: :target, class_name: "Generated::Artifact", dependent: :destroy
 
     validates :source_system, presence: true
     validates :legistar_matter_attachment_id, presence: true, uniqueness: { scope: :source_system }
