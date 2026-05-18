@@ -63,8 +63,8 @@ RUN=true FORCE=true LIMIT=10 bin/rails generated:summarize_attachments
 
 Each attempt writes a `Generated::Artifact` row with target, source
 artifact, model identifier, prompt version, input digest, status,
-content, and error details. This keeps provider and model experiments
-auditable.
+content, usage metadata, and error details. This keeps provider and
+model experiments auditable.
 
 ## Provenance and idempotency
 
@@ -94,7 +94,9 @@ generated summaries as assistive, surface them with explicit
 "generated" labels in UI, and prefer the underlying official records
 for anything load-bearing.
 
-**Response shape is validated, but not content quality.** The client
-rejects responses that aren't JSON or that omit the required
-`summary` / `key_points` / `limitations` keys, but does not score
+**Response shape is normalized, but not content quality.** The client
+rejects responses that aren't JSON or that omit required keys. It stores
+`summary`, `key_points`, `limitations`, and `document_status`, coercing
+`key_points` and `limitations` into arrays and normalizing
+`document_status` to `draft`, `final`, or `unknown`. It does not score
 quality. Run small batches and spot-check before scaling.

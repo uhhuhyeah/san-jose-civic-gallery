@@ -46,6 +46,7 @@ module Generated
         status: "succeeded",
         content: response.content,
         input_metadata: input_metadata(extracted_text, prompt),
+        usage_metadata: response.usage_metadata,
         generated_at: Time.current,
         error_message: nil
       )
@@ -64,6 +65,7 @@ module Generated
         status: "failed",
         content: {},
         input_metadata: prompt ? input_metadata(extracted_text, prompt) : { "reason" => "prompt_build_failed" },
+        usage_metadata: {},
         generated_at: Time.current,
         error_message: error.message
       )
@@ -92,6 +94,7 @@ module Generated
         status: "failed",
         content: {},
         input_metadata: { "reason" => "missing_source_text" },
+        usage_metadata: {},
         generated_at: Time.current,
         error_message: "No successful extracted text is available for this attachment."
       )

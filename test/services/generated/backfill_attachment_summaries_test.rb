@@ -85,8 +85,10 @@ module Generated
           content: {
             "summary" => "Summary from fake model",
             "key_points" => [],
-            "limitations" => []
-          }
+            "limitations" => [],
+            "document_status" => "unknown"
+          },
+          usage_metadata: {}
         )
       end
     end

@@ -283,6 +283,7 @@ Key fields:
 - `input_sha256`
 - `content` (jsonb)
 - `input_metadata` (jsonb)
+- `usage_metadata` (jsonb)
 - `generated_at`
 - `error_message`
 

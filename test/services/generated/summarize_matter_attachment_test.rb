@@ -25,9 +25,11 @@ module Generated
       assert_equal extracted_text, result.artifact.source_artifact
       assert_equal "attachment_summary", result.artifact.kind
       assert_equal "test-model", result.artifact.model_identifier
-      assert_equal "attachment_summary_v1", result.artifact.prompt_version
+      assert_equal "attachment_summary_v2", result.artifact.prompt_version
       assert_equal "The agreement funds library outreach.", @attachment.extracted_texts.first.content
       assert_equal "Summary from fake model", result.artifact.content.fetch("summary")
+      assert_equal "draft", result.artifact.content.fetch("document_status")
+      assert_equal({ "prompt_tokens" => 100, "completion_tokens" => 30, "total_tokens" => 130 }, result.artifact.usage_metadata)
     end
 
     test "does not generate again for the same input, prompt, and model" do
@@ -162,8 +164,10 @@ module Generated
           content: {
             "summary" => "Summary from fake model",
             "key_points" => [ "One point" ],
-            "limitations" => []
-          }
+            "limitations" => [],
+            "document_status" => "draft"
+          },
+          usage_metadata: { "prompt_tokens" => 100, "completion_tokens" => 30, "total_tokens" => 130 }
         )
       end
     end
