@@ -1,6 +1,6 @@
 # App Context
 
-This directory is the Rails 8 application for San Jose Civic Pulse.
+This directory is the Rails 8 application for San Jose Civic Gallery.
 
 ## First-Read Guidance
 

@@ -2,8 +2,8 @@
 # check=error=true
 
 # This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
-# docker build -t san_jose_civic_pulse .
-# docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name san_jose_civic_pulse san_jose_civic_pulse
+# docker build -t san_jose_civic_gallery .
+# docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name san_jose_civic_gallery san_jose_civic_gallery
 
 # For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
 

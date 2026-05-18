@@ -1,6 +1,6 @@
 # Architecture Summary
 
-San Jose Civic Pulse is being built as a single Rails 8 application with a clear separation between official records, extracted artifacts, and generated artifacts.
+San Jose Civic Gallery is being built as a single Rails 8 application with a clear separation between official records, extracted artifacts, and generated artifacts.
 
 ## Current Direction
 
