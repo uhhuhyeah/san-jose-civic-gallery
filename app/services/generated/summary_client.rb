@@ -16,10 +16,11 @@ module Generated
   #
   # The returned Response must expose:
   #
-  #   - content    -> Hash with the keys named in REQUIRED_CONTENT_KEYS
-  #   - model_name -> String matching the calling client's model_name
+  #   - content        -> Hash with the keys named in REQUIRED_CONTENT_KEYS
+  #   - model_name     -> String matching the calling client's model_name
+  #   - usage_metadata -> Hash of provider usage fields, when returned
   class SummaryClient
-    Response = Data.define(:content, :model_name)
+    Response = Data.define(:content, :model_name, :usage_metadata)
 
     class ConfigurationError < StandardError; end
     class RequestError < StandardError; end
@@ -27,7 +28,8 @@ module Generated
     DEFAULT_API_BASE = "https://api.openai.com/v1"
     DEFAULT_MODEL = "gpt-4o-mini"
     DEFAULT_TIMEOUT_SECONDS = 30
-    REQUIRED_CONTENT_KEYS = %w[summary key_points limitations].freeze
+    REQUIRED_CONTENT_KEYS = %w[summary key_points limitations document_status].freeze
+    DOCUMENT_STATUSES = %w[draft final unknown].freeze
 
     attr_reader :model_name, :max_input_chars
 
@@ -51,9 +53,9 @@ module Generated
       response = post_chat_completion(system_prompt:, user_prompt:)
       raw_content = response.dig("choices", 0, "message", "content").to_s
       parsed_content = JSON.parse(raw_content)
-      validate_content_shape!(parsed_content)
+      normalized_content = normalize_content_shape(parsed_content)
 
-      Response.new(content: parsed_content, model_name:)
+      Response.new(content: normalized_content, model_name:, usage_metadata: response.fetch("usage", {}))
     rescue JSON::ParserError => error
       raise RequestError, "Summary model returned invalid JSON: #{error.message}"
     end
@@ -62,15 +64,34 @@ module Generated
 
     attr_reader :api_key, :api_base, :timeout_seconds
 
-    def validate_content_shape!(parsed_content)
+    def normalize_content_shape(parsed_content)
       unless parsed_content.is_a?(Hash)
         raise RequestError, "Summary model returned non-object JSON; expected an object with keys #{REQUIRED_CONTENT_KEYS.join(', ')}"
       end
 
       missing = REQUIRED_CONTENT_KEYS - parsed_content.keys
-      return if missing.empty?
+      unless missing.empty?
+        raise RequestError, "Summary model response is missing required keys: #{missing.join(', ')}"
+      end
 
-      raise RequestError, "Summary model response is missing required keys: #{missing.join(', ')}"
+      normalized = parsed_content.slice(*REQUIRED_CONTENT_KEYS)
+      normalized["summary"] = normalized["summary"].to_s.strip
+      normalized["key_points"] = normalize_string_array(normalized["key_points"])
+      normalized["limitations"] = normalize_string_array(normalized["limitations"])
+      normalized["document_status"] = normalize_document_status(normalized["document_status"])
+      normalized
+    end
+
+    def normalize_string_array(value)
+      Array(value)
+        .flatten
+        .map { |item| item.to_s.strip }
+        .reject(&:blank?)
+    end
+
+    def normalize_document_status(value)
+      status = value.to_s.downcase.strip
+      DOCUMENT_STATUSES.include?(status) ? status : "unknown"
     end
 
     def post_chat_completion(system_prompt:, user_prompt:)

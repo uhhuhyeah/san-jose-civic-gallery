@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_18_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_18_123000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -210,6 +210,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_18_120000) do
     t.bigint "target_id", null: false
     t.string "target_type", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "usage_metadata", default: {}, null: false
     t.index ["source_artifact_type", "source_artifact_id"], name: "idx_generated_artifacts_source"
     t.index ["target_type", "target_id", "kind", "model_identifier", "prompt_version", "input_sha256"], name: "idx_generated_artifacts_idempotency", unique: true
     t.index ["target_type", "target_id"], name: "idx_generated_artifacts_target"

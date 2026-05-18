@@ -29,9 +29,10 @@ module Generated
         kind: "attachment_summary",
         status: "succeeded",
         model_identifier: "openai/gpt-4o-mini",
-        prompt_version: "attachment_summary_v1",
+        prompt_version: "attachment_summary_v2",
         input_sha256: "abc123",
-        content: { "summary" => "Short summary" }
+        content: { "summary" => "Short summary", "key_points" => [], "limitations" => [], "document_status" => "unknown" },
+        usage_metadata: { "total_tokens" => 10 }
       )
 
       assert_equal @attachment, artifact.target
