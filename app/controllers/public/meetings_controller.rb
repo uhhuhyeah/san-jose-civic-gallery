@@ -4,7 +4,7 @@ module Public
       @month = parsed_month
       @query = params[:q].to_s.strip
       @body_name = params[:body_name].to_s.strip
-      @body_options = Civic::Event.current_from_source.where.not(body_name: [ nil, "" ]).distinct.order(:body_name).pluck(:body_name)
+      @body_options = cached_body_options
       @year_options = year_options
 
       @events = filtered_events
@@ -59,6 +59,12 @@ module Public
       years = Civic::Event.current_from_source.where.not(event_date: nil).pluck(Arel.sql("DISTINCT EXTRACT(YEAR FROM event_date)::integer"))
       years << @month.year
       years.compact.uniq.sort.reverse
+    end
+
+    def cached_body_options
+      Rails.cache.fetch("public/meetings/body_options/v1", expires_in: 5.minutes) do
+        Civic::Event.current_from_source.where.not(body_name: [ nil, "" ]).distinct.order(:body_name).pluck(:body_name)
+      end
     end
   end
 end

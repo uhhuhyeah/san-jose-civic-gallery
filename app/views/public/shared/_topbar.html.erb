@@ -13,7 +13,7 @@
     <%= form.label :q, "Search agendas, matters, and staff reports", class: "sr-only", for: "global-matter-search" %>
     <%= form.search_field :q,
       id: "global-matter-search",
-      value: params[:q],
+      value: (local_assigns[:active] == :matters ? params[:q] : nil),
       placeholder: "Search agendas, matters, and staff reports",
       autocomplete: "off" %>
     <%= form.submit "Search", class: "topbar-search-submit" %>

@@ -88,5 +88,21 @@ module Public
       assert_response :success
       assert_includes response.body, "No meetings have been ingested for July 2026"
     end
+
+    test "shows count of remaining agenda items when more than three" do
+      5.times do |i|
+        @may_event.event_items.create!(
+          legistar_event_item_id: 200000 + i,
+          agenda_sequence: 10 + i,
+          agenda_number: "4.#{i}",
+          title: "Additional agenda item #{i}"
+        )
+      end
+
+      get public_meetings_url(month: "2026-05")
+
+      assert_response :success
+      assert_includes response.body, "+3 more agenda items"
+    end
   end
 end

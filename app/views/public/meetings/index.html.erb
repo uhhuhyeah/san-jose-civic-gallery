@@ -80,6 +80,10 @@
                     </li>
                   <% end %>
                 </ul>
+                <% remaining = event.event_items.size - 3 %>
+                <% if remaining.positive? %>
+                  <%= link_to "+#{pluralize(remaining, "more agenda item")}", public_event_path(event), class: "meeting-preview-more" %>
+                <% end %>
               </div>
             <% end %>
           </div>
