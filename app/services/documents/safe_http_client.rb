@@ -92,7 +92,7 @@ module Documents
     end
 
     def user_agent
-      ENV.fetch("LEGISTAR_USER_AGENT", "SanJoseCivicPulse/1.0 (+mail@davidamcclain.com)")
+      ENV.fetch("LEGISTAR_USER_AGENT", "SanJoseCivicGallery/1.0 (+mail@davidamcclain.com)")
     end
 
     def parse_http_time(value)

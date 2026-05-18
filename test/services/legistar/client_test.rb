@@ -33,7 +33,7 @@ module Legistar
         assert_equal true, captured_kwargs[:use_ssl]
         assert_equal 5, captured_kwargs[:open_timeout]
         assert_equal 30, captured_kwargs[:read_timeout]
-        assert_match(/SanJoseCivicPulse/, captured_request["User-Agent"])
+        assert_match(/SanJoseCivicGallery/, captured_request["User-Agent"])
         assert_equal "application/json", captured_request["Accept"]
         assert_equal 200, result[:status]
         assert_equal [ { "EventId" => 1 } ], result[:payload]

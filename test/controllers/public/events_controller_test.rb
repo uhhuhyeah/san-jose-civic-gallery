@@ -24,8 +24,8 @@ module Public
       get root_url
 
       assert_response :success
-      assert_includes response.body, "San Jose Civic Pulse"
-      assert_includes response.body, "Welcome to San Jose Civic Pulse"
+      assert_includes response.body, "San Jose Civic Gallery"
+      assert_includes response.body, "Welcome to San Jose Civic Gallery"
       assert_includes response.body, "Regular meeting"
       assert_includes response.body, "Agenda: Final"
       assert_includes response.body, "Minutes: Draft"

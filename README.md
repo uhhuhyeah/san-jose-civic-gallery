@@ -1,6 +1,6 @@
-# San Jose Civic Pulse Rails App
+# San Jose Civic Gallery Rails App
 
-San Jose Civic Pulse is a source-first civic information app for making San Jose City Hall materials easier to discover, understand, and verify.
+San Jose Civic Gallery is a source-first civic information app for making San Jose City Hall materials easier to discover, understand, and verify.
 
 This repository contains the Rails 8 application. It is being built as public-interest, open-source software with a strong emphasis on provenance, source-linking, and conservative AI-assisted summaries.
 
@@ -47,7 +47,7 @@ Local database defaults:
 - port: `55432`
 - user: `postgres`
 - password: `postgres`
-- database: `san_jose_civic_pulse_development`
+- database: `san_jose_civic_gallery_development`
 
 Override them with `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and `TEST_DB_NAME` if needed.
 

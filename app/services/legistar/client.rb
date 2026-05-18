@@ -9,7 +9,7 @@ module Legistar
     DEFAULT_SOURCE_SYSTEM = "legistar.sanjose"
     DEFAULT_OPEN_TIMEOUT = 5
     DEFAULT_READ_TIMEOUT = 30
-    DEFAULT_USER_AGENT = "SanJoseCivicPulse/1.0 (+mail@davidamcclain.com)"
+    DEFAULT_USER_AGENT = "SanJoseCivicGallery/1.0 (+mail@davidamcclain.com)"
 
     attr_reader :source_system
 

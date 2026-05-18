@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for contributing to San Jose Civic Pulse.
+Thanks for contributing to San Jose Civic Gallery.
 
 ## Project Posture
 
