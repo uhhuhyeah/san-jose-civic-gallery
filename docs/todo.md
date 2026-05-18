@@ -27,8 +27,9 @@
 
 - Attachment summaries now have a generated-artifact foundation and a
   local operator task.
-  - Next: run small batches against candidate models and compare quality,
-    cost, and failure modes.
+  - Next: run small batches with `script/evaluate_generated_summaries`
+    against candidate models and compare quality, cost, and failure
+    modes from local `tmp/generated_summary_evals/` reports.
   - Then: add public UI only with explicit generated labels and source
     provenance links.
   - Later: compose matter-level summaries from official matter/event
