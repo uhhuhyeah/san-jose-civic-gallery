@@ -138,6 +138,40 @@ module DataHealth
       assert_equal 1, snapshot.summarized_count
     end
 
+    test "reliability numerators exclude attachments without source links" do
+      matter = Civic::Matter.create!(legistar_matter_id: 1, matter_file: "26-001")
+      with_link = matter.all_attachments.create!(
+        legistar_matter_attachment_id: 1,
+        name: "Linked PDF",
+        hyperlink: "https://sanjose.legistar.com/View.ashx?ID=1"
+      )
+      with_link.source_file.attach(io: StringIO.new("%PDF-1.4 fake"), filename: "a.pdf", content_type: "application/pdf")
+      with_link.extracted_texts.create!(extractor_name: "pdftotext", status: "ok", content: "body", character_count: 4)
+
+      without_link = matter.all_attachments.create!(
+        legistar_matter_attachment_id: 2,
+        name: "Local PDF",
+        hyperlink: nil
+      )
+      without_link.source_file.attach(io: StringIO.new("%PDF-1.4 fake"), filename: "b.pdf", content_type: "application/pdf")
+      without_link.extracted_texts.create!(extractor_name: "pdftotext", status: "ok", content: "body", character_count: 4)
+      without_link.generated_artifacts.create!(
+        kind: Generated::SummarizeMatterAttachment::KIND,
+        status: "succeeded",
+        model_identifier: "test-model",
+        prompt_version: Generated::SummarizeMatterAttachment::PROMPT::VERSION,
+        input_sha256: "abc",
+        content: { "summary" => "ok" }
+      )
+
+      snapshot = Snapshot.new
+      assert_equal 1, snapshot.import_eligible_count
+      assert_equal 1, snapshot.pdf_imported_count
+      assert_equal 1, snapshot.pdf_extracted_count
+      assert_equal 1, snapshot.summarizable_count
+      assert_equal 0, snapshot.summarized_count
+    end
+
     test "freshness_level is :unknown with no sync, then green/amber/red at boundaries" do
       assert_equal :unknown, Snapshot.new.freshness_level
 
@@ -191,11 +225,20 @@ module DataHealth
     test "cache_key changes when underlying tables are written" do
       first = Snapshot.new.cache_key
 
-      sleep_skew = 1
-      travel_to(Time.current + sleep_skew.seconds) do
+      travel_to(Time.current.change(usec: 123_456)) do
         Civic::Matter.create!(legistar_matter_id: 1, matter_file: "26-001")
         assert_not_equal first, Snapshot.new.cache_key
       end
+    end
+
+    test "cache_key preserves sub-second timestamp changes" do
+      matter = Civic::Matter.create!(legistar_matter_id: 1, matter_file: "26-001")
+      matter.update_column(:updated_at, Time.zone.parse("2026-05-18 12:00:00.100000"))
+      first = Snapshot.new.cache_key
+
+      matter.update_column(:updated_at, Time.zone.parse("2026-05-18 12:00:00.900000"))
+
+      assert_not_equal first, Snapshot.new.cache_key
     end
   end
 end

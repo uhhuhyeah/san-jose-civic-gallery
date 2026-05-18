@@ -116,15 +116,13 @@ module DataHealth
     end
 
     def summarizable_count
-      @summarizable_count ||= Civic::MatterAttachment
-        .current_from_source
+      @summarizable_count ||= attachments_with_hyperlink
         .where(id: successful_text_target_ids)
         .count
     end
 
     def summarized_count
-      @summarized_count ||= Civic::MatterAttachment
-        .current_from_source
+      @summarized_count ||= attachments_with_hyperlink
         .where(id: successful_text_target_ids)
         .where(id: current_summary_target_ids)
         .count
@@ -147,12 +145,12 @@ module DataHealth
     # write.
     def cache_key
       [
-        Civic::Matter.maximum(:updated_at)&.to_i,
-        Civic::Event.maximum(:updated_at)&.to_i,
-        Civic::MatterAttachment.maximum(:updated_at)&.to_i,
-        Documents::ExtractedText.maximum(:updated_at)&.to_i,
-        Generated::Artifact.maximum(:updated_at)&.to_i
-      ].compact.max || 0
+        cache_component_for(Civic::Matter),
+        cache_component_for(Civic::Event),
+        cache_component_for(Civic::MatterAttachment),
+        cache_component_for(Documents::ExtractedText),
+        cache_component_for(Generated::Artifact)
+      ].join("/")
     end
 
     private
@@ -164,8 +162,7 @@ module DataHealth
     end
 
     def imported_pdf_attachments
-      Civic::MatterAttachment
-        .current_from_source
+      attachments_with_hyperlink
         .joins(source_file_attachment: :blob)
         .where(
           "active_storage_blobs.content_type = :pdf OR lower(active_storage_blobs.filename) LIKE :ext",
@@ -190,6 +187,13 @@ module DataHealth
           status: "succeeded"
         )
         .select(:target_id)
+    end
+
+    def cache_component_for(model)
+      [
+        model.count,
+        model.maximum(:updated_at)&.utc&.iso8601(6) || "none"
+      ].join(":")
     end
   end
 end
