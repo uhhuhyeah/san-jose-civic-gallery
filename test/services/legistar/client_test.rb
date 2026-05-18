@@ -96,5 +96,41 @@ module Legistar
         Net::HTTP.define_singleton_method(:start, original_start)
       end
     end
+
+    test "builds bounded event window query with OData datetime literals" do
+      client = Client.new
+      captured_uri = nil
+      response = Net::HTTPOK.new("1.1", "200", "OK")
+      response.define_singleton_method(:body) { "[]" }
+      original_start = Net::HTTP.method(:start)
+
+      Net::HTTP.define_singleton_method(:start) do |host, port, **kwargs, &block|
+        fake_http = Object.new
+        fake_http.define_singleton_method(:request) do |request|
+          captured_uri = request.uri
+          response
+        end
+        block.call(fake_http)
+      end
+
+      result = client.events_for_window(
+        body_name: "Mayor's Office",
+        start_date: Date.new(2026, 5, 1),
+        end_date: Date.new(2026, 6, 1),
+        limit: 50,
+        skip: 100
+      )
+
+      params = Rack::Utils.parse_nested_query(captured_uri.query)
+      assert_equal 200, result[:status]
+      assert_equal "EventBodyName eq 'Mayor''s Office' and EventDate ge datetime'2026-05-01T00:00:00' and EventDate lt datetime'2026-06-01T00:00:00'",
+        params.fetch("$filter")
+      assert_equal "EventDate asc, EventId asc", params.fetch("$orderby")
+      assert_equal "50", params.fetch("$top")
+      assert_equal "100", params.fetch("$skip")
+    ensure
+      Net::HTTP.singleton_class.send(:remove_method, :start)
+      Net::HTTP.define_singleton_method(:start, original_start)
+    end
   end
 end

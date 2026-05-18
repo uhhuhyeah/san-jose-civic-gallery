@@ -30,6 +30,23 @@ module Legistar
       get("Events", params:)
     end
 
+    def events_for_window(body_name:, start_date:, end_date:, limit:, skip: 0)
+      params = {
+        "$filter" => [
+          "EventBodyName eq '#{escape_odata_string(body_name)}'",
+          "EventDate ge #{odata_datetime(start_date)}",
+          "EventDate lt #{odata_datetime(end_date)}"
+        ].join(" and "),
+        # Secondary EventId key keeps pagination stable when multiple
+        # events share the same EventDate.
+        "$orderby" => "EventDate asc, EventId asc",
+        "$top" => limit,
+        "$skip" => skip
+      }
+
+      get("Events", params:)
+    end
+
     def event_items(event_id:)
       get("Events/#{event_id}/EventItems")
     end
@@ -43,6 +60,15 @@ module Legistar
     end
 
     private
+
+    def escape_odata_string(value)
+      value.to_s.gsub("'", "''")
+    end
+
+    def odata_datetime(value)
+      date = value.is_a?(Date) ? value : Date.iso8601(value.to_s)
+      "datetime'#{date.iso8601}T00:00:00'"
+    end
 
     def get(path, params: {})
       uri = URI.join("#{base_url}/", path)

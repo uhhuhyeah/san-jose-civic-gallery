@@ -16,11 +16,6 @@
 
 ## Ingestion completeness
 
-- Event-level retraction reconciliation is not yet driven by sync.
-  `civic_events.source_present` / `source_missing_at` columns exist
-  but stay `true`, because `recent_events` is a sliding `$top` window
-  and naive reconciliation would mark every older event as missing.
-
 - Extracted text uses local `pdftotext` first and falls back to local
   `ocrmypdf` for scanned PDFs when embedded text is empty.
 
