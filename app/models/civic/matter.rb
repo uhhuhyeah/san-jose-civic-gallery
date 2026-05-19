@@ -7,6 +7,7 @@ module Civic
     has_many :event_items, class_name: "Civic::EventItem", foreign_key: :civic_matter_id, inverse_of: :matter
     has_many :all_attachments, -> { display_order }, class_name: "Civic::MatterAttachment", foreign_key: :civic_matter_id, inverse_of: :matter, dependent: :destroy
     has_many :attachments, -> { current_from_source.display_order }, class_name: "Civic::MatterAttachment", foreign_key: :civic_matter_id, inverse_of: :matter
+    has_many :themes, class_name: "Civic::MatterTheme", foreign_key: :civic_matter_id, inverse_of: :matter, dependent: :delete_all
 
     validates :source_system, presence: true
     validates :legistar_matter_id, presence: true, uniqueness: { scope: :source_system }
