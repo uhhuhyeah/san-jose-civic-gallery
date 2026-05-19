@@ -29,22 +29,11 @@ module Public
       end
 
       def event_show(event)
-        if event.association(:event_items).loaded?
-          items = event.event_items.to_a
-          matters = items.filter_map { |item| item.association(:matter).loaded? ? item.matter : nil }.uniq
-          attachments = matters.flat_map { |matter| matter.association(:attachments).loaded? ? matter.attachments.to_a : [] }.uniq
+        matter_ids = Civic::EventItem
+          .where(civic_event_id: event.id)
+          .where.not(civic_matter_id: nil)
+          .select(:civic_matter_id)
 
-          return compose(
-            "public/event-show/v1",
-            event.id,
-            timestamp_component(event.updated_at),
-            cache_component_for_records(items),
-            cache_component_for_records(matters),
-            cache_component_for_records(attachments)
-          )
-        end
-
-        matter_ids = event_matter_ids(event.id)
         compose(
           "public/event-show/v1",
           event.id,
@@ -56,27 +45,7 @@ module Public
       end
 
       def matter_show(matter)
-        if matter.association(:event_items).loaded? && matter.association(:attachments).loaded?
-          event_items = matter.event_items.to_a
-          events = event_items.filter_map { |event_item| event_item.association(:event).loaded? ? event_item.event : nil }.uniq
-          attachments = matter.attachments.to_a
-          extracted_texts = attachments.flat_map { |attachment| attachment.association(:extracted_texts).loaded? ? attachment.extracted_texts.to_a : [] }
-          generated_artifacts = attachments.flat_map { |attachment| attachment.association(:generated_artifacts).loaded? ? attachment.generated_artifacts.to_a : [] }
-
-          return compose(
-            "public/matter-show/v1",
-            matter.id,
-            timestamp_component(matter.updated_at),
-            cache_component_for_records(event_items),
-            cache_component_for_records(events),
-            cache_component_for_records(attachments),
-            cache_component_for_records(extracted_texts),
-            cache_component_for_records(generated_artifacts)
-          )
-        end
-
-        attachments = Civic::MatterAttachment.where(civic_matter_id: matter.id)
-        attachment_ids = attachments.select(:id)
+        attachment_ids = Civic::MatterAttachment.where(civic_matter_id: matter.id).select(:id)
         related_event_ids = Civic::EventItem.where(civic_matter_id: matter.id).select(:civic_event_id)
 
         compose(
@@ -85,7 +54,7 @@ module Public
           timestamp_component(matter.updated_at),
           cache_component_for(Civic::EventItem.where(civic_matter_id: matter.id)),
           cache_component_for(Civic::Event.where(id: related_event_ids)),
-          cache_component_for(attachments),
+          cache_component_for(Civic::MatterAttachment.where(civic_matter_id: matter.id)),
           cache_component_for(Documents::ExtractedText.where(civic_matter_attachment_id: attachment_ids)),
           cache_component_for(Generated::Artifact.where(target_type: "Civic::MatterAttachment", target_id: attachment_ids))
         )
@@ -102,8 +71,8 @@ module Public
         )
       end
 
-      def data
-        compose("public/data/v1", DataHealth::Snapshot.new.cache_key)
+      def data(snapshot = DataHealth::Snapshot.new)
+        compose("public/data/v1", snapshot.cache_key)
       end
 
       def matter_attachment_fragment(attachment, latest_text:, summary_artifact:)
@@ -127,19 +96,19 @@ module Public
       end
 
       def query_digest(value)
-        normalized = value.to_s.strip.downcase
-        return "blank" if normalized.blank?
-
-        Digest::SHA256.hexdigest(normalized).first(16)
+        digest_or_blank(value.to_s.strip.downcase)
       end
 
       private
 
-      def event_matter_ids(event_id)
-        Civic::EventItem
-          .where(civic_event_id: event_id)
-          .where.not(civic_matter_id: nil)
-          .select(:civic_matter_id)
+      def value_digest(value)
+        digest_or_blank(value.to_s.strip)
+      end
+
+      def digest_or_blank(normalized)
+        return "blank" if normalized.blank?
+
+        Digest::SHA256.hexdigest(normalized).first(16)
       end
 
       def cache_component_for(scope)
@@ -149,26 +118,12 @@ module Public
         ].join(":")
       end
 
-      def cache_component_for_records(records)
-        [
-          records.size,
-          timestamp_component(records.filter_map(&:updated_at).max)
-        ].join(":")
-      end
-
       def timestamp_component(timestamp)
         timestamp&.utc&.iso8601(6) || "none"
       end
 
       def compose(*parts)
         parts.join("/")
-      end
-
-      def value_digest(value)
-        normalized = value.to_s.strip
-        return "blank" if normalized.blank?
-
-        Digest::SHA256.hexdigest(normalized).first(16)
       end
     end
   end
