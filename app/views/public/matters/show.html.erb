@@ -88,6 +88,21 @@
               </p>
             </header>
 
+            <% if attachment.manually_imported? %>
+              <aside class="manual-import-notice" aria-label="Manual upload disclosure">
+                <p>
+                  <strong>This file was uploaded manually by a site admin</strong>
+                  on <%= attachment.manually_imported_at.to_date.iso8601 %>
+                  because the original source URL is not directly retrievable
+                  by our automated importer.
+                  <% if attachment.manual_import_reason.present? %>
+                    Reason given: <em><%= attachment.manual_import_reason %></em>.
+                  <% end %>
+                  The original official source link is preserved below for verification.
+                </p>
+              </aside>
+            <% end %>
+
             <dl class="record-facts">
               <div>
                 <dt>Filename</dt>
