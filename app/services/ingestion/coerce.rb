@@ -1,7 +1,7 @@
 module Ingestion
-  class InvalidPayload < StandardError; end
-
   module Coerce
+    class InvalidPayload < StandardError; end
+
     module_function
 
     def date(value, field:)

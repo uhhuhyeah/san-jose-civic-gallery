@@ -12,7 +12,7 @@ module Ingestion
     end
 
     test "date raises InvalidPayload with the field name for unparseable input" do
-      error = assert_raises(InvalidPayload) do
+      error = assert_raises(Coerce::InvalidPayload) do
         Coerce.date("not-a-date", field: "EventDate")
       end
       assert_match(/EventDate/, error.message)
@@ -31,7 +31,7 @@ module Ingestion
     end
 
     test "datetime raises InvalidPayload with the field name for unparseable input" do
-      error = assert_raises(InvalidPayload) do
+      error = assert_raises(Coerce::InvalidPayload) do
         Coerce.datetime("not-a-datetime", field: "MatterLastModifiedUtc")
       end
       assert_match(/MatterLastModifiedUtc/, error.message)
