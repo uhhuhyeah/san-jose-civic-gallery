@@ -16,6 +16,10 @@ module Civic
     scope :current_from_source, -> { where(source_present: true) }
     scope :display_order, -> { order(:sort_order, :legistar_matter_attachment_id) }
     scope :imported, -> { where.not(source_file_imported_at: nil) }
+    # Attachments where the automated importer failed and no operator
+    # has stepped in with a manual upload yet. Use this to drive
+    # attachments:needs_manual_upload and any human-intervention dashboards.
+    scope :needs_manual_upload, -> { where.not(source_file_import_error: nil).where(manually_imported_at: nil) }
 
     def imported?
       source_file.attached?

@@ -1,0 +1,107 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Wrapper around the attachments:manual_upload rake task. Handles the
+# three-step shuffle (scp the PDF from your laptop to the VPS, docker cp
+# it into the running web container, then run the rake task via kamal app
+# exec) so the operator only has to provide an attachment id and a local
+# PDF path. Cleans up the VPS-side temp file at the end.
+#
+# Usage:
+#   bin/manual_upload <ATTACHMENT_ID> <LOCAL_PDF_PATH> [REASON]
+#
+# Environment overrides:
+#   OPERATOR  defaults to `git config user.email`
+#   REASON    defaults to a generic disclosure if no third positional arg
+#
+# Examples:
+#   bin/manual_upload 1 ~/Downloads/budget.pdf
+#   bin/manual_upload 1 ~/Downloads/budget.pdf "Akamai blocks the CivicPlus page URL"
+#   OPERATOR=ops@example.com bin/manual_upload 1 ~/Downloads/budget.pdf
+
+require "yaml"
+
+DEFAULT_REASON = "Source URL is not directly retrievable by the automated importer; " \
+                 "PDF uploaded manually by site admin."
+
+def abort_with(message)
+  warn message
+  exit 1
+end
+
+def usage_and_exit
+  abort_with <<~USAGE
+    Usage: bin/manual_upload <ATTACHMENT_ID> <LOCAL_PDF_PATH> [REASON]
+
+    Uploads a PDF from your laptop to the running web container and runs
+    attachments:manual_upload to attach it to the given Civic::MatterAttachment.
+
+    Environment overrides:
+      OPERATOR   defaults to `git config user.email`
+      REASON     defaults to a generic disclosure if no third positional arg
+
+    Run `bin/rails attachments:needs_manual_upload` (or via kamal app exec
+    in production) to see which attachment ids are waiting on this.
+  USAGE
+end
+
+usage_and_exit if ARGV.size < 2 || %w[-h --help].include?(ARGV[0])
+
+attachment_id = ARGV[0]
+local_path    = File.expand_path(ARGV[1])
+reason        = ARGV[2] || ENV["REASON"] || DEFAULT_REASON
+operator      = ENV.fetch("OPERATOR") { `git config user.email`.strip }
+
+abort_with "OPERATOR is empty (set OPERATOR=... or configure `git config user.email`)" if operator.empty?
+abort_with "attachment id must be an integer, got: #{attachment_id.inspect}" unless attachment_id =~ /\A\d+\z/
+abort_with "PDF not found: #{local_path}" unless File.exist?(local_path)
+
+# Single quotes inside the bash -c "..." wrapping would break our shell
+# escaping. Reject either kind of quote in operator/reason to keep things
+# simple. Reasons are short human text; longer or quote-bearing reasons
+# can call the rake task directly.
+[ [ "operator", operator ], [ "reason", reason ] ].each do |label, value|
+  abort_with "#{label} cannot contain single or double quotes: #{value.inspect}" if value.match?(/['"]/)
+end
+
+# Read the VPS host from config/deploy.yml so we do not have to hardcode it.
+deploy_config_path = File.expand_path("../config/deploy.yml", __dir__)
+deploy_config = YAML.load_file(deploy_config_path)
+host = deploy_config.dig("servers", "web", "hosts")&.first
+abort_with "Could not read servers.web.hosts from #{deploy_config_path}" if host.to_s.empty?
+
+remote_tmp = "/tmp/manual-upload-#{attachment_id}.pdf"
+
+def run!(label, *cmd)
+  puts label
+  puts "  $ #{cmd.join(' ')}"
+  system(*cmd) or abort_with "Command failed at: #{label}"
+end
+
+container_lookup = "docker ps --format '{{.Names}}' " \
+                   "--filter 'label=service=san-jose-civic-gallery' " \
+                   "--filter 'label=role=web' " \
+                   "--filter 'status=running' | head -1"
+
+run! "[1/4] scp PDF to VPS",
+  "scp", local_path, "root@#{host}:#{remote_tmp}"
+
+run! "[2/4] docker cp PDF into the running web container",
+  "ssh", "root@#{host}",
+  %{CONTAINER=$(#{container_lookup}) && docker cp #{remote_tmp} "$CONTAINER:#{remote_tmp}"}
+
+inner_env = "ATTACHMENT_ID=#{attachment_id} PDF_PATH=#{remote_tmp} " \
+            "OPERATOR='#{operator}' REASON='#{reason}'"
+inner_cmd = %(bash -c "#{inner_env} bin/rails attachments:manual_upload")
+
+run! "[3/4] Run attachments:manual_upload in container",
+  "kamal", "app", "exec", "--reuse", "--roles=web", inner_cmd
+
+run! "[4/4] Remove /tmp file from VPS",
+  "ssh", "root@#{host}", "rm #{remote_tmp}"
+
+puts
+puts "Done. Verify with:"
+puts "  kamal app exec --reuse --roles=web 'bin/rails runner " \
+     "\"a = Civic::MatterAttachment.find(#{attachment_id}); " \
+     "puts a.manually_imported_at, a.source_file.filename\"'"
