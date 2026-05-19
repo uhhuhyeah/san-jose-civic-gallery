@@ -32,6 +32,9 @@ env:
     AWS_REGION: auto
     AWS_BUCKET: civic-gallery-production
     AWS_ENDPOINT_URL_S3: https://942cc91abd309aacae9c081b86bbab34.r2.cloudflarestorage.com
+    # Cloudflare R2 rejects the modern S3 checksum headers that aws-sdk-s3 >= 1.218 sends by default.
+    AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+    AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
   secret:
     - RAILS_MASTER_KEY
     - DATABASE_URL

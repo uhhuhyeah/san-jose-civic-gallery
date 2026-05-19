@@ -13,7 +13,9 @@ r2:
   region: <%= ENV.fetch("AWS_REGION", "auto") %>
   bucket: <%= ENV["AWS_BUCKET"] %>
   endpoint: <%= ENV["AWS_ENDPOINT_URL_S3"] %>
-  force_path_style: false
+  # R2 accepts virtual-host style for some operations but rejects it for others
+  # (notably presigned GETs from newer aws-sdk-s3 versions). Path-style is universally safe.
+  force_path_style: true
 
 # Remember not to checkin your GCS keyfile to a repository
 # google:

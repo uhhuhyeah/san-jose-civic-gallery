@@ -40,8 +40,10 @@ gem "thruster", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 1.2"
 
-# S3-compatible storage backend for Active Storage (Cloudflare R2 in production)
-gem "aws-sdk-s3", require: false
+# S3-compatible storage backend for Active Storage (Cloudflare R2 in production).
+# Pinned to a pre-1.218 version: 1.218+ introduced new S3 checksum behavior that
+# Cloudflare R2 doesn't fully accept (PUTs fail with InvalidRequest / 401 Unauthorized).
+gem "aws-sdk-s3", "~> 1.197.0", require: false
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
