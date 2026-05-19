@@ -13,7 +13,7 @@ class ApplicationController < ActionController::Base
   private
 
   def public_read_only_request?
-    request.get? && controller_path.start_with?("public/")
+    (request.get? || request.head?) && controller_path.start_with?("public/")
   end
 
   # Prevent Set-Cookie on public anonymous responses so Cloudflare can cache them.

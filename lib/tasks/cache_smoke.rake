@@ -22,7 +22,7 @@ namespace :public do
       puts "#{response.code} #{path}"
       headers_of_interest.each do |header|
         value = response[header]
-        puts "  #{header}: #{value}" if value
+        puts "  #{header}: #{value || "(missing)"}"
       end
     rescue StandardError => e
       puts
