@@ -16,6 +16,8 @@ This repository is intentionally documented in a compact way so contributors and
   reconciliation workflow
 - `generated-summaries.md`: operator workflow for creating generated
   attachment summaries from extracted text
+- `source-data-quality.md`: known limitations in the upstream source data,
+  what they mean for Civic Gallery, and why we cannot fix them downstream
 
 ## Documentation Principles
 
