@@ -34,7 +34,7 @@ module Public
       assert_response :success
       cache_control = response.headers["Cache-Control"]
       assert_includes cache_control, "public"
-      assert_includes cache_control, "max-age=60"
+      assert_includes cache_control, "max-age=300"
       assert_includes cache_control, "s-maxage=7200"
       assert_includes cache_control, "stale-while-revalidate=60"
     end
