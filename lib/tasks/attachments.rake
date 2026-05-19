@@ -7,9 +7,9 @@ namespace :attachments do
     attachment_id
     matter_file
     attachment_name
-    hyperlink
     error_status
     error_message
+    hyperlink
     pdf_path
     reason
   ].freeze
@@ -54,9 +54,9 @@ namespace :attachments do
           row[:attachment_id],
           row[:matter_file],
           row[:attachment_name],
-          row[:hyperlink],
           row[:error_status],
           row[:error_message],
+          row[:hyperlink],
           nil,
           nil
         ]

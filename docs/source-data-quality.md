@@ -84,8 +84,10 @@ bin/manual_upload --csv ./needs_manual_upload.csv
 `bin/needs_manual_upload` runs `attachments:needs_manual_upload` in the
 production web container via kamal and writes the CSV body it emits to
 a local file. Columns: `attachment_id`, `matter_file`, `attachment_name`,
-`hyperlink`, `error_status`, `error_message`, `pdf_path`, `reason`. The
-first six are populated from the database; the last two are for the
+`error_status`, `error_message`, `hyperlink`, `pdf_path`, `reason`.
+`hyperlink` sits next to `pdf_path` to make spreadsheet data entry easy
+(open the link in one column, drop the local file path in the next).
+The first six are populated from the database; the last two are for the
 operator to fill in.
 
 `bin/manual_upload --csv` walks the CSV and runs the same
