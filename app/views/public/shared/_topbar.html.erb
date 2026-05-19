@@ -23,5 +23,6 @@
     <%= link_to "Pulse", root_path, aria: { current: local_assigns[:active] == :pulse ? "page" : nil } %>
     <%= link_to "Matters", public_matters_path, aria: { current: local_assigns[:active] == :matters ? "page" : nil } %>
     <%= link_to "Meetings", public_meetings_path, aria: { current: local_assigns[:active] == :meetings ? "page" : nil } %>
+    <%= link_to "Glossary", glossary_path, aria: { current: local_assigns[:active] == :glossary ? "page" : nil } %>
   </nav>
 </header>
