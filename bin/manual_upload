@@ -19,6 +19,7 @@
 #   bin/manual_upload 1 ~/Downloads/budget.pdf "Akamai blocks the CivicPlus page URL"
 #   OPERATOR=ops@example.com bin/manual_upload 1 ~/Downloads/budget.pdf
 
+require "shellwords"
 require "yaml"
 
 DEFAULT_REASON = "Source URL is not directly retrievable by the automated importer; " \
@@ -56,14 +57,6 @@ abort_with "OPERATOR is empty (set OPERATOR=... or configure `git config user.em
 abort_with "attachment id must be an integer, got: #{attachment_id.inspect}" unless attachment_id =~ /\A\d+\z/
 abort_with "PDF not found: #{local_path}" unless File.exist?(local_path)
 
-# Single quotes inside the bash -c "..." wrapping would break our shell
-# escaping. Reject either kind of quote in operator/reason to keep things
-# simple. Reasons are short human text; longer or quote-bearing reasons
-# can call the rake task directly.
-[ [ "operator", operator ], [ "reason", reason ] ].each do |label, value|
-  abort_with "#{label} cannot contain single or double quotes: #{value.inspect}" if value.match?(/['"]/)
-end
-
 # Read the VPS host from config/deploy.yml so we do not have to hardcode it.
 deploy_config_path = File.expand_path("../config/deploy.yml", __dir__)
 deploy_config = YAML.load_file(deploy_config_path)
@@ -74,7 +67,7 @@ remote_tmp = "/tmp/manual-upload-#{attachment_id}.pdf"
 
 def run!(label, *cmd)
   puts label
-  puts "  $ #{cmd.join(' ')}"
+  puts "  $ #{Shellwords.join(cmd)}"
   system(*cmd) or abort_with "Command failed at: #{label}"
 end
 
@@ -90,9 +83,15 @@ run! "[2/4] docker cp PDF into the running web container",
   "ssh", "root@#{host}",
   %{CONTAINER=$(#{container_lookup}) && docker cp #{remote_tmp} "$CONTAINER:#{remote_tmp}"}
 
-inner_env = "ATTACHMENT_ID=#{attachment_id} PDF_PATH=#{remote_tmp} " \
-            "OPERATOR='#{operator}' REASON='#{reason}'"
-inner_cmd = %(bash -c "#{inner_env} bin/rails attachments:manual_upload")
+# Shell-escape each operator-supplied value individually, then escape the
+# whole inner command again so `kamal app exec` passes it through to
+# `bash -c` as a single safe argument.
+inner_command = "ATTACHMENT_ID=#{attachment_id} " \
+                "PDF_PATH=#{Shellwords.escape(remote_tmp)} " \
+                "OPERATOR=#{Shellwords.escape(operator)} " \
+                "REASON=#{Shellwords.escape(reason)} " \
+                "bin/rails attachments:manual_upload"
+inner_cmd = "bash -c #{Shellwords.escape(inner_command)}"
 
 run! "[3/4] Run attachments:manual_upload in container",
   "kamal", "app", "exec", "--reuse", "--roles=web", inner_cmd
