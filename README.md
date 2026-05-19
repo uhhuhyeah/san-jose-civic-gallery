@@ -19,6 +19,7 @@ Early scaffold. Not production-ready and not yet useful as a public-facing produ
 - Solid Cache
 - Active Storage
 - Kamal
+- Sentry for error monitoring, tracing, logs, and profiling
 
 ## Local Setup
 

@@ -41,6 +41,7 @@ env:
     - AWS_ACCESS_KEY_ID
     - AWS_SECRET_ACCESS_KEY
     - GENERATED_SUMMARY_API_KEY
+    - SENTRY_DSN
 
 volumes:
   - "san_jose_civic_gallery_storage:/rails/storage"
