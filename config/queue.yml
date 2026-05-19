@@ -3,14 +3,26 @@ default: &default
     - polling_interval: 1
       batch_size: 500
   workers:
+    # Main ingestion/import pipeline. Keep enough concurrency for many
+    # short network/database jobs without letting it consume every DB slot.
     - queues: [ "default" ]
       threads: 3
       processes: 1
       polling_interval: 0.1
+    # Solid Queue's own recurring command jobs. This should orchestrate,
+    # not perform long application batches inline.
     - queues: [ "solid_queue_recurring" ]
       threads: 1
       processes: 1
       polling_interval: 1
+    # Generated summaries call an external model API and can be slow or
+    # rate-limited, so isolate them from ingestion and extraction.
+    - queues: [ "generated_summary" ]
+      threads: 1
+      processes: 1
+      polling_interval: 1
+    # PDF extraction/OCR can be CPU/subprocess heavy. Keep it isolated so
+    # document processing cannot starve ingestion.
     - queues: [ "slow_extract" ]
       threads: 1
       processes: 1
