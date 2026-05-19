@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_18_123000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_19_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -121,6 +121,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_18_123000) do
     t.bigint "last_source_snapshot_id"
     t.datetime "last_synced_at"
     t.bigint "legistar_matter_attachment_id", null: false
+    t.text "manual_import_reason"
+    t.datetime "manually_imported_at"
+    t.string "manually_imported_by"
     t.string "matter_version"
     t.string "name", null: false
     t.boolean "print_with_reports"

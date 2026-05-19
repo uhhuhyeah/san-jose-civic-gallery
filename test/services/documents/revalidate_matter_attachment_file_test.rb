@@ -212,6 +212,30 @@ module Documents
       assert_not @attachment.reload.extractable_as_pdf?
     end
 
+    test "skips revalidation for manually-imported attachments without probing the source URL" do
+      @attachment.update!(
+        manually_imported_at: Time.current,
+        manually_imported_by: "operator@example.com",
+        manual_import_reason: "source URL behind a WAF"
+      )
+
+      probe = Class.new do
+        def self.call(**)
+          raise "should not probe when the attachment was manually uploaded"
+        end
+      end
+      importer = Class.new do
+        def self.call(matter_attachment:)
+          raise "should not import when the attachment was manually uploaded"
+        end
+      end
+
+      result = RevalidateMatterAttachmentFile.call(matter_attachment: @attachment, probe:, importer:)
+
+      assert_equal :skipped_manual_import, result.action
+      assert_nil result.probe_result
+    end
+
     private
 
     def probe_returning(result)

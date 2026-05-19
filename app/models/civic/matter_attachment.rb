@@ -21,6 +21,10 @@ module Civic
       source_file.attached?
     end
 
+    def manually_imported?
+      manually_imported_at.present?
+    end
+
     def latest_extracted_text
       extracted_texts.first
     end

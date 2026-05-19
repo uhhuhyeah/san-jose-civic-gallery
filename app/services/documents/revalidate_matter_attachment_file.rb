@@ -16,6 +16,15 @@ module Documents
       raise ArgumentError, "Matter attachment source file is not attached" unless @matter_attachment.source_file.attached?
       raise ArgumentError, "Matter attachment hyperlink is missing" if @matter_attachment.hyperlink.blank?
 
+      # Manually-uploaded attachments substitute for a source URL we cannot
+      # actually fetch (e.g. CivicPlus pages behind Akamai). Probing that
+      # URL would either fail or return the original blocked response, so
+      # we skip revalidation entirely. Operators who want to re-trigger a
+      # full check should clear manually_imported_at first.
+      if @matter_attachment.manually_imported?
+        return Result.new(matter_attachment: @matter_attachment, action: :skipped_manual_import, probe_result: nil)
+      end
+
       # Always probe the canonical hyperlink: any saved source_file_final_url
       # may be a short-lived CDN redirect target that no longer resolves.
       probe_result = @probe.call(
