@@ -7,8 +7,15 @@
 # exec) so the operator only has to provide an attachment id and a local
 # PDF path. Cleans up the VPS-side temp file at the end.
 #
-# Usage:
+# Two modes:
+#
 #   bin/manual_upload <ATTACHMENT_ID> <LOCAL_PDF_PATH> [REASON]
+#     Upload a single PDF (ad-hoc operator use).
+#
+#   bin/manual_upload --csv <CSV_PATH>
+#     Bulk-upload from a CSV produced by `bin/needs_manual_upload`. Rows
+#     with a blank pdf_path column are skipped. Use this to work through
+#     a batch of pending attachments in one go.
 #
 # Environment overrides:
 #   OPERATOR  defaults to `git config user.email`
@@ -17,8 +24,10 @@
 # Examples:
 #   bin/manual_upload 1 ~/Downloads/budget.pdf
 #   bin/manual_upload 1 ~/Downloads/budget.pdf "Akamai blocks the CivicPlus page URL"
+#   bin/manual_upload --csv ./needs_manual_upload.csv
 #   OPERATOR=ops@example.com bin/manual_upload 1 ~/Downloads/budget.pdf
 
+require "csv"
 require "shellwords"
 require "yaml"
 
@@ -32,38 +41,56 @@ end
 
 def usage_and_exit
   abort_with <<~USAGE
-    Usage: bin/manual_upload <ATTACHMENT_ID> <LOCAL_PDF_PATH> [REASON]
+    Usage:
+      bin/manual_upload <ATTACHMENT_ID> <LOCAL_PDF_PATH> [REASON]
+      bin/manual_upload --csv <CSV_PATH>
 
-    Uploads a PDF from your laptop to the running web container and runs
-    attachments:manual_upload to attach it to the given Civic::MatterAttachment.
+    Single-row mode uploads one PDF and runs attachments:manual_upload in
+    the production web container.
+
+    CSV mode reads a file produced by `bin/needs_manual_upload`, walks
+    each row with a non-blank pdf_path column, and runs the same upload
+    flow for every row. Rows with an empty pdf_path are skipped.
 
     Environment overrides:
       OPERATOR   defaults to `git config user.email`
       REASON     defaults to a generic disclosure if no third positional arg
+                 (single-row mode) or no `reason` column value (CSV mode)
 
-    Run `bin/rails attachments:needs_manual_upload` (or via kamal app exec
-    in production) to see which attachment ids are waiting on this.
+    Run `bin/needs_manual_upload` to pull a fresh CSV of attachment ids
+    waiting on this workflow.
   USAGE
 end
 
-usage_and_exit if ARGV.size < 2 || %w[-h --help].include?(ARGV[0])
+def load_marcel
+  require "bundler/setup"
+  require "marcel"
+  true
+rescue LoadError
+  false
+end
 
-attachment_id = ARGV[0]
-local_path    = File.expand_path(ARGV[1])
-reason        = ARGV[2] || ENV["REASON"] || DEFAULT_REASON
-operator      = ENV.fetch("OPERATOR") { `git config user.email`.strip }
+def pdf_mime?(path)
+  if load_marcel
+    File.open(path, "rb") { |f| Marcel::MimeType.for(f, name: File.basename(path)) } == "application/pdf"
+  else
+    File.open(path, "rb") { |f| f.read(5) } == "%PDF-"
+  end
+end
 
-abort_with "OPERATOR is empty (set OPERATOR=... or configure `git config user.email`)" if operator.empty?
-abort_with "attachment id must be an integer, got: #{attachment_id.inspect}" unless attachment_id =~ /\A\d+\z/
-abort_with "PDF not found: #{local_path}" unless File.exist?(local_path)
+def deploy_host
+  deploy_config_path = File.expand_path("../config/deploy.yml", __dir__)
+  deploy_config = YAML.load_file(deploy_config_path)
+  host = deploy_config.dig("servers", "web", "hosts")&.first
+  abort_with "Could not read servers.web.hosts from #{deploy_config_path}" if host.to_s.empty?
+  host
+end
 
-# Read the VPS host from config/deploy.yml so we do not have to hardcode it.
-deploy_config_path = File.expand_path("../config/deploy.yml", __dir__)
-deploy_config = YAML.load_file(deploy_config_path)
-host = deploy_config.dig("servers", "web", "hosts")&.first
-abort_with "Could not read servers.web.hosts from #{deploy_config_path}" if host.to_s.empty?
-
-remote_tmp = "/tmp/manual-upload-#{attachment_id}.pdf"
+def resolved_operator
+  operator = ENV.fetch("OPERATOR") { `git config user.email`.strip }
+  abort_with "OPERATOR is empty (set OPERATOR=... or configure `git config user.email`)" if operator.empty?
+  operator
+end
 
 def run!(label, *cmd)
   puts label
@@ -71,17 +98,145 @@ def run!(label, *cmd)
   system(*cmd) or abort_with "Command failed at: #{label}"
 end
 
-container_lookup = "docker ps --format '{{.Names}}' " \
+def attempt!(label, *cmd)
+  puts label
+  puts "  $ #{Shellwords.join(cmd)}"
+  system(*cmd)
+end
+
+CONTAINER_LOOKUP = "docker ps --format '{{.Names}}' " \
                    "--filter 'label=service=san-jose-civic-gallery' " \
                    "--filter 'label=role=web' " \
                    "--filter 'status=running' | head -1"
+
+def upload_one(attachment_id:, local_path:, reason:, operator:, host:)
+  remote_tmp = "/tmp/manual-upload-#{attachment_id}.pdf"
+
+  inner_command = "ATTACHMENT_ID=#{attachment_id} " \
+                  "PDF_PATH=#{Shellwords.escape(remote_tmp)} " \
+                  "OPERATOR=#{Shellwords.escape(operator)} " \
+                  "REASON=#{Shellwords.escape(reason)} " \
+                  "bin/rails attachments:manual_upload"
+  inner_cmd = "bash -c #{Shellwords.escape(inner_command)}"
+
+  steps = [
+    [ "[1/4] scp PDF to VPS",
+     [ "scp", local_path, "root@#{host}:#{remote_tmp}" ] ],
+    [ "[2/4] docker cp PDF into the running web container",
+     [ "ssh", "root@#{host}",
+      %{CONTAINER=$(#{CONTAINER_LOOKUP}) && docker cp #{remote_tmp} "$CONTAINER:#{remote_tmp}"} ] ],
+    [ "[3/4] Run attachments:manual_upload in container",
+     [ "kamal", "app", "exec", "--reuse", "--roles=web", inner_cmd ] ]
+  ]
+
+  steps.each do |label, cmd|
+    unless attempt!("  #{label}", *cmd)
+      attempt!("  [4/4] Remove /tmp file from VPS", "ssh", "root@#{host}", "rm -f #{remote_tmp}")
+      return false
+    end
+  end
+
+  attempt!("  [4/4] Remove /tmp file from VPS", "ssh", "root@#{host}", "rm -f #{remote_tmp}")
+  true
+end
+
+usage_and_exit if ARGV.empty? || %w[-h --help].include?(ARGV[0])
+
+if ARGV[0] == "--csv"
+  csv_path = ARGV[1]
+  abort_with "Usage: bin/manual_upload --csv <CSV_PATH>" if csv_path.to_s.empty?
+  abort_with "CSV not found: #{csv_path}" unless File.exist?(csv_path)
+
+  operator = resolved_operator
+  host = deploy_host
+  rows = CSV.read(csv_path, headers: true)
+
+  actionable = rows.reject { |row| row["pdf_path"].to_s.strip.empty? }
+  total = actionable.size
+  skipped = rows.size - total
+
+  if total.zero?
+    puts "No rows with a non-blank pdf_path in #{csv_path}."
+    puts "Fill in the pdf_path column for the rows you want to upload, then re-run."
+    exit 0
+  end
+
+  uploaded = 0
+  failed = []
+
+  actionable.each_with_index do |row, seq|
+    label_prefix = "[#{seq + 1}/#{total}]"
+    attachment_id = row["attachment_id"].to_s.strip
+    pdf_path = File.expand_path(row["pdf_path"].to_s.strip)
+    reason = row["reason"].to_s.strip
+    reason = ENV["REASON"] if reason.empty? && ENV["REASON"].to_s.strip != ""
+    reason = DEFAULT_REASON if reason.to_s.strip.empty?
+
+    unless attachment_id =~ /\A\d+\z/
+      warn "#{label_prefix} skipping: attachment_id must be an integer, got #{attachment_id.inspect}"
+      failed << { id: attachment_id, reason: "invalid attachment_id" }
+      next
+    end
+
+    unless File.exist?(pdf_path)
+      warn "#{label_prefix} skipping attachment #{attachment_id}: PDF not found at #{pdf_path}"
+      failed << { id: attachment_id, reason: "pdf not found" }
+      next
+    end
+
+    unless pdf_mime?(pdf_path)
+      warn "#{label_prefix} skipping attachment #{attachment_id}: #{pdf_path} is not application/pdf"
+      failed << { id: attachment_id, reason: "not a pdf" }
+      next
+    end
+
+    puts "#{label_prefix} attachment #{attachment_id} uploading..."
+    ok = upload_one(
+      attachment_id: attachment_id,
+      local_path: pdf_path,
+      reason: reason,
+      operator: operator,
+      host: host
+    )
+
+    if ok
+      uploaded += 1
+      puts "#{label_prefix} attachment #{attachment_id} done"
+    else
+      failed << { id: attachment_id, reason: "upload step failed" }
+      warn "#{label_prefix} attachment #{attachment_id} failed"
+    end
+  end
+
+  puts
+  puts "Uploaded: #{uploaded}, Skipped (no pdf_path): #{skipped}, Failed: #{failed.size}"
+  unless failed.empty?
+    failed.each { |f| puts "  failed attachment #{f[:id]}: #{f[:reason]}" }
+    exit 1
+  end
+  exit 0
+end
+
+usage_and_exit if ARGV.size < 2
+
+attachment_id = ARGV[0]
+local_path    = File.expand_path(ARGV[1])
+reason        = ARGV[2] || ENV["REASON"] || DEFAULT_REASON
+operator      = resolved_operator
+
+abort_with "attachment id must be an integer, got: #{attachment_id.inspect}" unless attachment_id =~ /\A\d+\z/
+abort_with "PDF not found: #{local_path}" unless File.exist?(local_path)
+
+host = deploy_host
+
+remote_tmp = "/tmp/manual-upload-#{attachment_id}.pdf"
 
 run! "[1/4] scp PDF to VPS",
   "scp", local_path, "root@#{host}:#{remote_tmp}"
 
 run! "[2/4] docker cp PDF into the running web container",
   "ssh", "root@#{host}",
-  %{CONTAINER=$(#{container_lookup}) && docker cp #{remote_tmp} "$CONTAINER:#{remote_tmp}"}
+  %{CONTAINER=$(#{CONTAINER_LOOKUP}) && docker cp #{remote_tmp} "$CONTAINER:#{remote_tmp}"}
 
 # Shell-escape each operator-supplied value individually, then escape the
 # whole inner command again so `kamal app exec` passes it through to
