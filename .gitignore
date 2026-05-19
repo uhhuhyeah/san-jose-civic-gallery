@@ -41,3 +41,7 @@
 .DS_Store
 /coverage
 /tmp/screenshots
+
+# Operator manual-upload CSV scratch files.
+/needs_manual_upload.csv
+/.~lock.needs_manual_upload.csv#
