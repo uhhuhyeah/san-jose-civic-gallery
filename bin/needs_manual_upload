@@ -1,0 +1,89 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Laptop-side wrapper around the attachments:needs_manual_upload rake
+# task. Runs the rake task in the production web container via
+# `kamal app exec`, extracts the CSV body bracketed by sentinel lines
+# from kamal's noisy stdout, and writes it to a local file the operator
+# can open in a spreadsheet.
+#
+# Usage:
+#   bin/needs_manual_upload [OUTPUT_PATH]
+#
+# Environment overrides:
+#   STATUS    passed through to the rake task. Filters rows by
+#             error_status (e.g. STATUS=403, STATUS=ERR).
+#
+# Examples:
+#   bin/needs_manual_upload
+#   bin/needs_manual_upload ./candidates.csv
+#   STATUS=403 bin/needs_manual_upload
+
+require "open3"
+require "shellwords"
+require "yaml"
+
+DEFAULT_OUTPUT_PATH = "./needs_manual_upload.csv"
+BEGIN_SENTINEL = "===NEEDS_MANUAL_UPLOAD_CSV_BEGIN==="
+END_SENTINEL = "===NEEDS_MANUAL_UPLOAD_CSV_END==="
+
+def abort_with(message)
+  warn message
+  exit 1
+end
+
+def usage_and_exit
+  abort_with <<~USAGE
+    Usage: bin/needs_manual_upload [OUTPUT_PATH]
+
+    Pulls a CSV of Civic::MatterAttachment rows waiting on manual upload
+    from production and writes it to OUTPUT_PATH (default
+    #{DEFAULT_OUTPUT_PATH}). Open the file in a spreadsheet, fill in the
+    pdf_path column for each row you want to handle, then run:
+
+      bin/manual_upload --csv <path>
+
+    Environment overrides:
+      STATUS   pass-through filter on error_status (e.g. STATUS=403,
+               STATUS=ERR for the non-HTTP fallback bucket). Default
+               unset (all candidates).
+  USAGE
+end
+
+usage_and_exit if %w[-h --help].include?(ARGV[0])
+
+output_path = ARGV[0] || DEFAULT_OUTPUT_PATH
+status = ENV["STATUS"].to_s.strip
+
+deploy_config_path = File.expand_path("../config/deploy.yml", __dir__)
+deploy_config = YAML.load_file(deploy_config_path)
+host = deploy_config.dig("servers", "web", "hosts")&.first
+abort_with "Could not read servers.web.hosts from #{deploy_config_path}" if host.to_s.empty?
+
+env_prefix = status.empty? ? "" : "STATUS=#{Shellwords.escape(status)} "
+inner_command = "#{env_prefix}bin/rails attachments:needs_manual_upload"
+inner_cmd = "bash -c #{Shellwords.escape(inner_command)}"
+
+puts "Running attachments:needs_manual_upload in production..."
+puts "  $ kamal app exec --reuse --roles=web #{inner_cmd}"
+
+stdout_str, status_obj = Open3.capture2(
+  "kamal", "app", "exec", "--reuse", "--roles=web", inner_cmd
+)
+
+abort_with "kamal app exec failed (exit #{status_obj.exitstatus})" unless status_obj.success?
+
+begin_idx = stdout_str.index(BEGIN_SENTINEL)
+end_idx = stdout_str.index(END_SENTINEL)
+abort_with "Could not find CSV sentinels in output. Full output:\n#{stdout_str}" if begin_idx.nil? || end_idx.nil?
+
+csv_body = stdout_str[(begin_idx + BEGIN_SENTINEL.length)...end_idx]
+csv_body = csv_body.sub(/\A\r?\n/, "").sub(/\r?\n\z/, "\n")
+csv_body = "#{csv_body}\n" unless csv_body.end_with?("\n")
+
+File.write(output_path, csv_body)
+
+row_count = csv_body.lines.size
+data_rows = [ row_count - 1, 0 ].max
+noun = data_rows == 1 ? "row" : "rows"
+puts "Wrote #{data_rows} #{noun} to #{output_path}"

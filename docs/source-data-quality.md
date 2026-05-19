@@ -63,40 +63,45 @@ to import the source file fail with HTTP 403 from `AkamaiGHost`.
 
 ## Operator helpers for manual upload
 
-These two commands cover the full workflow for handling exceptions like
-the section above.
-
-### Find what needs intervention
+The workflow is CSV-driven so you can triage in a spreadsheet and
+upload a batch in one shot rather than juggling individual ids.
 
 ```bash
-# Locally in development:
-bin/rails attachments:needs_manual_upload
+# 1. Pull a fresh CSV of attachments waiting on manual upload.
+#    STATUS=403 filters to the Akamai-blocked bucket; omit to see all.
+STATUS=403 bin/needs_manual_upload
 
-# Against production:
-kamal app exec --reuse --roles=web 'bin/rails attachments:needs_manual_upload'
+# 2. Open ./needs_manual_upload.csv in a spreadsheet. For each row you
+#    want to handle, download the PDF from the `hyperlink` column and
+#    fill in the `pdf_path` column with the local path on your laptop.
+#    Optionally override the `reason` column for that row.
+
+# 3. Bulk-upload every row that has a non-blank pdf_path. Rows with a
+#    blank pdf_path are skipped, so partial batches are fine.
+bin/manual_upload --csv ./needs_manual_upload.csv
 ```
 
-Lists every Civic::MatterAttachment that failed the automated importer
-and has not been manually uploaded yet, grouped by host so you can see
-patterns at a glance. Output includes the attachment id, matter file
-number, attachment name, source hyperlink, and a one-line error
-summary.
+`bin/needs_manual_upload` runs `attachments:needs_manual_upload` in the
+production web container via kamal and writes the CSV body it emits to
+a local file. Columns: `attachment_id`, `matter_file`, `attachment_name`,
+`hyperlink`, `error_status`, `error_message`, `pdf_path`, `reason`. The
+first six are populated from the database; the last two are for the
+operator to fill in.
 
-### Upload a PDF for one of them
+`bin/manual_upload --csv` walks the CSV and runs the same
+laptop-to-VPS-to-container shuffle for every actionable row: scp the
+PDF to the VPS, docker cp it into the running web container, run
+`attachments:manual_upload` via kamal app exec, remove the VPS temp
+file. Operator identity defaults to your `git config user.email`. Reason
+defaults to the row's `reason` column, then the `REASON` env var, then
+a generic disclosure. Per-row failures do not abort the batch; the
+script exits non-zero at the end if any row failed.
+
+For ad-hoc single-row uploads, the positional form still works:
 
 ```bash
 bin/manual_upload <ATTACHMENT_ID> <LOCAL_PDF_PATH> [REASON]
 ```
-
-This is a laptop-side wrapper that handles the laptop-to-VPS-to-container
-file shuffle and runs `attachments:manual_upload` for you. Operator
-identity defaults to your `git config user.email`. Reason defaults to a
-generic disclosure if you do not provide one.
-
-What it actually does, in order: scp the PDF to the VPS, docker cp it
-into the running web container, run the rake task via kamal app exec,
-remove the VPS temp file. The rake task itself stamps the manual import
-columns, attaches the file to source_file, and enqueues text extraction.
 
 ## How to add to this doc
 

@@ -1,43 +1,75 @@
+require "csv"
+
 namespace :attachments do
-  desc "List Civic::MatterAttachment rows that failed the automated import " \
-       "and have not yet been manually uploaded, grouped by source host."
+  CSV_BEGIN_SENTINEL = "===NEEDS_MANUAL_UPLOAD_CSV_BEGIN===".freeze
+  CSV_END_SENTINEL = "===NEEDS_MANUAL_UPLOAD_CSV_END===".freeze
+  CSV_HEADERS = %w[
+    attachment_id
+    matter_file
+    attachment_name
+    hyperlink
+    error_status
+    error_message
+    pdf_path
+    reason
+  ].freeze
+
+  desc "Emit a CSV of Civic::MatterAttachment rows that failed the automated " \
+       "import and have not yet been manually uploaded. Honors STATUS env var " \
+       "to filter by error_status (e.g. STATUS=403, STATUS=ERR)."
   task needs_manual_upload: :environment do
+    status_filter = ENV["STATUS"].to_s.strip
+    status_filter = nil if status_filter.empty?
+
     candidates = Civic::MatterAttachment
       .needs_manual_upload
       .includes(:matter)
       .order(:created_at)
 
-    total = candidates.size
-    if total.zero?
-      puts "No attachments are currently waiting on manual upload."
-      next
+    rows = candidates.map do |attachment|
+      error_text = attachment.source_file_import_error.to_s
+      error_status = error_text[/HTTP (\d+)/, 1] || "ERR"
+      error_message = error_text.lines.first.to_s.strip
+
+      {
+        attachment_id: attachment.id,
+        matter_file: attachment.matter&.matter_file,
+        attachment_name: attachment.name,
+        hyperlink: attachment.hyperlink,
+        error_status: error_status,
+        error_message: error_message
+      }
     end
 
-    hosts = candidates.group_by do |attachment|
-      begin
-        URI.parse(attachment.hyperlink.to_s).host || "(unparseable)"
-      rescue URI::InvalidURIError
-        "(invalid)"
+    total = rows.size
+    if status_filter
+      rows = rows.select { |row| row[:error_status] == status_filter }
+    end
+    filtered_out = total - rows.size
+
+    csv_body = CSV.generate do |csv|
+      csv << CSV_HEADERS
+      rows.each do |row|
+        csv << [
+          row[:attachment_id],
+          row[:matter_file],
+          row[:attachment_name],
+          row[:hyperlink],
+          row[:error_status],
+          row[:error_message],
+          nil,
+          nil
+        ]
       end
     end
 
-    noun = total == 1 ? "attachment" : "attachments"
-    verb = total == 1 ? "needs" : "need"
-    puts "#{total} #{noun} #{verb} manual upload (grouped by host):"
-    hosts.sort_by { |host, rows| -rows.size }.each do |host, rows|
-      puts "  #{host.ljust(28)} #{rows.size}"
-    end
-    puts
+    puts CSV_BEGIN_SENTINEL
+    print csv_body
+    puts CSV_END_SENTINEL
 
-    candidates.each do |attachment|
-      matter_file = attachment.matter&.matter_file || "(no matter)"
-      error_summary = attachment.source_file_import_error.to_s.lines.first.to_s.strip[0, 200]
-
-      puts "[id=#{attachment.id}] #{matter_file}  #{attachment.name}"
-      puts "       #{attachment.hyperlink}"
-      puts "       #{error_summary}"
-      puts
-    end
+    summary = "needs_manual_upload: #{rows.size} rows"
+    summary += " (#{filtered_out} filtered out by STATUS=#{status_filter})" if status_filter
+    warn summary
   end
 
   desc "Manually attach a PDF to a Civic::MatterAttachment when the source URL " \
