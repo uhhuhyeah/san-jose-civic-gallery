@@ -51,6 +51,18 @@ module Public
       assert_response :not_modified
     end
 
+    test "homepage emits cacheable Cache-Control and no Set-Cookie" do
+      get root_url
+
+      assert_response :success
+      cache_control = response.headers["Cache-Control"]
+      assert_includes cache_control, "public"
+      assert_includes cache_control, "max-age=300"
+      assert_includes cache_control, "s-maxage=7200"
+      assert_nil response.headers["Set-Cookie"],
+        "expected no Set-Cookie on anonymous public GET (got #{response.headers["Set-Cookie"].inspect})"
+    end
+
     test "renders matter-pending hint when item has matter_id but no synced matter" do
       @event.event_items.create!(
         legistar_event_item_id: 129631,
