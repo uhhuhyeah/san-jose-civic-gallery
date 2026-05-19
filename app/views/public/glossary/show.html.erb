@@ -1,0 +1,318 @@
+<main class="page-shell">
+  <%= render "public/shared/topbar", active: :glossary %>
+
+  <header class="page-header inset-header glossary-header">
+    <p class="eyebrow">Civic Records Glossary</p>
+    <h1>Plain-language guide to City Hall records</h1>
+    <p>
+      Civic Gallery mirrors official San Jose meeting records and source
+      documents. This glossary explains the terms residents will see while
+      browsing agendas, matters, attachments, minutes, and generated summaries.
+    </p>
+  </header>
+
+  <section class="glossary-note inset-panel" aria-label="How to read this glossary">
+    <p>
+      These definitions are written for Civic Gallery readers. They are based on
+      San Jose public records, California open-meeting rules, and the Legistar
+      data model that powers the City's agenda portal. Always treat the official
+      City record as authoritative.
+    </p>
+  </section>
+
+  <section class="glossary-section section-band" aria-labelledby="records-heading">
+    <div class="section-title">
+      <h2 id="records-heading">Records You Will See</h2>
+      <span>Agenda portal language</span>
+    </div>
+
+    <div class="glossary-grid">
+      <article class="glossary-term">
+        <h3>Agenda</h3>
+        <p>
+          The public notice for a meeting. It lists the time, place, and items
+          of business expected to be discussed or acted on. California law
+          generally requires regular-meeting agendas to be posted at least 72
+          hours before the meeting. <a href="#source-4">[4]</a>
+        </p>
+      </article>
+
+      <article class="glossary-term">
+        <h3>Agenda Item</h3>
+        <p>
+          A specific piece of meeting business on an agenda. In Legistar, event
+          items sit under an event and can carry agenda notes, minutes notes,
+          action names, vote information, matter links, and attachments.
+          <a href="#source-5">[5]</a>
+        </p>
+      </article>
+
+      <article class="glossary-term">
+        <h3>Matter</h3>
+        <p>
+          A legislative file or record that can appear on one or more meeting
+          agendas. In Civic Gallery, a matter is the durable record behind an
+          agenda item, such as a council item, ordinance, resolution, report, or
+          contract approval.
+        </p>
+      </article>
+
+      <article class="glossary-term">
+        <h3>Matter File</h3>
+        <p>
+          The file number attached to a matter, such as <code>26-575</code>.
+          Civic Gallery uses matter files as stable labels for linking meeting
+          items, attachments, extracted text, and generated summaries.
+        </p>
+      </article>
+
+      <article class="glossary-term">
+        <h3>Attachment</h3>
+        <p>
+          A document connected to a matter. Attachments can include staff
+          reports, ordinances, resolutions, agreements, memos, letters, exhibits,
+          and other supporting files. Legistar exposes matter attachments that
+          are available for Internet viewing and can also return the file
+          content for an attachment. <a href="#source-6">[6]</a>
+        </p>
+      </article>
+
+      <article class="glossary-term">
+        <h3>Minutes</h3>
+        <p>
+          The official meeting record after a meeting occurs. Minutes document
+          what business was handled and record Council votes as required by the
+          City Charter. <a href="#source-3">[3]</a>
+        </p>
+      </article>
+
+      <article class="glossary-term">
+        <h3>Body</h3>
+        <p>
+          The public entity holding the meeting, such as the City Council,
+          Planning Commission, or a board or commission. San Jose publishes
+          agendas and minutes for Council, committees, boards, and commissions
+          through the City Clerk and agenda portals. <a href="#source-1">[1]</a>
+        </p>
+      </article>
+
+      <article class="glossary-term">
+        <h3>Official Source</h3>
+        <p>
+          The government-published record or document. Civic Gallery links back
+          to official Legistar, City Clerk, and source-document URLs so readers
+          can verify information before relying on it.
+        </p>
+      </article>
+    </div>
+
+    <aside class="glossary-callout" aria-label="Matter and attachment distinction">
+      <h3>Is a report a matter or an attachment?</h3>
+      <p>
+        It can be either. A <strong>matter</strong> is the agenda portal's
+        durable file for the business item: it has the file number, title,
+        status, type, body, meeting history, and agenda appearances. An
+        <strong>attachment</strong> is a document connected to that file, such
+        as a staff report, ordinance text, agreement, exhibit, or memo. When the
+        public body is acting on a report as the agenda item itself, the report
+        may be represented by the matter record. When the report supports,
+        explains, or accompanies that agenda item, it usually appears as an
+        attachment to the matter. Civic Gallery follows the City's source
+        structure and links both together when Legistar provides the connection.
+      </p>
+    </aside>
+  </section>
+
+  <section class="glossary-section section-band" aria-labelledby="actions-heading">
+    <div class="section-title">
+      <h2 id="actions-heading">Actions And Meeting Terms</h2>
+      <span>What the public body does</span>
+    </div>
+
+    <div class="glossary-grid">
+      <article class="glossary-term">
+        <h3>Motion</h3>
+        <p>
+          A Council action made, seconded, and adopted during a meeting. San
+          Jose's meeting guide describes motions as the least formal and most
+          common Council action for handling an agenda item. <a href="#source-2">[2]</a>
+        </p>
+      </article>
+
+      <article class="glossary-term">
+        <h3>Resolution</h3>
+        <p>
+          A formalized Council action filed by number with the Office of the
+          City Clerk. San Jose's meeting guide says resolutions generally become
+          effective immediately upon adoption. <a href="#source-2">[2]</a>
+        </p>
+      </article>
+
+      <article class="glossary-term">
+        <h3>Ordinance</h3>
+        <p>
+          A Council action that adopts law, authorizes expenditures, or
+          determines land use. San Jose's meeting guide notes that most
+          ordinances require two readings and generally do not take effect until
+          30 days after adoption at the second meeting. <a href="#source-2">[2]</a>
+        </p>
+      </article>
+
+      <article class="glossary-term">
+        <h3>Roll-call Vote</h3>
+        <p>
+          A vote where each Councilmember's vote is recorded by name. The San
+          Jose City Charter says votes on ordinances, resolutions, and motions
+          are by ayes and noes, with individual votes entered in the minutes.
+          <a href="#source-3">[3]</a>
+        </p>
+      </article>
+
+      <article class="glossary-term">
+        <h3>Public Comment</h3>
+        <p>
+          An opportunity for residents to address a public body. San Jose's
+          public meeting guidance says comments may be submitted through agenda
+          eComment links or by email for Council and committee meetings, and
+          commission comments go to the commission liaison listed on the agenda.
+          <a href="#source-7">[7]</a>
+        </p>
+      </article>
+
+      <article class="glossary-term">
+        <h3>Closed Session</h3>
+        <p>
+          A non-public portion of a meeting for limited subjects such as
+          personnel matters, real estate negotiations, or litigation. California
+          open-meeting rules treat closed-session exceptions narrowly.
+          <a href="#source-8">[8]</a>
+        </p>
+      </article>
+
+      <article class="glossary-term">
+        <h3>Study Session</h3>
+        <p>
+          A public meeting used for deeper review of a special issue or project.
+          San Jose's meeting guide says formal actions or decisions generally
+          are not made during study sessions. <a href="#source-2">[2]</a>
+        </p>
+      </article>
+
+      <article class="glossary-term">
+        <h3>Continued, Deferred, Or Dropped</h3>
+        <p>
+          A continued or deferred item is moved to a future meeting. A dropped
+          item is no longer expected to be considered or acted on at that
+          meeting. <a href="#source-2">[2]</a>
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <section class="glossary-section section-band" aria-labelledby="civic-gallery-heading">
+    <div class="section-title">
+      <h2 id="civic-gallery-heading">Civic Gallery Terms</h2>
+      <span>How this site labels records</span>
+    </div>
+
+    <div class="glossary-grid">
+      <article class="glossary-term">
+        <h3>Extracted Text</h3>
+        <p>
+          Text that Civic Gallery extracts from an official attachment. It helps
+          search and preview documents, but it is not a replacement for the
+          official PDF or source file.
+        </p>
+      </article>
+
+      <article class="glossary-term">
+        <h3>Generated Summary</h3>
+        <p>
+          An AI-produced summary based on extracted text. It is assistive and
+          may be incomplete or wrong, so the official attachment should be
+          reviewed before relying on the summary.
+        </p>
+      </article>
+
+      <article class="glossary-term">
+        <h3>Source Snapshot</h3>
+        <p>
+          A stored copy of an official source payload observed during ingestion.
+          It helps Civic Gallery keep records traceable to the public source
+          data that produced them.
+        </p>
+      </article>
+
+      <article class="glossary-term">
+        <h3>Source Present</h3>
+        <p>
+          A Civic Gallery status meaning the record still appears in the latest
+          source data. If a record disappears from the source, the app preserves
+          the historical record while marking that source absence separately.
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <section class="glossary-sources section-band" aria-labelledby="sources-heading">
+    <h2 id="sources-heading">Sources</h2>
+    <ol>
+      <li id="source-1">
+        <a href="https://www.sanjoseca.gov/your-government/appointees/city-clerk" rel="noopener">
+          City of San Jose Office of the City Clerk
+        </a>
+        <span>Agendas, minutes, boards and commissions, records, and City Clerk role.</span>
+      </li>
+      <li id="source-2">
+        <a href="https://www.sanjoseca.gov/home/showpublisheddocument/12113/636666005912870000" rel="noopener">
+          City of San Jose Guide to Council Meetings
+        </a>
+        <span>Meeting terms including motions, resolutions, ordinances, study sessions, closed sessions, and continued or dropped items.</span>
+      </li>
+      <li id="source-3">
+        <a href="https://www.sanjoseca.gov/home/showpublisheddocument/95973/638574336991130000" rel="noopener">
+          City Charter of the City of San Jose
+        </a>
+        <span>Council action by ordinance, resolution, or motion, and vote recording in minutes.</span>
+      </li>
+      <li id="source-4">
+        <a href="https://law.onecle.com/california/government/54954.2.html" rel="noopener">
+          California Government Code Section 54954.2
+        </a>
+        <span>Regular-meeting agenda posting requirements and public online access requirements.</span>
+      </li>
+      <li id="source-5">
+        <a href="https://webapi.legistar.com/Help/Api/GET-v1-Client-Events-EventId-EventItems_AgendaNote_MinutesNote_Attachments" rel="noopener">
+          Legistar Web API: Event Items
+        </a>
+        <span>Event item fields, matter references, agenda notes, minutes notes, actions, votes, and attachments.</span>
+      </li>
+      <li id="source-6">
+        <a href="https://webapi.legistar.com/Help" rel="noopener">
+          Legistar Web API Help
+        </a>
+        <span>Events, matters, matter attachments, histories, types, statuses, and attachment file endpoints.</span>
+      </li>
+      <li id="source-7">
+        <a href="https://www.sanjoseca.gov/your-government/appointees/city-clerk/council-agendas-minutes/participate-watch-public-meetings" rel="noopener">
+          City of San Jose: Participate and Watch Public Meetings
+        </a>
+        <span>Public comment, eComment, email instructions, and meeting-body viewing guidance.</span>
+      </li>
+      <li id="source-8">
+        <a href="https://oag.ca.gov/open-meetings" rel="noopener">
+          California Attorney General: Open Meetings
+        </a>
+        <span>Brown Act public-access principles and narrow construction of closed-session exceptions.</span>
+      </li>
+      <li id="source-9">
+        <a href="https://www.sanjoseca.gov/your-government/governance-structure" rel="noopener">
+          City of San Jose Governance Structure
+        </a>
+        <span>Council-manager framework, City Council role, City Clerk role, and Council appointees.</span>
+      </li>
+    </ol>
+  </section>
+
+  <%= render "public/shared/footer" %>
+</main>
