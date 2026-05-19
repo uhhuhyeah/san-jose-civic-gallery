@@ -41,6 +41,16 @@ module Public
       assert_includes response.body, "Public Comment"
     end
 
+    test "event detail returns 304 when client ETag matches" do
+      get public_event_url(@event)
+      assert_response :success
+      etag = response.headers["ETag"]
+
+      get public_event_url(@event), headers: { "If-None-Match" => etag }
+
+      assert_response :not_modified
+    end
+
     test "renders matter-pending hint when item has matter_id but no synced matter" do
       @event.event_items.create!(
         legistar_event_item_id: 129631,

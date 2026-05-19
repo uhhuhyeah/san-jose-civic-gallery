@@ -4,16 +4,25 @@ module Public
       @month = parsed_month
       @query = params[:q].to_s.strip
       @body_name = params[:body_name].to_s.strip
-      @body_options = cached_body_options
-      @year_options = year_options
+      return unless stale?(etag: meetings_index_cache_version, public: true)
 
-      @events = filtered_events
-        .includes(event_items: { matter: :attachments })
-        .recent_first
-        .limit(100)
+      @body_options = cached_body_options
+      @year_options = cached_year_options
+
+      @events = records_in_cached_order(cached_event_ids, Civic::Event.includes(event_items: { matter: :attachments }))
     end
 
     private
+
+    INDEX_CACHE_TTL = 5.minutes
+
+    def meetings_index_cache_version
+      @meetings_index_cache_version ||= Public::CacheVersion.meetings_index(month: @month, query: @query, body_name: @body_name)
+    end
+
+    def public_options_cache_version
+      @public_options_cache_version ||= Public::CacheVersion.events_index
+    end
 
     def filtered_events
       scope = Civic::Event.current_from_source
@@ -61,10 +70,27 @@ module Public
       years.compact.uniq.sort.reverse
     end
 
+    def cached_year_options
+      Rails.cache.fetch([ public_options_cache_version, "meetings-year-options" ], expires_in: INDEX_CACHE_TTL) do
+        year_options
+      end
+    end
+
     def cached_body_options
-      Rails.cache.fetch("public/meetings/body_options/v1", expires_in: 5.minutes) do
+      Rails.cache.fetch([ public_options_cache_version, "meetings-body-options" ], expires_in: INDEX_CACHE_TTL) do
         Civic::Event.current_from_source.where.not(body_name: [ nil, "" ]).distinct.order(:body_name).pluck(:body_name)
       end
+    end
+
+    def cached_event_ids
+      Rails.cache.fetch([ meetings_index_cache_version, "event-ids" ], expires_in: INDEX_CACHE_TTL) do
+        filtered_events.recent_first.limit(100).map(&:id)
+      end
+    end
+
+    def records_in_cached_order(ids, scope)
+      records_by_id = scope.where(id: ids).index_by(&:id)
+      ids.filter_map { |id| records_by_id[id] }
     end
   end
 end

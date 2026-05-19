@@ -14,63 +14,67 @@
     <% end %>
   </header>
 
-  <section class="section-band">
-    <h2>Official Record</h2>
-    <dl class="detail-grid">
-      <div>
-        <dt>File</dt>
-        <dd><%= @matter.matter_file %></dd>
-      </div>
-      <div>
-        <dt>Type</dt>
-        <dd><%= @matter.matter_type_name.presence || "Unknown" %></dd>
-      </div>
-      <div>
-        <dt>Status</dt>
-        <dd><%= @matter.matter_status_name.presence || "Unknown" %></dd>
-      </div>
-      <div>
-        <dt>Body</dt>
-        <dd><%= @matter.body_name.presence || "Unknown" %></dd>
-      </div>
-      <div>
-        <dt>Requester</dt>
-        <dd><%= @matter.requester.presence || "Unknown" %></dd>
-      </div>
-      <div>
-        <dt>Last synced</dt>
-        <dd><%= @matter.last_synced_at&.to_fs(:long) || "Unknown" %></dd>
-      </div>
-      <div>
-        <dt>Introduced</dt>
-        <dd><%= @matter.intro_date || "Unknown" %></dd>
-      </div>
-      <div>
-        <dt>Agenda date</dt>
-        <dd><%= @matter.agenda_date || "Unknown" %></dd>
-      </div>
-    </dl>
-  </section>
+  <% cache [@matter_cache_version, "official-record"] do %>
+    <section class="section-band">
+      <h2>Official Record</h2>
+      <dl class="detail-grid">
+        <div>
+          <dt>File</dt>
+          <dd><%= @matter.matter_file %></dd>
+        </div>
+        <div>
+          <dt>Type</dt>
+          <dd><%= @matter.matter_type_name.presence || "Unknown" %></dd>
+        </div>
+        <div>
+          <dt>Status</dt>
+          <dd><%= @matter.matter_status_name.presence || "Unknown" %></dd>
+        </div>
+        <div>
+          <dt>Body</dt>
+          <dd><%= @matter.body_name.presence || "Unknown" %></dd>
+        </div>
+        <div>
+          <dt>Requester</dt>
+          <dd><%= @matter.requester.presence || "Unknown" %></dd>
+        </div>
+        <div>
+          <dt>Last synced</dt>
+          <dd><%= @matter.last_synced_at&.to_fs(:long) || "Unknown" %></dd>
+        </div>
+        <div>
+          <dt>Introduced</dt>
+          <dd><%= @matter.intro_date || "Unknown" %></dd>
+        </div>
+        <div>
+          <dt>Agenda date</dt>
+          <dd><%= @matter.agenda_date || "Unknown" %></dd>
+        </div>
+      </dl>
+    </section>
+  <% end %>
 
-  <section class="section-band">
-    <h2>Related Meetings</h2>
-    <% if @event_items.any? %>
-      <ul class="linked-list">
-        <% @event_items.each do |item| %>
-          <li>
-            <%= link_to item.event.display_name, public_event_path(item.event) %>
-            <span><%= item.event.event_date %></span>
-            <strong><%= item.display_name %></strong>
-            <% if item.title.present? && item.title != item.display_name %>
-              <p><%= item.title %></p>
-            <% end %>
-          </li>
-        <% end %>
-      </ul>
-    <% else %>
-      <p>No related meeting items have been linked yet.</p>
-    <% end %>
-  </section>
+  <% cache [@matter_cache_version, "related-meetings"] do %>
+    <section class="section-band">
+      <h2>Related Meetings</h2>
+      <% if @event_items.any? %>
+        <ul class="linked-list">
+          <% @event_items.each do |item| %>
+            <li>
+              <%= link_to item.event.display_name, public_event_path(item.event) %>
+              <span><%= item.event.event_date %></span>
+              <strong><%= item.display_name %></strong>
+              <% if item.title.present? && item.title != item.display_name %>
+                <p><%= item.title %></p>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p>No related meeting items have been linked yet.</p>
+      <% end %>
+    </section>
+  <% end %>
 
   <section class="section-band">
     <h2>Official Attachments</h2>
@@ -79,17 +83,18 @@
         <% @matter.attachments.each do |attachment| %>
           <% latest_text = attachment.latest_extracted_text %>
           <% summary_artifact = attachment_summary_artifact(attachment) %>
-          <article class="attachment-row" id="attachment-<%= attachment.id %>">
-            <header>
-              <h3><%= attachment.name %></h3>
-              <p>
-                <%= attachment_import_status(attachment) %>
-                <span aria-hidden="true">/</span>
-                <%= attachment_extraction_status(attachment) %>
-                <span aria-hidden="true">/</span>
-                <%= attachment_summary_status_text(attachment, summary_artifact) %>
-              </p>
-            </header>
+          <% cache Public::CacheVersion.matter_attachment_fragment(attachment, latest_text:, summary_artifact:) do %>
+            <article class="attachment-row" id="attachment-<%= attachment.id %>">
+              <header>
+                <h3><%= attachment.name %></h3>
+                <p>
+                  <%= attachment_import_status(attachment) %>
+                  <span aria-hidden="true">/</span>
+                  <%= attachment_extraction_status(attachment) %>
+                  <span aria-hidden="true">/</span>
+                  <%= attachment_summary_status_text(attachment, summary_artifact) %>
+                </p>
+              </header>
 
             <% if attachment.manually_imported? %>
               <aside class="manual-import-notice" aria-label="Manual upload disclosure">
@@ -194,8 +199,9 @@
               <% else %>
                 <p class="status-note"><%= attachment_summary_not_available_reason(attachment) %></p>
               <% end %>
-            </section>
-          </article>
+              </section>
+            </article>
+          <% end %>
         <% end %>
       </div>
     <% else %>

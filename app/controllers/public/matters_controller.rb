@@ -2,13 +2,11 @@ module Public
   class MattersController < ApplicationController
     def index
       @query = params[:q].to_s.strip
+      return unless stale?(etag: matters_index_cache_version, public: true)
+
       @document_matches = document_matches_for(@query)
       document_matter_ids = @document_matches.map { |match| match.matter_attachment.matter.id }.uniq
-
-      scope = Civic::Matter.includes(:attachments)
-      scope = scope.where(id: matching_matter_ids(@query, document_matter_ids)) if @query.present?
-
-      @matters = scope.recent_first.limit(50)
+      @matters = records_in_cached_order(cached_matter_ids(@query, document_matter_ids), Civic::Matter.includes(:attachments))
       @document_matches_by_matter_id = @document_matches.group_by { |match| match.matter_attachment.matter.id }
     end
 
@@ -24,20 +22,22 @@ module Public
         )
         .find(params[:id])
       @event_items = @matter.event_items.agenda_order.includes(:event)
+      @matter_cache_version = Public::CacheVersion.matter_show(@matter)
+      stale?(etag: @matter_cache_version, public: true)
     end
 
     private
 
+    INDEX_CACHE_TTL = 5.minutes
+
+    def matters_index_cache_version
+      @matters_index_cache_version ||= Public::CacheVersion.matters_index(query: @query)
+    end
+
     def document_matches_for(query)
       return [] if query.blank?
 
-      Documents::ExtractedText
-        .search(query)
-        .joins(matter_attachment: :matter)
-        .merge(Civic::MatterAttachment.current_from_source)
-        .includes(matter_attachment: :matter)
-        .limit(20)
-        .to_a
+      records_in_cached_order(cached_document_match_ids(query), document_match_scope(query))
     end
 
     def matching_matter_ids(query, document_matter_ids)
@@ -45,6 +45,33 @@ module Public
       return metadata_matches.select(:id) if document_matter_ids.empty?
 
       metadata_matches.or(Civic::Matter.where(id: document_matter_ids)).select(:id)
+    end
+
+    def cached_document_match_ids(query)
+      Rails.cache.fetch([ matters_index_cache_version, "document-match-ids" ], expires_in: INDEX_CACHE_TTL) do
+        document_match_scope(query).limit(20).map(&:id)
+      end
+    end
+
+    def document_match_scope(query)
+      Documents::ExtractedText
+        .search(query)
+        .joins(matter_attachment: :matter)
+        .merge(Civic::MatterAttachment.current_from_source)
+        .includes(matter_attachment: :matter)
+    end
+
+    def cached_matter_ids(query, document_matter_ids)
+      Rails.cache.fetch([ matters_index_cache_version, "matter-ids" ], expires_in: INDEX_CACHE_TTL) do
+        scope = Civic::Matter.all
+        scope = scope.where(id: matching_matter_ids(query, document_matter_ids)) if query.present?
+        scope.recent_first.limit(50).pluck(:id)
+      end
+    end
+
+    def records_in_cached_order(ids, scope)
+      records_by_id = scope.where(id: ids).index_by(&:id)
+      ids.filter_map { |id| records_by_id[id] }
     end
   end
 end

@@ -174,6 +174,16 @@ module Public
       assert_includes response.body, "Open source document"
     end
 
+    test "matter detail returns 304 when client ETag matches" do
+      get public_matter_url(@matter)
+      assert_response :success
+      etag = response.headers["ETag"]
+
+      get public_matter_url(@matter), headers: { "If-None-Match" => etag }
+
+      assert_response :not_modified
+    end
+
     test "shows generated summary pending when extracted text exists without a summary" do
       @attachment.source_file.attach(
         io: StringIO.new("%PDF-1.4 fake"),
