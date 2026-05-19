@@ -8,7 +8,11 @@ Start with [CONTEXT.md](./CONTEXT.md) for the app-focused orientation and [docs/
 
 ## Status
 
-Early scaffold. Not production-ready and not yet useful as a public-facing product.
+Live at [sanjose.civicgallery.org](https://sanjose.civicgallery.org).
+
+The app is importing San Jose matters from 2019 through today, including linked meetings, attachments, imported source files, extracted text, and generated summaries where available. Ongoing ingestion continues to import new matters and related records as they appear in the public source system.
+
+See the [Data Health dashboard](https://sanjose.civicgallery.org/data) on sanjose.civicgallery.org for details
 
 ## Stack
 
