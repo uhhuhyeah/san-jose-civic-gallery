@@ -19,6 +19,7 @@ module Documents
     DEFAULT_ALLOWED_HOSTS = %w[
       sanjose.legistar.com
       legistar.granicus.com
+      www.sanjoseca.gov
     ].freeze
     DEFAULT_OPEN_TIMEOUT = 5
     DEFAULT_READ_TIMEOUT = 30
