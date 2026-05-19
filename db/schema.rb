@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_19_200000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_19_210000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -155,6 +155,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_200000) do
     t.index ["updated_at"], name: "index_civic_matter_attachments_on_updated_at"
   end
 
+  create_table "civic_matter_themes", force: :cascade do |t|
+    t.bigint "civic_matter_id", null: false
+    t.float "confidence"
+    t.datetime "created_at", null: false
+    t.bigint "source_artifact_id"
+    t.string "theme_slug", null: false
+    t.datetime "updated_at", null: false
+    t.index ["civic_matter_id", "theme_slug"], name: "idx_civic_matter_themes_unique_per_matter", unique: true
+    t.index ["source_artifact_id"], name: "index_civic_matter_themes_on_source_artifact_id"
+    t.index ["theme_slug", "civic_matter_id"], name: "idx_civic_matter_themes_by_theme"
+  end
+
   create_table "civic_matters", force: :cascade do |t|
     t.date "agenda_date"
     t.string "body_name"
@@ -251,6 +263,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_200000) do
   add_foreign_key "civic_events", "ingestion_source_snapshots", column: "last_source_snapshot_id", on_delete: :nullify
   add_foreign_key "civic_matter_attachments", "civic_matters"
   add_foreign_key "civic_matter_attachments", "ingestion_source_snapshots", column: "last_source_snapshot_id", on_delete: :nullify
+  add_foreign_key "civic_matter_themes", "civic_matters"
+  add_foreign_key "civic_matter_themes", "generated_artifacts", column: "source_artifact_id", on_delete: :nullify
   add_foreign_key "civic_matters", "ingestion_source_snapshots", column: "last_source_snapshot_id", on_delete: :nullify
   add_foreign_key "document_extracted_texts", "civic_matter_attachments"
 end
