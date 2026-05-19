@@ -75,6 +75,17 @@ artifact, model identifier, prompt version, input digest, status,
 content, usage metadata, and error details. This keeps provider and
 model experiments auditable.
 
+## Recurring Production Generation
+
+Production recurring generation is scheduled in `config/recurring.yml` and
+enqueues `Generated::BackfillAttachmentSummariesJob`. That job runs on the
+dedicated `generated_summary` Solid Queue worker instead of doing model calls
+inside the `solid_queue_recurring` scheduler queue.
+
+This keeps the recurring scheduler responsible for orchestration and isolates
+external model API calls from both normal ingestion and PDF extraction work. See
+`docs/background-queues.md` for the queue responsibilities and tuning notes.
+
 ## Provenance and idempotency
 
 `Generated::Artifact` rows are unique per `(target, kind,

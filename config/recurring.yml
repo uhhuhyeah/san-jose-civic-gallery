@@ -26,5 +26,6 @@ production:
   # successful summary for the current model + prompt version, so this is
   # safe to run on a recurring basis.
   generate_attachment_summaries:
-    command: "Generated::BackfillAttachmentSummaries.call(limit: 150, dry_run: false, client: Generated::SummaryClient.new)"
+    class: Generated::BackfillAttachmentSummariesJob
+    args: [ { limit: 150, dry_run: false } ]
     schedule: every 2 hours
