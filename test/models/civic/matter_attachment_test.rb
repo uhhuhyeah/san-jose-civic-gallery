@@ -29,5 +29,29 @@ module Civic
       assert_includes ids, imported.id
       assert_not_includes ids, not_yet.id
     end
+
+    test "needs_manual_upload scope returns attachments with import errors and no manual upload yet" do
+      clean = @matter.all_attachments.create!(
+        legistar_matter_attachment_id: 8001,
+        name: "Clean"
+      )
+      needs_help = @matter.all_attachments.create!(
+        legistar_matter_attachment_id: 8002,
+        name: "Akamai-blocked",
+        source_file_import_error: "Documents::SafeHttpClient::HttpError: HTTP 403"
+      )
+      already_resolved = @matter.all_attachments.create!(
+        legistar_matter_attachment_id: 8003,
+        name: "Manually fixed",
+        source_file_import_error: "Documents::SafeHttpClient::HttpError: HTTP 403",
+        manually_imported_at: Time.current,
+        manually_imported_by: "operator@example.com"
+      )
+
+      ids = MatterAttachment.needs_manual_upload.pluck(:id)
+      assert_includes ids, needs_help.id
+      assert_not_includes ids, clean.id
+      assert_not_includes ids, already_resolved.id
+    end
   end
 end

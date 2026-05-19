@@ -54,6 +54,49 @@ to import the source file fail with HTTP 403 from `AkamaiGHost`.
 - Accept the failed-import state as the correct surface for these
   attachments. Do not retry them with `RETRY_ERRORS=true` unless the
   source URL has actually changed.
+- When a document like this is genuinely important (the 2026-2027 Capital
+  Budget being a clear example), an operator can download the PDF in a
+  browser and use the manual-upload helpers described below to bring it
+  into Civic Gallery. The public attachment view renders a disclosure
+  banner so readers know the file arrived by an operator override
+  rather than the automated importer.
+
+## Operator helpers for manual upload
+
+These two commands cover the full workflow for handling exceptions like
+the section above.
+
+### Find what needs intervention
+
+```bash
+# Locally in development:
+bin/rails attachments:needs_manual_upload
+
+# Against production:
+kamal app exec --reuse --roles=web 'bin/rails attachments:needs_manual_upload'
+```
+
+Lists every Civic::MatterAttachment that failed the automated importer
+and has not been manually uploaded yet, grouped by host so you can see
+patterns at a glance. Output includes the attachment id, matter file
+number, attachment name, source hyperlink, and a one-line error
+summary.
+
+### Upload a PDF for one of them
+
+```bash
+bin/manual_upload <ATTACHMENT_ID> <LOCAL_PDF_PATH> [REASON]
+```
+
+This is a laptop-side wrapper that handles the laptop-to-VPS-to-container
+file shuffle and runs `attachments:manual_upload` for you. Operator
+identity defaults to your `git config user.email`. Reason defaults to a
+generic disclosure if you do not provide one.
+
+What it actually does, in order: scp the PDF to the VPS, docker cp it
+into the running web container, run the rake task via kamal app exec,
+remove the VPS temp file. The rake task itself stamps the manual import
+columns, attaches the file to source_file, and enqueues text extraction.
 
 ## How to add to this doc
 
