@@ -19,6 +19,20 @@ module Generated
         end
       end
 
+      test "instructs primary-subject tagging, a cap, and procedural exclusion" do
+        prompt = MatterThemesV1.build(matter: @matter, source_text: "Body text.")
+        system_prompt = prompt[:system_prompt]
+
+        assert_includes system_prompt, "primary subject"
+        assert_includes system_prompt, "at most three"
+        assert_match(/approval of\s+minutes/, system_prompt)
+        assert_match(/empty array for procedural/, system_prompt)
+      end
+
+      test "version is matter_themes_v2" do
+        assert_equal "matter_themes_v2", MatterThemesV1::VERSION
+      end
+
       test "includes matter identity and source text in the user prompt" do
         prompt = MatterThemesV1.build(matter: @matter, source_text: "Discusses zoning variance.")
 
