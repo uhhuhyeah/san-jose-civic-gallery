@@ -1,3 +1,6 @@
+<% content_for(:title) { @matter.display_name } %>
+<% content_for(:description) { "View San Jose matter #{@matter.display_name}, related meetings, official attachments, extracted text, generated summaries, and source links." } %>
+
 <main class="page-shell">
   <%= render "public/shared/topbar", active: :matters %>
 
