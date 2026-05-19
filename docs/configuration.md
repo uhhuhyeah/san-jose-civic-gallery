@@ -27,6 +27,12 @@ deployments may override any of them.
 
 Local development uses the on-disk `local` service in `config/storage.yml`.
 
+## Error monitoring (Sentry)
+
+| Variable | Notes |
+| --- | --- |
+| `SENTRY_DSN` | Sentry project DSN. In production this is supplied through Kamal secrets. Leave unset to disable event delivery in local development. |
+
 ## Legistar API client (`Legistar::Client`)
 
 | Variable | Default | Notes |
