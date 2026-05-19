@@ -1,3 +1,6 @@
+<% content_for(:title) { @event.display_name } %>
+<% content_for(:description) { "View the #{@event.display_name} meeting record, agenda items, linked matters, attachments, and official San Jose source links." } %>
+
 <main class="page-shell">
   <%= render "public/shared/topbar", active: :meetings %>
 
