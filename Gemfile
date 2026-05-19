@@ -52,6 +52,9 @@ gem "image_processing", "~> 1.2"
 # the modern S3 checksum behavior that Cloudflare R2 rejects with InvalidRequest / 401.
 gem "aws-sdk-s3", "~> 1.217.0", require: false
 
+# Web UI for inspecting Solid Queue (and other Active Job backends). Mounted at /jobs.
+gem "mission_control-jobs"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri mingw mswin x64_mingw ], require: "debug/prelude"

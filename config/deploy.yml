@@ -42,6 +42,8 @@ env:
     - AWS_SECRET_ACCESS_KEY
     - GENERATED_SUMMARY_API_KEY
     - SENTRY_DSN
+    - MISSION_CONTROL_USERNAME
+    - MISSION_CONTROL_PASSWORD
 
 volumes:
   - "san_jose_civic_gallery_storage:/rails/storage"
