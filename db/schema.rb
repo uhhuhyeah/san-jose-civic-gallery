@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_19_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_19_200000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -79,6 +79,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_100000) do
     t.index ["last_source_snapshot_id"], name: "index_civic_event_items_on_last_source_snapshot_id"
     t.index ["source_system", "legistar_event_item_id"], name: "idx_civic_event_items_unique_per_source", unique: true
     t.index ["source_system", "matter_id"], name: "idx_civic_event_items_source_system_matter_id"
+    t.index ["updated_at"], name: "index_civic_event_items_on_updated_at"
   end
 
   create_table "civic_events", force: :cascade do |t|
@@ -106,6 +107,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_100000) do
     t.index ["last_source_snapshot_id"], name: "index_civic_events_on_last_source_snapshot_id"
     t.index ["source_present"], name: "idx_civic_events_source_presence"
     t.index ["source_system", "legistar_event_id"], name: "idx_civic_events_unique_per_source", unique: true
+    t.index ["updated_at"], name: "index_civic_events_on_updated_at"
   end
 
   create_table "civic_matter_attachments", force: :cascade do |t|
@@ -150,6 +152,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_100000) do
     t.index ["last_source_snapshot_id"], name: "index_civic_matter_attachments_on_last_source_snapshot_id"
     t.index ["source_file_validated_at", "source_file_imported_at"], name: "idx_civic_matter_attachments_file_validation"
     t.index ["source_system", "legistar_matter_attachment_id"], name: "idx_civic_matter_attachments_unique_per_source", unique: true
+    t.index ["updated_at"], name: "index_civic_matter_attachments_on_updated_at"
   end
 
   create_table "civic_matters", force: :cascade do |t|
@@ -178,6 +181,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_100000) do
     t.index ["last_source_snapshot_id"], name: "index_civic_matters_on_last_source_snapshot_id"
     t.index ["matter_file"], name: "index_civic_matters_on_matter_file"
     t.index ["source_system", "legistar_matter_id"], name: "idx_civic_matters_unique_per_source", unique: true
+    t.index ["updated_at"], name: "index_civic_matters_on_updated_at"
   end
 
   create_table "document_extracted_texts", force: :cascade do |t|
@@ -195,6 +199,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_100000) do
     t.index "to_tsvector('english'::regconfig, COALESCE(content, ''::text))", name: "idx_document_extracted_texts_content_search", where: "((status)::text = 'ok'::text)", using: :gin
     t.index ["civic_matter_attachment_id", "created_at"], name: "idx_document_extracted_texts_attachment_history"
     t.index ["civic_matter_attachment_id"], name: "index_document_extracted_texts_on_civic_matter_attachment_id"
+    t.index ["updated_at"], name: "index_document_extracted_texts_on_updated_at"
   end
 
   create_table "generated_artifacts", force: :cascade do |t|
@@ -217,6 +222,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_100000) do
     t.index ["source_artifact_type", "source_artifact_id"], name: "idx_generated_artifacts_source"
     t.index ["target_type", "target_id", "kind", "model_identifier", "prompt_version", "input_sha256"], name: "idx_generated_artifacts_idempotency", unique: true
     t.index ["target_type", "target_id"], name: "idx_generated_artifacts_target"
+    t.index ["updated_at"], name: "index_generated_artifacts_on_updated_at"
   end
 
   create_table "ingestion_source_snapshots", force: :cascade do |t|

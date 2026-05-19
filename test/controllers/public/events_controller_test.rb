@@ -41,6 +41,16 @@ module Public
       assert_includes response.body, "Public Comment"
     end
 
+    test "event detail returns 304 when client ETag matches" do
+      get public_event_url(@event)
+      assert_response :success
+      etag = response.headers["ETag"]
+
+      get public_event_url(@event), headers: { "If-None-Match" => etag }
+
+      assert_response :not_modified
+    end
+
     test "renders matter-pending hint when item has matter_id but no synced matter" do
       @event.event_items.create!(
         legistar_event_item_id: 129631,
@@ -76,8 +86,8 @@ module Public
       queries = count_app_queries { get public_event_url(@event) }
 
       assert_response :success
-      assert_operator queries.size, :<=, 8,
-        "Expected events#show to issue at most 8 SQL queries (no N+1); got #{queries.size}:\n#{queries.join("\n")}"
+      assert_operator queries.size, :<=, 10,
+        "Expected events#show to issue at most 10 SQL queries (4 eager-load + 6 cache-version); got #{queries.size}:\n#{queries.join("\n")}"
     end
 
     private

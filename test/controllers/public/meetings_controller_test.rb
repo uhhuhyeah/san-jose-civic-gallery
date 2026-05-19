@@ -47,6 +47,16 @@ module Public
       assert_not_includes response.body, "Planning meeting"
     end
 
+    test "meetings index returns 304 when client ETag matches" do
+      get public_meetings_url(month: "2026-05")
+      assert_response :success
+      etag = response.headers["ETag"]
+
+      get public_meetings_url(month: "2026-05"), headers: { "If-None-Match" => etag }
+
+      assert_response :not_modified
+    end
+
     test "lists meetings using year and month picker params" do
       get public_meetings_url(year: "2026", month_number: "6")
 
