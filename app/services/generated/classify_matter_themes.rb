@@ -21,6 +21,10 @@ module Generated
       new(matter:, client:, force:).call
     end
 
+    def self.current_input_sha256(matter:, client: ThemesClient.new)
+      new(matter:, client:, force: false).current_input_sha256
+    end
+
     def initialize(matter:, client:, force:)
       @matter = matter
       @client = client
@@ -52,6 +56,10 @@ module Generated
       Result.new(artifact:, created: artifact.previously_new_record?, skipped: false, reason: nil, theme_slugs: slugs)
     rescue StandardError => error
       record_failure(prompt:, error:)
+    end
+
+    def current_input_sha256
+      PROMPT.build(matter:, source_text:, max_input_chars: client_max_input_chars)[:sent_content_sha256]
     end
 
     private

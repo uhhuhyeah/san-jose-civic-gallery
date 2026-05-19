@@ -37,6 +37,18 @@ module Generated
       assert_equal [ candidate.id ], forced.candidates.map(&:id)
     end
 
+    test "includes previously classified matters when the source input changed" do
+      candidate = matter(70_007, "26-406")
+      ClassifyMatterThemes.call(matter: candidate, client: @client)
+
+      add_summary(candidate, summary: "Discusses a new protected bikeway network.")
+
+      result = BackfillMatterThemes.call(limit: 10, dry_run: true, client: @client)
+
+      assert_equal [ candidate.id ], result.candidates.map(&:id)
+      assert_equal 1, @client.calls
+    end
+
     test "respects the limit" do
       matter(70_005, "26-404")
       matter(70_006, "26-405")
@@ -50,6 +62,22 @@ module Generated
 
     def matter(legistar_id, file)
       Civic::Matter.create!(legistar_matter_id: legistar_id, matter_file: file)
+    end
+
+    def add_summary(matter, summary:)
+      attachment = matter.all_attachments.create!(
+        legistar_matter_attachment_id: matter.legistar_matter_id + 10_000,
+        name: "Staff report"
+      )
+      attachment.generated_artifacts.create!(
+        kind: "attachment_summary",
+        status: "succeeded",
+        model_identifier: "summary-model",
+        prompt_version: "attachment_summary_v3",
+        input_sha256: Digest::SHA256.hexdigest(summary),
+        content: { "summary" => summary, "key_points" => [], "limitations" => [], "document_status" => "final" }
+      )
+      matter.reload
     end
 
     class FakeThemesClient

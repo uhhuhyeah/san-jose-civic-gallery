@@ -40,21 +40,28 @@ module Generated
     attr_reader :limit, :dry_run, :client, :force
 
     def candidate_matters
-      scope = Civic::Matter.order(:id)
-      scope = scope.where.not(id: already_succeeded_target_ids) unless force
-      scope.limit(limit).to_a
+      return [] unless limit.positive?
+      return Civic::Matter.order(:id).limit(limit).to_a if force
+
+      candidates = []
+      Civic::Matter.order(:id).find_each do |matter|
+        next if already_succeeded_for_current_input?(matter)
+
+        candidates << matter
+        break if candidates.size >= limit
+      end
+      candidates
     end
 
-    def already_succeeded_target_ids
-      Generated::Artifact
-        .where(
-          target_type: "Civic::Matter",
-          kind: ClassifyMatterThemes::KIND,
-          model_identifier: client_model_name,
-          prompt_version: ClassifyMatterThemes::PROMPT::VERSION,
-          status: "succeeded"
-        )
-        .select(:target_id)
+    def already_succeeded_for_current_input?(matter)
+      Generated::Artifact.exists?(
+        target: matter,
+        kind: ClassifyMatterThemes::KIND,
+        model_identifier: client_model_name,
+        prompt_version: ClassifyMatterThemes::PROMPT::VERSION,
+        input_sha256: ClassifyMatterThemes.current_input_sha256(matter:, client:),
+        status: "succeeded"
+      )
     end
 
     def client_model_name

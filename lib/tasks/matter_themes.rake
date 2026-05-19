@@ -57,7 +57,10 @@ namespace :pulse do
 
     rows = Civic::ThemeTaxonomy::THEMES.map do |theme|
       matter_ids = Civic::MatterTheme.for_theme(theme[:slug]).select(:civic_matter_id)
-      events = Civic::EventItem.where(civic_matter_id: matter_ids).joins(:event)
+      events = Civic::EventItem.current_from_source
+        .where(civic_matter_id: matter_ids)
+        .joins(:event)
+        .merge(Civic::Event.current_from_source)
       events = events.where(civic_events: { event_date: since.. }) if since
 
       { label: theme[:label], slug: theme[:slug], matters: matter_ids.count, appearances: events.count }
