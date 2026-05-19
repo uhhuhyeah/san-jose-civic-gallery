@@ -121,12 +121,14 @@
                 <dd><%= attachment.source_file_checksum_sha256&.first(12) || "Unavailable" %></dd>
               </div>
               <div>
-                <dt>Official source</dt>
+                <dt>Official source link</dt>
                 <dd>
                   <% if (source_url = official_source_url(attachment.hyperlink)) %>
                     <%= link_to "Open source document", source_url, target: "_blank", rel: "noopener" %>
+                  <% elsif attachment.imported? %>
+                    Official source link unavailable. The file was imported, but the current source metadata does not include a public document URL.
                   <% else %>
-                    No official document link recorded
+                    Official source link unavailable. The current source metadata does not include a public document URL.
                   <% end %>
                 </dd>
               </div>

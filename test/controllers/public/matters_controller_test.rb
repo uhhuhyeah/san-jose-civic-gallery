@@ -212,6 +212,23 @@ module Public
       assert_includes response.body, "The source file has not been imported yet."
     end
 
+    test "explains unavailable official source link when imported file has no public URL" do
+      @attachment.update!(hyperlink: nil)
+      @attachment.source_file.attach(
+        io: StringIO.new("%PDF-1.4 fake"),
+        filename: "agreement.pdf",
+        content_type: "application/pdf"
+      )
+
+      get public_matter_url(@matter)
+
+      assert_response :success
+      assert_includes response.body, "Official source link"
+      assert_includes response.body, "Official source link unavailable"
+      assert_includes response.body, "The file was imported, but the current source metadata does not include a public document URL."
+      assert_not_includes response.body, "No official document link recorded"
+    end
+
     test "shows a fallback note when a succeeded summary has blank summary text" do
       @attachment.source_file.attach(
         io: StringIO.new("%PDF-1.4 fake"),
@@ -255,7 +272,7 @@ module Public
 
       assert_response :success
       assert_includes response.body, "Open source document"
-      assert_not_includes response.body, "No official document link recorded"
+      assert_not_includes response.body, "Official source link unavailable"
     end
   end
 end
