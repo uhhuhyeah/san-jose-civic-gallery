@@ -1,0 +1,21 @@
+{
+  "Attachment": [
+    {
+      "AttachmentID": 5001,
+      "Title": "Gift Acceptance Memo",
+      "FileName": "gift-memo.pdf",
+      "ContentType": "application/pdf",
+      "FileExtension": "pdf",
+      "Order": 1
+    },
+    {
+      "AttachmentID": 5002,
+      "Title": "Donor List",
+      "FileName": "donors.pdf",
+      "ContentType": "application/pdf",
+      "FileExtension": "pdf",
+      "Order": 2
+    }
+  ],
+  "HyperLink": []
+}
