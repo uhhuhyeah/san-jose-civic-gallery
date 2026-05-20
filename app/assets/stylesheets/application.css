@@ -334,6 +334,7 @@ a:hover {
   align-items: center;
   min-height: 24px;
   padding: 3px 8px;
+  margin: 6px 0;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: #ffffff;
