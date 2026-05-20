@@ -1,0 +1,93 @@
+<% content_for(:title) { "Pulse (preview)" } %>
+<% content_for(:description) { "Preview of which civic themes San Jose's bodies have been focused on lately, and which are heating up." } %>
+<% content_for(:head) do %>
+  <%= tag.meta name: "robots", content: "noindex, nofollow" %>
+<% end %>
+
+<main class="newspaper-shell">
+  <%= render "public/shared/topbar" %>
+
+  <header class="page-header inset-header">
+    <p class="eyebrow">Preview / work in progress</p>
+    <h1>Pulse</h1>
+    <p>
+      Which civic themes the city's bodies have been focused on over the last
+      quarter, and which are heating up. Themes are derived from AI tagging of
+      matters and are assistive, not official.
+    </p>
+  </header>
+
+  <section class="inset-panel" aria-label="Filter by body">
+    <%= form_with url: pulse_v2_path, method: :get, local: true, class: "search-form" do |form| %>
+      <%= form.label :body_name, "Show", for: "pulse-body-name" %>
+      <div class="search-row">
+        <%= form.select :body_name,
+          options_for_select([ [ "All bodies (citywide)", "" ] ] + @body_options.map { |body| [ body, body ] }, @body_name),
+          {},
+          id: "pulse-body-name",
+          aria: { label: "Filter by body" } %>
+        <%= form.submit "Update" %>
+        <% if @body_name.present? %>
+          <%= link_to "Citywide", pulse_v2_path, class: "button-secondary" %>
+        <% end %>
+      </div>
+    <% end %>
+    <p class="data-source">
+      Showing: <strong><%= @body_name.presence || "Citywide (all bodies)" %></strong>
+    </p>
+  </section>
+
+  <% if @heating_up.empty? && @top_themes.empty? %>
+    <section class="inset-panel">
+      <h2>Not enough activity yet</h2>
+      <p>
+        There are not enough tagged agenda appearances in this window
+        <% if @body_name.present? %>for this body <% end %>to show a pulse yet.
+        Try the citywide view, or check back as more meetings are ingested.
+      </p>
+    </section>
+  <% else %>
+    <section class="inset-panel" aria-label="Heating up">
+      <h2>Heating up</h2>
+      <p class="data-section-note">
+        Themes appearing on agendas more this quarter than last, by appearances
+        per meeting.
+      </p>
+      <% if @heating_up.any? %>
+        <ol class="pulse-list">
+          <% @heating_up.each do |stat| %>
+            <li>
+              <span class="pulse-theme"><%= stat.label %></span>
+              <% if stat.surging %>
+                <span class="pulse-trend pulse-trend-new">New this quarter</span>
+              <% else %>
+                <span class="pulse-trend">&#9650; <%= ((stat.lift - 1) * 100).round %>% vs last quarter</span>
+              <% end %>
+              <span class="pulse-count"><%= pluralize(stat.current_appearances, "appearance") %></span>
+            </li>
+          <% end %>
+        </ol>
+      <% else %>
+        <p>No themes are clearly trending up in this window.</p>
+      <% end %>
+    </section>
+
+    <section class="inset-panel" aria-label="Most active themes">
+      <h2>Most active themes</h2>
+      <p class="data-section-note">
+        By agenda appearances this quarter, counting each matter under its
+        primary theme.
+      </p>
+      <ol class="pulse-list">
+        <% @top_themes.each do |stat| %>
+          <li>
+            <span class="pulse-theme"><%= stat.label %></span>
+            <span class="pulse-count"><%= pluralize(stat.current_appearances, "appearance") %></span>
+          </li>
+        <% end %>
+      </ol>
+    </section>
+  <% end %>
+
+  <%= render "public/shared/footer" %>
+</main>
