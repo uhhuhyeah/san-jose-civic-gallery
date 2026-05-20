@@ -15,6 +15,34 @@ module Generated
     PROMPT = Generated::Prompts::MatterThemesV1
     SUMMARY_KIND = "attachment_summary"
 
+    # Procedural/administrative matter types carry no substantive subject. We
+    # force them to an empty theme set without calling the model, because the
+    # model otherwise classifies them by the content they reference (a closed
+    # session "about" litigation, a travel request "about" the trip's topic).
+    # This is more reliable than any prompt instruction.
+    PROCEDURAL_MATTER_TYPES = [
+      "Closed Session Agenda",
+      "Approval of Council Committee Minutes",
+      "Approval of Council Minutes",
+      "Review Final Agenda",
+      "Review Draft Agenda",
+      "Joint Meeting Agenda",
+      "Orders of the Day",
+      "Ceremonial Item",
+      "Mayor & Council Excused Absence Request"
+    ].freeze
+
+    # Travel authorizations are not their own matter type (they ride Consent and
+    # Rules Committee types alongside substantive items), so we match them by
+    # title instead.
+    PROCEDURAL_TITLE_PATTERN = /travel authoriz|request to travel/i
+
+    # Stable input hash for procedurally-skipped matters: the idempotency key
+    # already includes the (unique) target, so a constant is safe and lets the
+    # backfill recognize a skipped matter as already done without rebuilding a
+    # prompt.
+    PROCEDURAL_INPUT_SHA256 = Digest::SHA256.hexdigest("procedural:matter_themes").freeze
+
     Result = Data.define(:artifact, :created, :skipped, :reason, :theme_slugs)
 
     def self.call(matter:, client: ThemesClient.new, force: false)
@@ -32,6 +60,8 @@ module Generated
     end
 
     def call
+      return classify_procedural if procedural?
+
       prompt = PROMPT.build(matter:, source_text:, max_input_chars: client_max_input_chars)
       artifact = find_or_initialize_artifact(input_sha256: prompt[:sent_content_sha256])
 
@@ -59,12 +89,42 @@ module Generated
     end
 
     def current_input_sha256
+      return PROCEDURAL_INPUT_SHA256 if procedural?
+
       PROMPT.build(matter:, source_text:, max_input_chars: client_max_input_chars)[:sent_content_sha256]
     end
 
     private
 
     attr_reader :matter, :client, :force
+
+    def procedural?
+      PROCEDURAL_MATTER_TYPES.include?(matter.matter_type_name) ||
+        PROCEDURAL_TITLE_PATTERN.match?("#{matter.title} #{matter.name}")
+    end
+
+    # Record a succeeded, empty-theme artifact for a procedural matter without
+    # calling the model, and clear any prior projection.
+    def classify_procedural
+      artifact = find_or_initialize_artifact(input_sha256: PROCEDURAL_INPUT_SHA256)
+
+      if artifact.persisted? && !force && artifact.status == "succeeded"
+        return Result.new(artifact:, created: false, skipped: true, reason: "already_generated", theme_slugs: [])
+      end
+
+      artifact.assign_attributes(
+        status: "succeeded",
+        content: { "themes" => [] },
+        input_metadata: { "procedural" => true, "matter_type_name" => matter.matter_type_name },
+        usage_metadata: {},
+        generated_at: Time.current,
+        error_message: nil
+      )
+      artifact.save!
+      sync_projection(artifact, [])
+
+      Result.new(artifact:, created: artifact.previously_new_record?, skipped: false, reason: "procedural", theme_slugs: [])
+    end
 
     def record_failure(prompt:, error:)
       artifact = find_or_initialize_artifact(input_sha256: prompt[:sent_content_sha256])

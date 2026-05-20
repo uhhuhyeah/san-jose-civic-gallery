@@ -110,6 +110,63 @@ module Generated
       assert_equal 0, @matter.themes.count
     end
 
+    test "procedural matter types are skipped without calling the model" do
+      procedural = Civic::Matter.create!(
+        legistar_matter_id: 50_900,
+        matter_file: "26-390",
+        title: "Approval of City Council Minutes",
+        matter_type_name: "Approval of Council Minutes"
+      )
+
+      result = ClassifyMatterThemes.call(matter: procedural, client: @client)
+
+      assert_equal "succeeded", result.artifact.status
+      assert_equal "procedural", result.reason
+      assert_equal [], result.artifact.content["themes"]
+      assert_equal true, result.artifact.input_metadata["procedural"]
+      assert_equal 0, procedural.themes.count
+      assert_equal 0, @client.calls
+    end
+
+    test "travel authorization titles are skipped by pattern" do
+      travel = Civic::Matter.create!(
+        legistar_matter_id: 50_901,
+        matter_file: "26-391",
+        title: "Request for Travel Authorization for Councilmember Campos"
+      )
+
+      result = ClassifyMatterThemes.call(matter: travel, client: @client)
+
+      assert_equal "procedural", result.reason
+      assert_equal 0, @client.calls
+    end
+
+    test "a procedural skip clears a prior theme projection" do
+      add_summary(summary: "Housing project.", key_points: [])
+      ClassifyMatterThemes.call(matter: @matter, client: @client)
+      assert_equal 2, @matter.themes.count
+
+      @matter.update!(matter_type_name: "Closed Session Agenda")
+      ClassifyMatterThemes.call(matter: @matter, client: @client, force: true)
+
+      assert_equal 0, @matter.themes.count
+    end
+
+    test "re-running a procedural matter is idempotent" do
+      procedural = Civic::Matter.create!(
+        legistar_matter_id: 50_902,
+        matter_file: "26-392",
+        matter_type_name: "Ceremonial Item"
+      )
+
+      first = ClassifyMatterThemes.call(matter: procedural, client: @client)
+      second = ClassifyMatterThemes.call(matter: procedural, client: @client)
+
+      assert_equal first.artifact, second.artifact
+      assert_equal true, second.skipped
+      assert_equal 0, @client.calls
+    end
+
     test "client errors are captured on a failed artifact" do
       add_summary(summary: "Housing.", key_points: [])
       failing = FakeThemesClient.new(error: RuntimeError.new("budget exceeded"))

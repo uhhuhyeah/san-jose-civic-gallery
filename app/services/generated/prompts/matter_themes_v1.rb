@@ -6,7 +6,7 @@ module Generated
       # Bump this whenever the taxonomy (Civic::ThemeTaxonomy) or the
       # instructions change, so the backfill re-tags every matter against the
       # new vocabulary. The version is part of the artifact idempotency key.
-      VERSION = "matter_themes_v4"
+      VERSION = "matter_themes_v5"
       DEFAULT_MAX_INPUT_CHARS = 12_000
       TRUNCATION_MARKER = "\n\n…[truncated]".freeze
       NO_BODY_TEXT = "(No attachment text available; classify from the title and name only.)".freeze
@@ -56,6 +56,16 @@ module Generated
             is itself primarily about business growth, jobs, or development
             incentives. Nearly everything costs money and touches the economy;
             that alone is not enough.
+          - Apply these boundaries between commonly confused themes:
+            - Traffic safety, Vision Zero, and vehicle, parking, or
+              street-safety concerns are Transportation, not Public Safety.
+              Reserve Public Safety for policing, fire, emergency response, and
+              crime.
+            - Energy, electricity, power, and clean-energy programs are
+              Utilities, not Economic Development.
+            - When a matter funds or budgets another program, tag that program
+              area, not Budget & Finance. Infrastructure funding is
+              Infrastructure & Public Works; park funding is Parks & Recreation.
           - Return an empty array for procedural or administrative items that
             have no substantive subject of their own, for example: approval of
             minutes, approval or adoption of an agenda, closed session agendas,
