@@ -9,54 +9,36 @@
 
   <section class="front-intro">
     <h1>San Jose Civic Gallery</h1>
-    <p>
-      The Pulse shows which themes the city's bodies have been focused on this
-      quarter and what is heating up, alongside the latest official agenda
-      materials. Themes are derived from AI tagging of matters and are
-      assistive, not official.
-    </p>
   </section>
 
-  <section class="newspaper-hero">
-    <article class="lead-card">
-      <% if @lead_item %>
-        <div>
-          <div class="meta">
-            <span class="pill blue"><%= @lead_item.event.body_name.presence || "Meeting" %></span>
-            <span><%= @lead_item.event.event_date %></span>
-            <span><%= @lead_item.agenda_number.presence || "Agenda item" %></span>
-          </div>
-          <h2><%= link_to @lead_item.matter.display_name, public_matter_path(@lead_item.matter) %></h2>
-          <p>
-            <%= @lead_item.title.presence || @lead_item.matter.descriptive_title.presence || "Official agenda item linked to source materials." %>
-          </p>
+  <%# Band 1: Pulse selector (left) aligned with the source-record cards (right). %>
+  <section class="newspaper-body">
+    <div>
+      <%= form_with url: pulse_v2_path, method: :get, local: true, class: "search-form" do |form| %>
+        <div class="section-title">
+          <h2>The Civic Gallery <em>Pulse</em></h2>
+          <span>Themes trending across agendas this quarter</span>
         </div>
-        <div class="lead-actions">
-          <div class="tags">
-            <% if @lead_item.matter.matter_type_name.present? %>
-              <span class="pill green"><%= @lead_item.matter.matter_type_name %></span>
-            <% end %>
-            <% if @lead_item.matter.matter_status_name.present? %>
-              <span class="pill gold"><%= @lead_item.matter.matter_status_name %></span>
-            <% end %>
-            <span class="pill">Official sources linked</span>
-          </div>
-          <%= link_to "Open item details", public_matter_path(@lead_item.matter), class: "source-link" %>
-        </div>
-      <% else %>
-        <div>
-          <div class="meta">
-            <span class="pill blue">San Jose</span>
-            <span>Official source records</span>
-          </div>
-          <h2>Track City Hall agenda materials as they are ingested</h2>
-          <p>Recent meetings, matters, and agenda items will appear here after sync jobs run.</p>
-        </div>
-        <div class="lead-actions">
-          <%= link_to "Browse matters", public_matters_path, class: "source-link" %>
+        <p class="data-section-note">
+          The Pulse shows which themes the city's bodies have been focused on
+          this quarter and what is heating up, alongside the latest official
+          agenda materials. Themes are derived from AI tagging of matters and
+          are assistive, not official.
+        </p>
+        <%= form.label :body_name, "Show themes for", for: "pulse-body-name" %>
+        <div class="search-row">
+          <%= form.select :body_name,
+            options_for_select([ [ "All bodies (citywide)", "" ] ] + @body_options.map { |body| [ body, body ] }, @body_name),
+            {},
+            id: "pulse-body-name",
+            aria: { label: "Filter themes by body" } %>
+          <%= form.submit "Update" %>
+          <% if @body_name.present? %>
+            <%= link_to "Citywide", pulse_v2_path, class: "button-secondary" %>
+          <% end %>
         </div>
       <% end %>
-    </article>
+    </div>
 
     <aside class="mini-stack" aria-label="Source record counts">
       <div class="mini-card">
@@ -77,29 +59,14 @@
     </aside>
   </section>
 
+  <%# Band 2: Heating up / Most active / Recent meetings (left) aligned with Record Pulse (right). %>
   <section class="newspaper-body">
     <div>
-      <div class="section-title">
-        <h2>Pulse</h2>
-        <span>Themes trending across agendas this quarter</span>
-      </div>
-
-      <%= form_with url: pulse_v2_path, method: :get, local: true, class: "search-form" do |form| %>
-        <%= form.label :body_name, "Show themes for", for: "pulse-body-name" %>
-        <div class="search-row">
-          <%= form.select :body_name,
-            options_for_select([ [ "All bodies (citywide)", "" ] ] + @body_options.map { |body| [ body, body ] }, @body_name),
-            {},
-            id: "pulse-body-name",
-            aria: { label: "Filter themes by body" } %>
-          <%= form.submit "Update" %>
-          <% if @body_name.present? %>
-            <%= link_to "Citywide", pulse_v2_path, class: "button-secondary" %>
-          <% end %>
-        </div>
-      <% end %>
-
       <% if @heating_up.empty? && @top_themes.empty? %>
+        <div class="section-title">
+          <h2>Heating up</h2>
+          <span>More than last quarter, per meeting</span>
+        </div>
         <div class="card">
           <article class="item">
             <h3 class="item-title">Not enough activity yet</h3>
@@ -113,14 +80,14 @@
         </div>
       <% else %>
         <div class="section-title">
-          <h3>Heating up</h3>
+          <h2>Heating up</h2>
           <span>More than last quarter, per meeting</span>
         </div>
         <div class="card">
           <% if @heating_up.any? %>
             <% @heating_up.each do |stat| %>
               <article class="item">
-                <h4 class="item-title"><%= stat.label %></h4>
+                <h3 class="item-title"><%= stat.label %></h3>
                 <div class="tags">
                   <% if stat.surging %>
                     <span class="pill gold">New this quarter</span>
@@ -139,8 +106,8 @@
         </div>
 
         <div class="section-title">
-          <h3>Most active themes</h3>
-          <span>By agenda appearances, counted on each matter's primary theme</span>
+          <h2>Most active themes</h2>
+          <span>By agenda appearances, on each matter's primary theme</span>
         </div>
         <div class="topic-grid">
           <% @top_themes.each do |stat| %>

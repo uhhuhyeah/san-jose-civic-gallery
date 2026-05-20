@@ -6,7 +6,7 @@ module Public
       get pulse_v2_path
 
       assert_response :success
-      assert_select "h2", "Pulse"
+      assert_select "h2", "The Civic Gallery Pulse"
     end
 
     test "marks the page noindex so crawlers skip the WIP route" do
