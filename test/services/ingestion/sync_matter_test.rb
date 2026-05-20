@@ -47,13 +47,13 @@ module Ingestion
 
     test "does not link event items from a different source_system" do
       other_source_event = Civic::Event.create!(
-        source_system: "legistar.santaclara",
+        source_system: "simbli.sjusd",
         legistar_event_id: 7622,
         body_name: "City Council",
         event_date: Date.new(2026, 5, 19)
       )
       other_item = other_source_event.all_event_items.create!(
-        source_system: "legistar.santaclara",
+        source_system: "simbli.sjusd",
         legistar_event_item_id: 555_555,
         matter_id: 15886,
         title: "Other-source item that happens to share matter id"

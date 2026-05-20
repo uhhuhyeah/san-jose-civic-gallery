@@ -16,6 +16,12 @@ module ActiveSupport
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
+    # Fixture set names do not classify onto namespaced models, so map them
+    # explicitly. Without this, Rails cannot resolve the model class and skips
+    # auto-populating timestamps (and the fixture accessors return the wrong
+    # type).
+    set_fixture_class civic_jurisdictions: Civic::Jurisdiction
+
     # Add more helper methods to be used by all tests here...
   end
 end

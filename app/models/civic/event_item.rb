@@ -2,6 +2,8 @@ module Civic
   class EventItem < ApplicationRecord
     self.table_name = "civic_event_items"
 
+    include JurisdictionScoped
+
     belongs_to :event, class_name: "Civic::Event", foreign_key: :civic_event_id, inverse_of: :event_items
     belongs_to :matter, class_name: "Civic::Matter", foreign_key: :civic_matter_id, inverse_of: :event_items, optional: true
     belongs_to :last_source_snapshot, class_name: "Ingestion::SourceSnapshot", optional: true
