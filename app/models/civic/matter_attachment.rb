@@ -3,6 +3,7 @@ module Civic
     self.table_name = "civic_matter_attachments"
 
     include JurisdictionScoped
+    include SourceIdentified
 
     belongs_to :matter, class_name: "Civic::Matter", foreign_key: :civic_matter_id, inverse_of: :attachments
     belongs_to :last_source_snapshot, class_name: "Ingestion::SourceSnapshot", optional: true
@@ -11,9 +12,10 @@ module Civic
     has_many :generated_artifacts, as: :target, class_name: "Generated::Artifact", dependent: :destroy
 
     validates :source_system, presence: true
-    validates :legistar_matter_attachment_id, presence: true, uniqueness: { scope: :source_system }
     validates :matter, presence: true
     validates :name, presence: true
+
+    source_identity generic: :source_attachment_id, legacy: :legistar_matter_attachment_id
 
     scope :current_from_source, -> { where(source_present: true) }
     scope :display_order, -> { order(:sort_order, :legistar_matter_attachment_id) }

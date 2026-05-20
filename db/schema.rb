@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_20_120100) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_20_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -55,7 +55,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_20_120100) do
     t.datetime "created_at", null: false
     t.bigint "last_source_snapshot_id"
     t.datetime "last_synced_at"
-    t.bigint "legistar_event_item_id", null: false
+    t.bigint "legistar_event_item_id"
     t.string "matter_file"
     t.bigint "matter_id"
     t.text "matter_name"
@@ -66,6 +66,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_20_120100) do
     t.string "passed_flag_name"
     t.string "raw_source_digest"
     t.integer "roll_call_flag"
+    t.string "source_event_item_id", null: false
     t.datetime "source_last_modified_at"
     t.datetime "source_missing_at"
     t.boolean "source_present", default: true, null: false
@@ -81,6 +82,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_20_120100) do
     t.index ["last_source_snapshot_id"], name: "index_civic_event_items_on_last_source_snapshot_id"
     t.index ["source_system", "legistar_event_item_id"], name: "idx_civic_event_items_unique_per_source", unique: true
     t.index ["source_system", "matter_id"], name: "idx_civic_event_items_source_system_matter_id"
+    t.index ["source_system", "source_event_item_id"], name: "idx_civic_event_items_unique_source_id", unique: true
     t.index ["updated_at"], name: "index_civic_event_items_on_updated_at"
   end
 
@@ -95,11 +97,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_20_120100) do
     t.string "in_site_url"
     t.bigint "last_source_snapshot_id"
     t.datetime "last_synced_at"
-    t.bigint "legistar_event_id", null: false
+    t.bigint "legistar_event_id"
     t.string "location_name"
     t.string "minutes_file_uri"
     t.string "minutes_status_name"
     t.string "raw_source_digest"
+    t.string "source_event_id", null: false
     t.datetime "source_last_modified_at"
     t.datetime "source_missing_at"
     t.boolean "source_present", default: true, null: false
@@ -111,6 +114,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_20_120100) do
     t.index ["last_source_snapshot_id"], name: "index_civic_events_on_last_source_snapshot_id"
     t.index ["source_present"], name: "idx_civic_events_source_presence"
     t.index ["source_system", "legistar_event_id"], name: "idx_civic_events_unique_per_source", unique: true
+    t.index ["source_system", "source_event_id"], name: "idx_civic_events_unique_source_id", unique: true
     t.index ["updated_at"], name: "index_civic_events_on_updated_at"
   end
 
@@ -140,7 +144,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_20_120100) do
     t.boolean "is_supporting_document"
     t.bigint "last_source_snapshot_id"
     t.datetime "last_synced_at"
-    t.bigint "legistar_matter_attachment_id", null: false
+    t.bigint "legistar_matter_attachment_id"
     t.text "manual_import_reason"
     t.datetime "manually_imported_at"
     t.string "manually_imported_by"
@@ -150,6 +154,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_20_120100) do
     t.string "raw_source_digest"
     t.boolean "show_on_internet_page"
     t.integer "sort_order"
+    t.string "source_attachment_id", null: false
     t.bigint "source_file_byte_size"
     t.string "source_file_checksum_sha256"
     t.string "source_file_etag"
@@ -171,6 +176,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_20_120100) do
     t.index ["last_source_snapshot_id"], name: "index_civic_matter_attachments_on_last_source_snapshot_id"
     t.index ["source_file_validated_at", "source_file_imported_at"], name: "idx_civic_matter_attachments_file_validation"
     t.index ["source_system", "legistar_matter_attachment_id"], name: "idx_civic_matter_attachments_unique_per_source", unique: true
+    t.index ["source_system", "source_attachment_id"], name: "idx_civic_matter_attachments_unique_source_id", unique: true
     t.index ["updated_at"], name: "index_civic_matter_attachments_on_updated_at"
   end
 
@@ -198,7 +204,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_20_120100) do
     t.date "intro_date"
     t.bigint "last_source_snapshot_id"
     t.datetime "last_synced_at"
-    t.bigint "legistar_matter_id", null: false
+    t.bigint "legistar_matter_id"
     t.string "matter_file", null: false
     t.string "matter_status_name"
     t.string "matter_type_name"
@@ -208,6 +214,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_20_120100) do
     t.string "raw_source_digest"
     t.string "requester"
     t.datetime "source_last_modified_at"
+    t.string "source_matter_id", null: false
     t.string "source_system", default: "legistar.sanjose", null: false
     t.text "title"
     t.datetime "updated_at", null: false
@@ -216,6 +223,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_20_120100) do
     t.index ["last_source_snapshot_id"], name: "index_civic_matters_on_last_source_snapshot_id"
     t.index ["matter_file"], name: "index_civic_matters_on_matter_file"
     t.index ["source_system", "legistar_matter_id"], name: "idx_civic_matters_unique_per_source", unique: true
+    t.index ["source_system", "source_matter_id"], name: "idx_civic_matters_unique_source_id", unique: true
     t.index ["updated_at"], name: "index_civic_matters_on_updated_at"
   end
 
