@@ -1,0 +1,903 @@
+{
+  "status": {
+    "title": "",
+    "url": "https://simbli.eboardsolutions.com/SB_Meetings/SB_MeetingListing.aspx?S=36030421",
+    "blocked": false,
+    "blockedBy": null,
+    "bodySample": ""
+  },
+  "meetings": [
+    {
+      "mid": "65707",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"65707\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "60934",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"60934\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "57394",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"57394\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "56961",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"56961\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "58710",
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"58710\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "54141",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"54141\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "57015",
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"57015\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "57014",
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"57014\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "57013",
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"57013\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "51454",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"51454\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "50593",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"50593\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "48029",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"48029\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "50379",
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"50379\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "48031",
+      "text": "Financing Corporation Annual Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"48031\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "48030",
+      "text": "Annual Organizational Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"48030\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "45887",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"45887\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "45216",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"45216\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "44465",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"44465\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "43983",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"43983\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "42469",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"42469\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "43619",
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"43619\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "43157",
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"43157\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "40373",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"40373\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "40372",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"40372\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "37575",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"37575\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "40403",
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"40403\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "37574",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"37574\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "37573",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"37573\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "37371",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"37371\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "37079",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"37079\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "36331",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"36331\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "35226",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"35226\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "35385",
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"35385\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "35368",
+      "text": "Financing Corporation Annual Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"35368\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "35365",
+      "text": "Annual Organizational Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"35365\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "33981",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"33981\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "33809",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"33809\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "33410",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"33410\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "32927",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"32927\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "32354",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"32354\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "31661",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"31661\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "31605",
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"31605\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "31219",
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"31219\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "30279",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"30279\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "30278",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"30278\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "29428",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"29428\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "30562",
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"30562\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "29427",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"29427\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "29338",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"29338\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "29049",
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"29049\",\"1\",\"0\",\"P\",event);"
+    }
+  ],
+  "links": [
+    {
+      "text": "Skip to Main Menu",
+      "href": "https://simbli.eboardsolutions.com/SB_Meetings/SB_MeetingListing.aspx?S=36030421#jumpToMenu",
+      "onclick": ""
+    },
+    {
+      "text": "Skip to Main Content",
+      "href": "https://simbli.eboardsolutions.com/SB_Meetings/SB_MeetingListing.aspx?S=36030421#jumpToMidContent",
+      "onclick": ""
+    },
+    {
+      "text": "Skip to Footer",
+      "href": "https://simbli.eboardsolutions.com/SB_Meetings/SB_MeetingListing.aspx?S=36030421#jumpToFooter",
+      "onclick": ""
+    },
+    {
+      "text": "​▼",
+      "href": "https://simbli.eboardsolutions.com/SB_Meetings/SB_MeetingListing.aspx?S=36030421#",
+      "onclick": ""
+    },
+    {
+      "text": "",
+      "href": "https://www.facebook.com/SanJoseUnified",
+      "onclick": ""
+    },
+    {
+      "text": "",
+      "href": "https://twitter.com/SanJoseUnified",
+      "onclick": ""
+    },
+    {
+      "text": "",
+      "href": "https://www.linkedin.com/company/san-jose-unified-school-district/",
+      "onclick": ""
+    },
+    {
+      "text": "",
+      "href": "https://www.instagram.com/sanjoseunified/",
+      "onclick": ""
+    },
+    {
+      "text": "",
+      "href": "https://simbli.eboardsolutions.com/Index.aspx?S=36030421",
+      "onclick": ""
+    },
+    {
+      "text": "",
+      "href": "http://www.sjusd.org/",
+      "onclick": ""
+    },
+    {
+      "text": "",
+      "href": "https://simbli.eboardsolutions.com/Index.aspx?S=36030421",
+      "onclick": ""
+    },
+    {
+      "text": "Home",
+      "href": "https://simbli.eboardsolutions.com/index.aspx?S=36030421",
+      "onclick": ""
+    },
+    {
+      "text": "Meetings Listing",
+      "href": "https://simbli.eboardsolutions.com/SB_Meetings/SB_MeetingListing.aspx?S=36030421",
+      "onclick": ""
+    },
+    {
+      "text": "",
+      "href": "https://csba.org/ProductsAndServices/PolicyServices/Gamut#gsc.tab=0",
+      "onclick": ""
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"65707\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"60934\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"57394\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"57394\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"56961\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"56961\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"58710\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"58710\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"54141\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"54141\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"57015\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"57015\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"57014\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"57014\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"57013\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"57013\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"51454\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"51454\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"50593\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"50593\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"48029\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"48029\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"50379\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"50379\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Financing Corporation Annual Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"48031\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"48031\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Annual Organizational Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"48030\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"45887\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"45887\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"45216\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"45216\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"44465\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"44465\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"43983\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"43983\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"42469\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"42469\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"43619\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"43619\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"43157\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"43157\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"40373\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"40373\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"40372\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"40372\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"37575\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"37575\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"40403\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"40403\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"37574\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"37574\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"37573\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"37573\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"37371\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"37371\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"37079\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"37079\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"36331\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"36331\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"35226\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"35226\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"35385\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"35385\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Financing Corporation Annual Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"35368\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"35368\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Annual Organizational Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"35365\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"35365\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"33981\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"33981\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"33809\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"33809\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"33410\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"33410\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"32927\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"32927\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"32354\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"32354\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"31661\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"31661\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"31605\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"31605\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"31219\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"31219\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"30279\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"30279\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"30278\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"30278\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"29428\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"29428\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"30562\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"30562\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"29427\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"29427\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"29338\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"29338\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"29049\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "text": "",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMinutes(\"36030421\",\"29049\",\"PUBLISHED\",\"0\",\"P\",\"1\",event);"
+    },
+    {
+      "text": "Back to Top",
+      "href": "javascript:void(0);",
+      "onclick": ""
+    },
+    {
+      "text": "Web Content Accessibility Guideline",
+      "href": "https://www.w3.org/TR/WCAG22/",
+      "onclick": ""
+    },
+    {
+      "text": "Copyright © 2026 eBOARDsolutions Inc. - All rights reserved.",
+      "href": "http://www.eboardsolutions.com/",
+      "onclick": ""
+    },
+    {
+      "text": "Privacy Notice",
+      "href": "https://simbli.eboardsolutions.com/Pages/Radprivacy.aspx?S=36030421",
+      "onclick": ""
+    },
+    {
+      "text": "Accessibility Notice",
+      "href": "https://simbli.eboardsolutions.com/Pages/AccessibilityNotice.aspx?S=36030421",
+      "onclick": ""
+    },
+    {
+      "text": "",
+      "href": "https://eboardsolutions.com/",
+      "onclick": ""
+    },
+    {
+      "text": "Back to Top",
+      "href": "javascript:void(0);",
+      "onclick": ""
+    }
+  ]
+}
