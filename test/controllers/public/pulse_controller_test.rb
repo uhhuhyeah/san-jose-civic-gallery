@@ -2,11 +2,11 @@ require "test_helper"
 
 module Public
   class PulseControllerTest < ActionDispatch::IntegrationTest
-    test "renders successfully" do
+    test "renders successfully with the Pulse section" do
       get pulse_v2_path
 
       assert_response :success
-      assert_select "h1", "Pulse"
+      assert_select "h2", "Pulse"
     end
 
     test "marks the page noindex so crawlers skip the WIP route" do

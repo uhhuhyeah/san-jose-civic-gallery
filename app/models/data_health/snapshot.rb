@@ -128,6 +128,13 @@ module DataHealth
         .count
     end
 
+    # Matters the theme classifier has processed for the current prompt version.
+    # Measured against all matters (not attachments); procedural matters count
+    # as classified even though they are intentionally tagged with no themes.
+    def theme_classified_count
+      @theme_classified_count ||= Civic::Matter.where(id: current_theme_target_ids).count
+    end
+
     # --- Reconciliation -----------------------------------------------
 
     def events_removed_since(cutoff)
@@ -184,6 +191,17 @@ module DataHealth
           target_type: "Civic::MatterAttachment",
           kind: Generated::SummarizeMatterAttachment::KIND,
           prompt_version: Generated::SummarizeMatterAttachment::PROMPT::VERSION,
+          status: "succeeded"
+        )
+        .select(:target_id)
+    end
+
+    def current_theme_target_ids
+      Generated::Artifact
+        .where(
+          target_type: "Civic::Matter",
+          kind: Generated::ClassifyMatterThemes::KIND,
+          prompt_version: Generated::ClassifyMatterThemes::PROMPT::VERSION,
           status: "succeeded"
         )
         .select(:target_id)

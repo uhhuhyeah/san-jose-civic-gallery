@@ -138,6 +138,36 @@ module DataHealth
       assert_equal 1, snapshot.summarized_count
     end
 
+    test "theme_classified_count counts matters with a current-version theme artifact" do
+      classified = Civic::Matter.create!(legistar_matter_id: 10, matter_file: "26-010")
+      Generated::Artifact.create!(
+        target: classified,
+        kind: Generated::ClassifyMatterThemes::KIND,
+        status: "succeeded",
+        model_identifier: "test-model",
+        prompt_version: Generated::ClassifyMatterThemes::PROMPT::VERSION,
+        input_sha256: "theme-1",
+        content: { "themes" => [ "housing" ] }
+      )
+
+      stale = Civic::Matter.create!(legistar_matter_id: 11, matter_file: "26-011")
+      Generated::Artifact.create!(
+        target: stale,
+        kind: Generated::ClassifyMatterThemes::KIND,
+        status: "succeeded",
+        model_identifier: "test-model",
+        prompt_version: "older_prompt_version",
+        input_sha256: "theme-2",
+        content: { "themes" => [] }
+      )
+
+      Civic::Matter.create!(legistar_matter_id: 12, matter_file: "26-012")
+
+      snapshot = Snapshot.new
+      assert_equal 1, snapshot.theme_classified_count
+      assert_equal 3, snapshot.matter_count
+    end
+
     test "reliability numerators exclude attachments without source links" do
       matter = Civic::Matter.create!(legistar_matter_id: 1, matter_file: "26-001")
       with_link = matter.all_attachments.create!(

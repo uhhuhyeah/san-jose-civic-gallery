@@ -5,89 +5,205 @@
 <% end %>
 
 <main class="newspaper-shell">
-  <%= render "public/shared/topbar" %>
+  <%= render "public/shared/topbar", active: :pulse %>
 
-  <header class="page-header inset-header">
-    <p class="eyebrow">Preview / work in progress</p>
-    <h1>Pulse</h1>
+  <section class="front-intro">
+    <h1>San Jose Civic Gallery</h1>
     <p>
-      Which civic themes the city's bodies have been focused on over the last
-      quarter, and which are heating up. Themes are derived from AI tagging of
-      matters and are assistive, not official.
-    </p>
-  </header>
-
-  <section class="inset-panel" aria-label="Filter by body">
-    <%= form_with url: pulse_v2_path, method: :get, local: true, class: "search-form" do |form| %>
-      <%= form.label :body_name, "Show", for: "pulse-body-name" %>
-      <div class="search-row">
-        <%= form.select :body_name,
-          options_for_select([ [ "All bodies (citywide)", "" ] ] + @body_options.map { |body| [ body, body ] }, @body_name),
-          {},
-          id: "pulse-body-name",
-          aria: { label: "Filter by body" } %>
-        <%= form.submit "Update" %>
-        <% if @body_name.present? %>
-          <%= link_to "Citywide", pulse_v2_path, class: "button-secondary" %>
-        <% end %>
-      </div>
-    <% end %>
-    <p class="data-source">
-      Showing: <strong><%= @body_name.presence || "Citywide (all bodies)" %></strong>
+      The Pulse shows which themes the city's bodies have been focused on this
+      quarter and what is heating up, alongside the latest official agenda
+      materials. Themes are derived from AI tagging of matters and are
+      assistive, not official.
     </p>
   </section>
 
-  <% if @heating_up.empty? && @top_themes.empty? %>
-    <section class="inset-panel">
-      <h2>Not enough activity yet</h2>
-      <p>
-        There are not enough tagged agenda appearances in this window
-        <% if @body_name.present? %>for this body <% end %>to show a pulse yet.
-        Try the citywide view, or check back as more meetings are ingested.
-      </p>
-    </section>
-  <% else %>
-    <section class="inset-panel" aria-label="Heating up">
-      <h2>Heating up</h2>
-      <p class="data-section-note">
-        Themes appearing on agendas more this quarter than last, by appearances
-        per meeting.
-      </p>
-      <% if @heating_up.any? %>
-        <ol class="pulse-list">
-          <% @heating_up.each do |stat| %>
-            <li>
-              <span class="pulse-theme"><%= stat.label %></span>
-              <% if stat.surging %>
-                <span class="pulse-trend pulse-trend-new">New this quarter</span>
-              <% else %>
-                <span class="pulse-trend">&#9650; <%= ((stat.lift - 1) * 100).round %>% vs last quarter</span>
-              <% end %>
-              <span class="pulse-count"><%= pluralize(stat.current_appearances, "appearance") %></span>
-            </li>
-          <% end %>
-        </ol>
+  <section class="newspaper-hero">
+    <article class="lead-card">
+      <% if @lead_item %>
+        <div>
+          <div class="meta">
+            <span class="pill blue"><%= @lead_item.event.body_name.presence || "Meeting" %></span>
+            <span><%= @lead_item.event.event_date %></span>
+            <span><%= @lead_item.agenda_number.presence || "Agenda item" %></span>
+          </div>
+          <h2><%= link_to @lead_item.matter.display_name, public_matter_path(@lead_item.matter) %></h2>
+          <p>
+            <%= @lead_item.title.presence || @lead_item.matter.descriptive_title.presence || "Official agenda item linked to source materials." %>
+          </p>
+        </div>
+        <div class="lead-actions">
+          <div class="tags">
+            <% if @lead_item.matter.matter_type_name.present? %>
+              <span class="pill green"><%= @lead_item.matter.matter_type_name %></span>
+            <% end %>
+            <% if @lead_item.matter.matter_status_name.present? %>
+              <span class="pill gold"><%= @lead_item.matter.matter_status_name %></span>
+            <% end %>
+            <span class="pill">Official sources linked</span>
+          </div>
+          <%= link_to "Open item details", public_matter_path(@lead_item.matter), class: "source-link" %>
+        </div>
       <% else %>
-        <p>No themes are clearly trending up in this window.</p>
+        <div>
+          <div class="meta">
+            <span class="pill blue">San Jose</span>
+            <span>Official source records</span>
+          </div>
+          <h2>Track City Hall agenda materials as they are ingested</h2>
+          <p>Recent meetings, matters, and agenda items will appear here after sync jobs run.</p>
+        </div>
+        <div class="lead-actions">
+          <%= link_to "Browse matters", public_matters_path, class: "source-link" %>
+        </div>
       <% end %>
-    </section>
+    </article>
 
-    <section class="inset-panel" aria-label="Most active themes">
-      <h2>Most active themes</h2>
-      <p class="data-section-note">
-        By agenda appearances this quarter, counting each matter under its
-        primary theme.
-      </p>
-      <ol class="pulse-list">
-        <% @top_themes.each do |stat| %>
-          <li>
-            <span class="pulse-theme"><%= stat.label %></span>
-            <span class="pulse-count"><%= pluralize(stat.current_appearances, "appearance") %></span>
-          </li>
+    <aside class="mini-stack" aria-label="Source record counts">
+      <div class="mini-card">
+        <span class="subtle">Current source records</span>
+        <strong><%= pluralize(@stats.fetch(:meetings), "meeting") %>, <%= pluralize(@stats.fetch(:agenda_items), "agenda item") %></strong>
+        <%= link_to "View meeting calendar", public_meetings_path, class: "source-link" %>
+      </div>
+      <div class="mini-card">
+        <span class="subtle">Linked matters</span>
+        <strong><%= pluralize(@stats.fetch(:matters), "matter") %>, <%= pluralize(@stats.fetch(:attachments), "attachment") %></strong>
+        <%= link_to "Browse official matters", public_matters_path, class: "source-link" %>
+      </div>
+      <div class="mini-card">
+        <span class="subtle">Document processing</span>
+        <strong><%= pluralize(@stats.fetch(:imported_files), "file") %> imported, <%= pluralize(@stats.fetch(:extracted_texts), "text extraction") %></strong>
+        <span class="source-link">Source files stay separate from extracted text</span>
+      </div>
+    </aside>
+  </section>
+
+  <section class="newspaper-body">
+    <div>
+      <div class="section-title">
+        <h2>Pulse</h2>
+        <span>Themes trending across agendas this quarter</span>
+      </div>
+
+      <%= form_with url: pulse_v2_path, method: :get, local: true, class: "search-form" do |form| %>
+        <%= form.label :body_name, "Show themes for", for: "pulse-body-name" %>
+        <div class="search-row">
+          <%= form.select :body_name,
+            options_for_select([ [ "All bodies (citywide)", "" ] ] + @body_options.map { |body| [ body, body ] }, @body_name),
+            {},
+            id: "pulse-body-name",
+            aria: { label: "Filter themes by body" } %>
+          <%= form.submit "Update" %>
+          <% if @body_name.present? %>
+            <%= link_to "Citywide", pulse_v2_path, class: "button-secondary" %>
+          <% end %>
+        </div>
+      <% end %>
+
+      <% if @heating_up.empty? && @top_themes.empty? %>
+        <div class="card">
+          <article class="item">
+            <h3 class="item-title">Not enough activity yet</h3>
+            <p>
+              There are not enough tagged agenda appearances in this window
+              <% if @body_name.present? %>for <%= @body_name %> <% end %>to show a
+              pulse. Try the citywide view, or check back as more meetings are
+              ingested.
+            </p>
+          </article>
+        </div>
+      <% else %>
+        <div class="section-title">
+          <h3>Heating up</h3>
+          <span>More than last quarter, per meeting</span>
+        </div>
+        <div class="card">
+          <% if @heating_up.any? %>
+            <% @heating_up.each do |stat| %>
+              <article class="item">
+                <h4 class="item-title"><%= stat.label %></h4>
+                <div class="tags">
+                  <% if stat.surging %>
+                    <span class="pill gold">New this quarter</span>
+                  <% else %>
+                    <span class="pill green">&#9650; <%= ((stat.lift - 1) * 100).round %>% vs last quarter</span>
+                  <% end %>
+                  <span class="pill"><%= pluralize(stat.current_appearances, "appearance") %> this quarter</span>
+                </div>
+              </article>
+            <% end %>
+          <% else %>
+            <article class="item">
+              <p>No themes are clearly trending up in this window.</p>
+            </article>
+          <% end %>
+        </div>
+
+        <div class="section-title">
+          <h3>Most active themes</h3>
+          <span>By agenda appearances, counted on each matter's primary theme</span>
+        </div>
+        <div class="topic-grid">
+          <% @top_themes.each do |stat| %>
+            <div class="topic-tile">
+              <strong><%= stat.label %></strong>
+              <span><%= pluralize(stat.current_appearances, "appearance") %></span>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <div class="section-title meetings-title" id="meetings">
+        <h2>Recent Meetings</h2>
+        <span>Official source events</span>
+      </div>
+      <div class="compact-list">
+        <% if @events.any? %>
+          <% @events.each do |event| %>
+            <article class="meeting-row">
+              <time class="meeting-date" datetime="<%= event.event_date %>">
+                <span><%= event.event_date.strftime("%b") %></span>
+                <strong><%= event.event_date.day %></strong>
+                <small><%= event.event_date.year %></small>
+              </time>
+              <div>
+                <h3><%= link_to event.listing_title, public_event_path(event) %></h3>
+                <p><%= event.body_name.presence || "Unknown body" %></p>
+              </div>
+              <div class="meeting-status">
+                <span>Agenda: <%= event.agenda_status_name.presence || "Unknown" %></span>
+                <span>Minutes: <%= event.minutes_status_name.presence || "Unknown" %></span>
+              </div>
+            </article>
+          <% end %>
+        <% else %>
+          <p>No events have been ingested yet.</p>
         <% end %>
-      </ol>
-    </section>
-  <% end %>
+      </div>
+    </div>
+
+    <aside>
+      <div class="section-title">
+        <h2>Record Pulse</h2>
+        <span>Current source data</span>
+      </div>
+      <div class="topic-grid">
+        <% @matter_type_counts.each do |matter_type, count| %>
+          <div class="topic-tile">
+            <strong><%= matter_type.presence || "Unclassified" %></strong>
+            <span><%= pluralize(count, "matter") %></span>
+          </div>
+        <% end %>
+        <div class="topic-tile">
+          <strong>Attachments</strong>
+          <span><%= pluralize(@stats.fetch(:attachments), "current source file") %></span>
+        </div>
+        <div class="topic-tile">
+          <strong>Extracted Text</strong>
+          <span><%= pluralize(@stats.fetch(:extracted_texts), "successful extraction") %></span>
+        </div>
+      </div>
+    </aside>
+  </section>
 
   <%= render "public/shared/footer" %>
 </main>
