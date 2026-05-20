@@ -19,7 +19,7 @@ Rails.application.routes.draw do
 
   namespace :public do
     get "meetings", to: "meetings#index"
-    resources :events, only: [ :index, :show ]
+    resources :events, only: [ :show ]
     resources :matters, only: [ :index, :show ]
   end
 

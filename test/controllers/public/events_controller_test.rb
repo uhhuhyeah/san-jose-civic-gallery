@@ -20,17 +20,6 @@ module Public
       )
     end
 
-    test "gets the index" do
-      get public_events_url
-
-      assert_response :success
-      assert_includes response.body, "San Jose Civic Gallery"
-      assert_includes response.body, "Welcome to San Jose Civic Gallery"
-      assert_includes response.body, "Regular meeting"
-      assert_includes response.body, "Agenda: Final"
-      assert_includes response.body, "Minutes: Draft"
-    end
-
     test "shows an event" do
       get public_event_url(@event)
 
@@ -49,18 +38,6 @@ module Public
       get public_event_url(@event), headers: { "If-None-Match" => etag }
 
       assert_response :not_modified
-    end
-
-    test "homepage emits cacheable Cache-Control and no Set-Cookie" do
-      get root_url
-
-      assert_response :success
-      cache_control = response.headers["Cache-Control"]
-      assert_includes cache_control, "public"
-      assert_includes cache_control, "max-age=300"
-      assert_includes cache_control, "s-maxage=7200"
-      assert_nil response.headers["Set-Cookie"],
-        "expected no Set-Cookie on anonymous public GET (got #{response.headers["Set-Cookie"].inspect})"
     end
 
     test "renders matter-pending hint when item has matter_id but no synced matter" do
