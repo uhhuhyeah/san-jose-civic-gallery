@@ -12,6 +12,11 @@
     <% if @matter.descriptive_title.present? %>
       <p><%= @matter.descriptive_title %></p>
     <% end %>
+    <% if @primary_theme %>
+      <div class="tags">
+        <%= link_to @primary_theme.label, public_matters_path(theme: @primary_theme.theme_slug), class: "pill green" %>
+      </div>
+    <% end %>
   </header>
 
   <% cache [@matter_cache_version, "official-record"] do %>
