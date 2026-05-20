@@ -1062,6 +1062,10 @@ dd {
   font-size: 0.88rem;
 }
 
+select#pulse-body-name {
+  max-width: 55px;
+}
+
 .data-summary {
   padding: 12px 20px;
   background: var(--paper-warm);
