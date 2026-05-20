@@ -1057,7 +1057,7 @@ dd {
 }
 
 .data-section-note {
-  margin: 0 0 12px;
+  margin: 12px 0 12px 12px;
   color: var(--muted);
   font-size: 0.88rem;
 }
@@ -1273,4 +1273,32 @@ dd {
     margin-right: 12px;
     margin-left: 12px;
   }
+}
+
+/* Pulse page (candidate homepage): give the selector box and the stacked
+   sections room to breathe. Scoped to .pulse-page so shared components
+   (e.g. the meetings search form) are untouched. */
+.pulse-page .search-form {
+  padding: 24px 24px 26px;
+}
+
+.pulse-page .search-form .section-title {
+  margin-bottom: 16px;
+}
+
+.pulse-page .search-form .data-section-note {
+  margin: 0 0 22px;
+  line-height: 1.5;
+}
+
+.pulse-page .search-form label {
+  margin-bottom: 12px;
+}
+
+.pulse-page .newspaper-body + .newspaper-body {
+  margin-top: 12px;
+}
+
+.pulse-page .newspaper-body > div > .section-title:not(:first-child) {
+  margin-top: 34px;
 }

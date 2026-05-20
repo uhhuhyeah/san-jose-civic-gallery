@@ -4,7 +4,7 @@
   <%= tag.meta name: "robots", content: "noindex, nofollow" %>
 <% end %>
 
-<main class="newspaper-shell">
+<main class="newspaper-shell pulse-page">
   <%= render "public/shared/topbar", active: :pulse %>
 
   <section class="front-intro">
@@ -22,7 +22,10 @@
         <p class="data-section-note">
           The Pulse shows which themes the city's bodies have been focused on
           this quarter and what is heating up, alongside the latest official
-          agenda materials. Themes are derived from AI tagging of matters and
+          agenda materials.
+        </p>
+        <p class="data-section-note">
+          Themes are derived from AI tagging of matters and
           are assistive, not official.
         </p>
         <%= form.label :body_name, "Show themes for", for: "pulse-body-name" %>
@@ -34,7 +37,7 @@
             aria: { label: "Filter themes by body" } %>
           <%= form.submit "Update" %>
           <% if @body_name.present? %>
-            <%= link_to "Citywide", pulse_v2_path, class: "button-secondary" %>
+            <%= link_to "View Citywide", pulse_v2_path, class: "button-secondary" %>
           <% end %>
         </div>
       <% end %>
