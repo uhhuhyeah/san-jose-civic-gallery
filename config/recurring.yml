@@ -29,3 +29,13 @@ production:
     class: Generated::BackfillAttachmentSummariesJob
     args: [ { limit: 150, dry_run: false } ]
     schedule: every 2 hours
+
+  # Classify matters into Pulse themes. Runs offset from the summary job so the
+  # attachment summaries it uses as source text are likely already generated.
+  # BackfillMatterThemes skips matters already classified for the current model
+  # + prompt version (and re-tags ones whose source input changed), so this is
+  # safe to run on a recurring basis. See docs/pulse.md.
+  classify_matter_themes:
+    class: Generated::BackfillMatterThemesJob
+    args: [ { limit: 150, dry_run: false } ]
+    schedule: every 2 hours at minute 30
