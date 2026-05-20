@@ -16,7 +16,7 @@ module Public
 
       assert_response :success
       assert_select "title", "San Jose Civic Gallery"
-      assert_select "meta[name='description'][content*='recent San Jose City Hall agenda records']"
+      assert_select "meta[name='description'][content*='civic themes the city']"
     end
 
     test "public get pages do not emit session cookies or csrf meta tags" do

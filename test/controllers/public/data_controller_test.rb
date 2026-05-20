@@ -86,9 +86,8 @@ module Public
     end
 
     test "footer link to data page is present on other pages" do
-      Civic::Event.create!(legistar_event_id: 1, event_date: Date.new(2026, 5, 19), body_name: "City Council")
+      get public_matters_url
 
-      get public_events_url
       assert_response :success
       assert_includes response.body, "Data Health"
       assert_includes response.body, data_path

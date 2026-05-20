@@ -98,8 +98,10 @@ It accepts `body_name` (nil = citywide rollup) and only counts
 `current_from_source` events and event items. `Public::CacheVersion.pulse`
 provides a conditional-GET key derived from theme/event source maxima.
 
-There is no public page yet; the query object is in place and inspectable via
-the rake task below.
+The Pulse page is the homepage (`root` -> `Public::PulseController#show`). It
+renders `heating_up` and `top_themes` with a per-body filter, and theme labels
+link to the Matters index filtered by theme (`/public/matters?theme=<slug>`).
+The data is also inspectable from the CLI via the rake task below.
 
 ## Operating it
 
