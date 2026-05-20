@@ -29,8 +29,16 @@ module Generated
         assert_match(/empty array for procedural/, system_prompt)
       end
 
-      test "version is matter_themes_v2" do
-        assert_equal "matter_themes_v2", MatterThemesV1::VERSION
+      test "instructs ceremonial and incidental-association handling" do
+        prompt = MatterThemesV1.build(matter: @matter, source_text: "Body text.")
+        system_prompt = prompt[:system_prompt]
+
+        assert_match(/[Cc]eremonial and sponsorship/, system_prompt)
+        assert_match(/incidental association/, system_prompt)
+      end
+
+      test "version is matter_themes_v3" do
+        assert_equal "matter_themes_v3", MatterThemesV1::VERSION
       end
 
       test "includes matter identity and source text in the user prompt" do

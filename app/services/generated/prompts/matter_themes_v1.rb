@@ -6,7 +6,7 @@ module Generated
       # Bump this whenever the taxonomy (Civic::ThemeTaxonomy) or the
       # instructions change, so the backfill re-tags every matter against the
       # new vocabulary. The version is part of the artifact idempotency key.
-      VERSION = "matter_themes_v2"
+      VERSION = "matter_themes_v3"
       DEFAULT_MAX_INPUT_CHARS = 12_000
       TRUNCATION_MARKER = "\n\n…[truncated]".freeze
       NO_BODY_TEXT = "(No attachment text available; classify from the title and name only.)".freeze
@@ -56,6 +56,13 @@ module Generated
             have no substantive subject of their own, for example: approval of
             minutes, approval or adoption of an agenda, closed session agendas,
             consent calendar mechanics, and board or commission appointments.
+          - Ceremonial and sponsorship items are administrative: City Council
+            sponsored special events, proclamations, flag raisings, galas,
+            "free use" of facilities, and retroactive event approvals. Tag these
+            with at most one theme, and only if the event itself has a clear
+            substantive subject. Otherwise return an empty array. Never tag a
+            theme based on an incidental association: for example, do not tag
+            Public Safety merely because an event honors firefighters or police.
           - Do not invent themes or return slugs that are not in the list.
 
           Allowed themes (slug — label):
