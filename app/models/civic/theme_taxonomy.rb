@@ -23,6 +23,7 @@ module Civic
       { slug: "health_human_services", label: "Health & Human Services" },
       { slug: "arts_culture", label: "Arts & Culture" },
       { slug: "governance_elections", label: "Governance & Elections" },
+      { slug: "legal_litigation", label: "Legal & Litigation" },
       { slug: "utilities", label: "Utilities" },
       { slug: "public_records_transparency", label: "Public Records & Transparency" },
       { slug: "labor_employment", label: "Labor & Employment" }
