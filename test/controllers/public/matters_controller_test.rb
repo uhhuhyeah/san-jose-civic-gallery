@@ -93,6 +93,15 @@ module Public
       assert_select "a.pill[href=?]", public_matters_path(theme: "housing"), text: "Housing"
     end
 
+    test "shows a primary theme pill on each matter row in the index" do
+      @matter.themes.create!(theme_slug: "housing", rank: 1)
+
+      get public_matters_url
+
+      assert_response :success
+      assert_select ".record-row a.pill[href=?]", public_matters_path(theme: "housing"), text: "Housing"
+    end
+
     test "finds matters by successful extracted document text" do
       other = Civic::Matter.create!(
         legistar_matter_id: 15887,

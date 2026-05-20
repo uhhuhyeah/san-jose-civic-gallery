@@ -8,7 +8,7 @@ module Public
 
       @document_matches = document_matches_for(@query)
       document_matter_ids = @document_matches.map { |match| match.matter_attachment.matter.id }.uniq
-      @matters = records_in_cached_order(cached_matter_ids(@query, document_matter_ids), Civic::Matter.includes(:attachments))
+      @matters = records_in_cached_order(cached_matter_ids(@query, document_matter_ids), Civic::Matter.includes(:attachments, :themes))
       @document_matches_by_matter_id = @document_matches.group_by { |match| match.matter_attachment.matter.id }
     end
 

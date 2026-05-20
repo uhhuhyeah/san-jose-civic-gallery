@@ -41,6 +41,12 @@
             <p class="record-meta">
               <%= [matter.matter_type_name, matter.matter_status_name, matter.body_name].compact_blank.join(" / ") %>
             </p>
+            <% primary_theme = matter.themes.detect { |theme| theme.rank == 1 } %>
+            <% if primary_theme %>
+              <div class="tags">
+                <%= link_to primary_theme.label, public_matters_path(theme: primary_theme.theme_slug), class: "pill green" %>
+              </div>
+            <% end %>
             <% if (document_matches = @document_matches_by_matter_id[matter.id]).present? %>
               <div class="document-search-hits">
                 <p>Extracted document text matches</p>
