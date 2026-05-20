@@ -72,7 +72,40 @@ module Ingestion
         end
       end
 
+      test "tombstones agenda items (and their attachments) removed from the agenda" do
+        sync
+
+        # Re-sync with only the first top-level subtree (items 100, 101); the
+        # attachment-bearing item 201 is gone.
+        reduced_agenda = { "Items" => [ @agenda["Items"][0] ] }
+        resync(client: FakeClient.new(agenda: reduced_agenda, docs: @docs))
+
+        assert Civic::EventItem.find_by(source_event_item_id: "36030421:57394:100").source_present
+        assert_not Civic::EventItem.find_by(source_event_item_id: "36030421:57394:201").source_present
+        assert_not Civic::MatterAttachment.find_by(source_attachment_id: "36030421:57394:5001").source_present
+      end
+
+      test "tombstones attachments removed from an item while the item remains" do
+        sync
+
+        resync(client: FakeClient.new(agenda: @agenda, docs: { "Attachment" => [] }))
+
+        assert Civic::EventItem.find_by(source_event_item_id: "36030421:57394:201").source_present
+        assert_not Civic::MatterAttachment.find_by(source_attachment_id: "36030421:57394:5001").source_present
+        assert_not Civic::MatterAttachment.find_by(source_attachment_id: "36030421:57394:5002").source_present
+      end
+
       private
+
+      def resync(client:)
+        SyncMeeting.call(
+          school_id: "36030421",
+          mid: "57394",
+          meeting_type: "Regular Session Board Meeting",
+          event_date: Date.new(2026, 4, 23),
+          client: client
+        )
+      end
 
       def sync
         SyncMeeting.call(
