@@ -29,6 +29,26 @@ module Generated
       assert_equal result.artifact.id, @matter.themes.first.source_artifact_id
     end
 
+    test "stores theme rank in returned order, most central first" do
+      add_summary(summary: "Affordable housing rezoning.", key_points: [])
+
+      ClassifyMatterThemes.call(matter: @matter, client: @client)
+
+      ranked = @matter.themes.by_rank.pluck(:theme_slug, :rank)
+      assert_equal [ [ "housing", 1 ], [ "land_use_zoning", 2 ] ], ranked
+    end
+
+    test "re-classification rewrites ranks to the new order" do
+      add_summary(summary: "Housing project.", key_points: [])
+      ClassifyMatterThemes.call(matter: @matter, client: @client)
+
+      reordered = FakeThemesClient.new(themes: [ "land_use_zoning", "housing" ])
+      ClassifyMatterThemes.call(matter: @matter, client: reordered, force: true)
+
+      assert_equal "land_use_zoning", @matter.themes.primary.first.theme_slug
+      assert_equal [ [ "land_use_zoning", 1 ], [ "housing", 2 ] ], @matter.themes.by_rank.pluck(:theme_slug, :rank)
+    end
+
     test "uses attachment summaries as source text when present" do
       add_summary(summary: "Discusses a new bike lane network.", key_points: [])
 

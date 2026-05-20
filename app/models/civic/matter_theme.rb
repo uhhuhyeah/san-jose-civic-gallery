@@ -9,6 +9,8 @@ module Civic
     validates :theme_slug, uniqueness: { scope: :civic_matter_id }
 
     scope :for_theme, ->(slug) { where(theme_slug: slug) }
+    scope :primary, -> { where(rank: 1) }
+    scope :by_rank, -> { order(:rank) }
 
     def label
       ThemeTaxonomy.label_for(theme_slug)
