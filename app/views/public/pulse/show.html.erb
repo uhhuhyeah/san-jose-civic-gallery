@@ -65,9 +65,10 @@
   <%# Band 2: Heating up / Most active / Recent meetings (left) aligned with Record Pulse (right). %>
   <section class="newspaper-body">
     <div>
+      <% scope_label = @body_name.presence || "Citywide" %>
       <% if @heating_up.empty? && @top_themes.empty? %>
         <div class="section-title">
-          <h2>Heating up</h2>
+          <h2>Heating up <span class="subtle">&middot; <%= scope_label %></span></h2>
           <span>More than last quarter, per meeting</span>
         </div>
         <div class="card">
@@ -83,7 +84,7 @@
         </div>
       <% else %>
         <div class="section-title">
-          <h2>Heating up</h2>
+          <h2>Heating up <span class="subtle">&middot; <%= scope_label %></span></h2>
           <span>More than last quarter, per meeting</span>
         </div>
         <div class="card">
