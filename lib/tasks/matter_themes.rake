@@ -57,22 +57,30 @@ namespace :pulse do
 
     rows = Civic::ThemeTaxonomy::THEMES.map do |theme|
       matter_ids = Civic::MatterTheme.for_theme(theme[:slug]).select(:civic_matter_id)
+      primary_ids = Civic::MatterTheme.primary.for_theme(theme[:slug]).select(:civic_matter_id)
       events = Civic::EventItem.current_from_source
-        .where(civic_matter_id: matter_ids)
+        .where(civic_matter_id: primary_ids)
         .joins(:event)
         .merge(Civic::Event.current_from_source)
       events = events.where(civic_events: { event_date: since.. }) if since
 
-      { label: theme[:label], slug: theme[:slug], matters: matter_ids.count, appearances: events.count }
+      {
+        label: theme[:label],
+        slug: theme[:slug],
+        matters: matter_ids.count,
+        primary: primary_ids.count,
+        appearances: events.count
+      }
     end
 
     rows.sort_by! { |row| -row[:appearances] }
 
     label_width = rows.map { |row| row[:label].length }.max || 0
-    puts format("%-#{label_width}s  %8s  %12s", "Theme", "Matters", "Appearances")
+    puts format("%-#{label_width}s  %8s  %8s  %14s", "Theme", "Matters", "Primary", "Appearances*")
     rows.each do |row|
-      puts format("%-#{label_width}s  %8d  %12d", row[:label], row[:matters], row[:appearances])
+      puts format("%-#{label_width}s  %8d  %8d  %14d", row[:label], row[:matters], row[:primary], row[:appearances])
     end
+    puts "* Appearances count matters where this is the primary (rank 1) theme."
 
     next if samples.zero?
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_19_210000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_19_220000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -159,10 +159,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_210000) do
     t.bigint "civic_matter_id", null: false
     t.float "confidence"
     t.datetime "created_at", null: false
+    t.integer "rank"
     t.bigint "source_artifact_id"
     t.string "theme_slug", null: false
     t.datetime "updated_at", null: false
     t.index ["civic_matter_id", "theme_slug"], name: "idx_civic_matter_themes_unique_per_matter", unique: true
+    t.index ["rank", "theme_slug"], name: "idx_civic_matter_themes_by_rank_theme"
     t.index ["source_artifact_id"], name: "index_civic_matter_themes_on_source_artifact_id"
     t.index ["theme_slug", "civic_matter_id"], name: "idx_civic_matter_themes_by_theme"
   end

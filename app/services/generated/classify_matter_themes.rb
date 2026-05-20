@@ -89,15 +89,18 @@ module Generated
     end
 
     # Replace the matter's projected themes with exactly the returned slugs,
-    # stamping the artifact that produced them.
+    # stamping the artifact that produced them. The model returns themes most
+    # central first, so the array index becomes a 1-based rank (rank 1 is the
+    # matter's primary theme), which the pulse uses to count matters under their
+    # primary theme rather than every incidental tag.
     def sync_projection(artifact, slugs)
       Civic::MatterTheme.transaction do
-        matter.themes.where.not(theme_slug: slugs).delete_all
-        existing = matter.themes.pluck(:theme_slug)
-        (slugs - existing).each do |slug|
-          matter.themes.create!(theme_slug: slug, source_artifact_id: artifact.id)
+        slugs.each_with_index do |slug, index|
+          theme = matter.themes.find_or_initialize_by(theme_slug: slug)
+          theme.assign_attributes(rank: index + 1, source_artifact_id: artifact.id)
+          theme.save!
         end
-        matter.themes.where(theme_slug: slugs).update_all(source_artifact_id: artifact.id) if slugs.any?
+        matter.themes.where.not(theme_slug: slugs).delete_all
       end
     end
 

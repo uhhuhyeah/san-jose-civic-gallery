@@ -6,15 +6,25 @@ module Generated
       @client = FakeThemesClient.new(themes: [ "housing" ])
     end
 
-    test "dry run reports candidate matters without calling the model" do
-      a = matter(70_001, "26-400")
-      b = matter(70_002, "26-401")
+    test "dry run reports candidate matters newest-agendized first, without calling the model" do
+      older = matter(70_001, "26-400", agenda_date: Date.new(2026, 1, 1))
+      newer = matter(70_002, "26-401", agenda_date: Date.new(2026, 5, 1))
 
       result = BackfillMatterThemes.call(limit: 10, dry_run: true, client: @client)
 
-      assert_equal [ a.id, b.id ], result.candidates.map(&:id)
+      assert_equal [ newer.id, older.id ], result.candidates.map(&:id)
       assert_equal 0, result.generated
       assert_equal 0, @client.calls
+    end
+
+    test "orders candidates by recency with never-agendized matters last" do
+      recent = matter(80_001, "26-410", agenda_date: Date.new(2026, 5, 10))
+      old = matter(80_002, "26-411", agenda_date: Date.new(2025, 5, 10))
+      undated = matter(80_003, "26-412")
+
+      result = BackfillMatterThemes.call(limit: 10, dry_run: true, client: @client)
+
+      assert_equal [ recent.id, old.id, undated.id ], result.candidates.map(&:id)
     end
 
     test "generate mode classifies candidates" do
@@ -60,8 +70,8 @@ module Generated
 
     private
 
-    def matter(legistar_id, file)
-      Civic::Matter.create!(legistar_matter_id: legistar_id, matter_file: file)
+    def matter(legistar_id, file, agenda_date: nil)
+      Civic::Matter.create!(legistar_matter_id: legistar_id, matter_file: file, agenda_date:)
     end
 
     def add_summary(matter, summary:)

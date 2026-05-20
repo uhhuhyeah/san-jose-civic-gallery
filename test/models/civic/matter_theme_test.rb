@@ -48,5 +48,12 @@ module Civic
 
       assert_equal [ @matter.id ], MatterTheme.for_theme("housing").pluck(:civic_matter_id)
     end
+
+    test "primary scope returns only rank 1 themes" do
+      @matter.themes.create!(theme_slug: "housing", rank: 1)
+      @matter.themes.create!(theme_slug: "land_use_zoning", rank: 2)
+
+      assert_equal [ "housing" ], MatterTheme.primary.pluck(:theme_slug)
+    end
   end
 end

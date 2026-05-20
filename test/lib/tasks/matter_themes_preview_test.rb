@@ -16,7 +16,7 @@ class MatterThemesPreviewTest < ActiveSupport::TestCase
 
   test "counts only current source agenda appearances" do
     matter = Civic::Matter.create!(legistar_matter_id: 91_001, matter_file: "26-910")
-    matter.themes.create!(theme_slug: "housing")
+    matter.themes.create!(theme_slug: "housing", rank: 1)
     current_event = Civic::Event.create!(legistar_event_id: 92_001, event_date: Date.new(2026, 5, 1))
     stale_event = Civic::Event.create!(legistar_event_id: 92_002, event_date: Date.new(2026, 5, 2))
     missing_event = Civic::Event.create!(
@@ -32,6 +32,8 @@ class MatterThemesPreviewTest < ActiveSupport::TestCase
 
     stdout, _stderr = capture_io { @task.execute }
 
-    assert_match(/Housing\s+1\s+1\b/, stdout)
+    # Columns: Matters, Primary, Appearances. The matter has one current-source
+    # appearance, so all three are 1 despite four event_item rows.
+    assert_match(/Housing\s+1\s+1\s+1\b/, stdout)
   end
 end

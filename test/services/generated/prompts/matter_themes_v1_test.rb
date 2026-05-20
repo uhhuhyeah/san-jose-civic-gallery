@@ -24,7 +24,7 @@ module Generated
         system_prompt = prompt[:system_prompt]
 
         assert_includes system_prompt, "primary subject"
-        assert_includes system_prompt, "at most three"
+        assert_includes system_prompt, "at most two"
         assert_match(/approval of\s+minutes/, system_prompt)
         assert_match(/empty array for procedural/, system_prompt)
       end
@@ -37,8 +37,17 @@ module Generated
         assert_match(/incidental association/, system_prompt)
       end
 
-      test "version is matter_themes_v3" do
-        assert_equal "matter_themes_v3", MatterThemesV1::VERSION
+      test "guards against Budget and Economic Development catch-alls and lists travel authorizations" do
+        prompt = MatterThemesV1.build(matter: @matter, source_text: "Body text.")
+        system_prompt = prompt[:system_prompt]
+
+        assert_match(/catch-all/, system_prompt)
+        assert_includes system_prompt, "Economic Development only"
+        assert_match(/travel authorization/, system_prompt)
+      end
+
+      test "version is matter_themes_v4" do
+        assert_equal "matter_themes_v4", MatterThemesV1::VERSION
       end
 
       test "includes matter identity and source text in the user prompt" do

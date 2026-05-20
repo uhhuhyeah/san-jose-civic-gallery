@@ -41,16 +41,26 @@ module Generated
 
     def candidate_matters
       return [] unless limit.positive?
-      return Civic::Matter.order(:id).limit(limit).to_a if force
+      return recency_first.limit(limit).to_a if force
 
       candidates = []
-      Civic::Matter.order(:id).find_each do |matter|
+      recency_first.each do |matter|
         next if already_succeeded_for_current_input?(matter)
 
         candidates << matter
         break if candidates.size >= limit
       end
       candidates
+    end
+
+    # Newest-agendized matters first so re-tags (after a prompt change) and
+    # validation converge on the matters the pulse actually measures, instead
+    # of finishing with them. Never-agendized matters (null agenda_date) are
+    # least pulse-relevant, so they sort last.
+    def recency_first
+      Civic::Matter.order(
+        Arel.sql("agenda_date DESC NULLS LAST, intro_date DESC NULLS LAST, legistar_matter_id DESC")
+      )
     end
 
     def already_succeeded_for_current_input?(matter)
