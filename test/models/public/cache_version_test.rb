@@ -3,21 +3,36 @@ require "test_helper"
 module Public
   class CacheVersionTest < ActiveSupport::TestCase
     test "index cache keys use digests instead of raw query text" do
-      matters_key = CacheVersion.matters_index(query: "Library Outreach")
+      jurisdiction = civic_jurisdictions(:sanjose)
+      matters_key = CacheVersion.matters_index(query: "Library Outreach", jurisdiction:)
       meetings_key = CacheVersion.meetings_index(
         month: Date.new(2026, 5, 1),
         query: "Library Outreach",
-        body_name: "City Council"
+        body_name: "City Council",
+        jurisdiction:
       )
 
-      assert_includes matters_key, "public/matters-index/v1"
-      assert_includes meetings_key, "public/meetings/month-v1/2026-05"
+      assert_includes matters_key, "public/matters-index/v1/sanjose"
+      assert_includes meetings_key, "public/meetings/month-v1/sanjose/2026-05"
       assert_no_match(/Library Outreach|City Council/, matters_key)
       assert_no_match(/Library Outreach|City Council/, meetings_key)
     end
 
+    test "cache keys differ per jurisdiction" do
+      sanjose = civic_jurisdictions(:sanjose)
+      sjusd = civic_jurisdictions(:sjusd)
+
+      assert_not_equal CacheVersion.events_index(jurisdiction: sanjose),
+        CacheVersion.events_index(jurisdiction: sjusd)
+      assert_not_equal CacheVersion.matters_index(query: "", jurisdiction: sanjose),
+        CacheVersion.matters_index(query: "", jurisdiction: sjusd)
+      assert_not_equal CacheVersion.pulse(as_of: Date.current, body_name: "", window: 13.weeks, jurisdiction: sanjose),
+        CacheVersion.pulse(as_of: Date.current, body_name: "", window: 13.weeks, jurisdiction: sjusd)
+    end
+
     test "event index version changes when source records change" do
-      first_key = CacheVersion.events_index
+      jurisdiction = civic_jurisdictions(:sanjose)
+      first_key = CacheVersion.events_index(jurisdiction:)
 
       travel 1.second do
         Civic::Event.create!(
@@ -27,7 +42,7 @@ module Public
         )
       end
 
-      assert_not_equal first_key, CacheVersion.events_index
+      assert_not_equal first_key, CacheVersion.events_index(jurisdiction:)
     end
 
     test "matter detail version changes when generated summary changes" do

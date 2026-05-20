@@ -8,12 +8,12 @@ module Public
 
       @document_matches = document_matches_for(@query)
       document_matter_ids = @document_matches.map { |match| match.matter_attachment.matter.id }.uniq
-      @matters = records_in_cached_order(cached_matter_ids(@query, document_matter_ids), Civic::Matter.includes(:attachments, :themes))
+      @matters = records_in_cached_order(cached_matter_ids(@query, document_matter_ids), Civic::Matter.for_jurisdiction(current_jurisdiction).includes(:attachments, :themes))
       @document_matches_by_matter_id = @document_matches.group_by { |match| match.matter_attachment.matter.id }
     end
 
     def show
-      @matter = Civic::Matter
+      @matter = current_jurisdiction.matters
         .includes(
           :themes,
           event_items: :event,
@@ -40,7 +40,7 @@ module Public
     end
 
     def matters_index_cache_version
-      @matters_index_cache_version ||= Public::CacheVersion.matters_index(query: @query, theme: @theme)
+      @matters_index_cache_version ||= Public::CacheVersion.matters_index(query: @query, theme: @theme, jurisdiction: current_jurisdiction)
     end
 
     def document_matches_for(query)
@@ -50,10 +50,10 @@ module Public
     end
 
     def matching_matter_ids(query, document_matter_ids)
-      metadata_matches = Civic::Matter.search(query)
+      metadata_matches = Civic::Matter.for_jurisdiction(current_jurisdiction).search(query)
       return metadata_matches.select(:id) if document_matter_ids.empty?
 
-      metadata_matches.or(Civic::Matter.where(id: document_matter_ids)).select(:id)
+      metadata_matches.or(Civic::Matter.for_jurisdiction(current_jurisdiction).where(id: document_matter_ids)).select(:id)
     end
 
     def cached_document_match_ids(query)
@@ -66,13 +66,13 @@ module Public
       Documents::ExtractedText
         .search(query)
         .joins(matter_attachment: :matter)
-        .merge(Civic::MatterAttachment.current_from_source)
+        .merge(Civic::MatterAttachment.current_from_source.for_jurisdiction(current_jurisdiction))
         .includes(matter_attachment: :matter)
     end
 
     def cached_matter_ids(query, document_matter_ids)
       Rails.cache.fetch([ matters_index_cache_version, "matter-ids" ], expires_in: INDEX_CACHE_TTL) do
-        scope = Civic::Matter.all
+        scope = Civic::Matter.for_jurisdiction(current_jurisdiction)
         scope = scope.where(id: matching_matter_ids(query, document_matter_ids)) if query.present?
         if @theme
           # Any-rank match (primary or secondary), but surface the matters where

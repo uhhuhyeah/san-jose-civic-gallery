@@ -9,7 +9,7 @@ module Public
       @body_options = cached_body_options
       @year_options = cached_year_options
 
-      @events = records_in_cached_order(cached_event_ids, Civic::Event.includes(event_items: { matter: :attachments }))
+      @events = records_in_cached_order(cached_event_ids, Civic::Event.for_jurisdiction(current_jurisdiction).includes(event_items: { matter: :attachments }))
     end
 
     private
@@ -17,15 +17,15 @@ module Public
     INDEX_CACHE_TTL = 5.minutes
 
     def meetings_index_cache_version
-      @meetings_index_cache_version ||= Public::CacheVersion.meetings_index(month: @month, query: @query, body_name: @body_name)
+      @meetings_index_cache_version ||= Public::CacheVersion.meetings_index(month: @month, query: @query, body_name: @body_name, jurisdiction: current_jurisdiction)
     end
 
     def public_options_cache_version
-      @public_options_cache_version ||= Public::CacheVersion.events_index
+      @public_options_cache_version ||= Public::CacheVersion.events_index(jurisdiction: current_jurisdiction)
     end
 
     def filtered_events
-      scope = Civic::Event.current_from_source
+      scope = Civic::Event.current_from_source.for_jurisdiction(current_jurisdiction)
         .where(event_date: @month.beginning_of_month..@month.end_of_month)
       scope = scope.where(body_name: @body_name) if @body_name.present?
       scope = apply_query(scope) if @query.present?
@@ -65,7 +65,7 @@ module Public
     end
 
     def year_options
-      years = Civic::Event.current_from_source.where.not(event_date: nil).pluck(Arel.sql("DISTINCT EXTRACT(YEAR FROM event_date)::integer"))
+      years = Civic::Event.current_from_source.for_jurisdiction(current_jurisdiction).where.not(event_date: nil).pluck(Arel.sql("DISTINCT EXTRACT(YEAR FROM event_date)::integer"))
       years << @month.year
       years.compact.uniq.sort.reverse
     end
@@ -78,7 +78,7 @@ module Public
 
     def cached_body_options
       Rails.cache.fetch([ public_options_cache_version, "meetings-body-options" ], expires_in: INDEX_CACHE_TTL) do
-        Civic::Event.current_from_source.where.not(body_name: [ nil, "" ]).distinct.order(:body_name).pluck(:body_name)
+        Civic::Event.current_from_source.for_jurisdiction(current_jurisdiction).where.not(body_name: [ nil, "" ]).distinct.order(:body_name).pluck(:body_name)
       end
     end
 

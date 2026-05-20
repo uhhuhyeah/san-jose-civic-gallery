@@ -1,7 +1,7 @@
 module Public
   class EventsController < ApplicationController
     def show
-      @event = Civic::Event
+      @event = current_jurisdiction.events
         .includes(event_items: { matter: :attachments })
         .find(params[:id])
       @event_cache_version = Public::CacheVersion.event_show(@event)

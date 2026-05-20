@@ -32,7 +32,7 @@ module Public
       2.times { appearance(housing, CURRENT_DATE) }
       appearance(transit, CURRENT_DATE)
 
-      top = ThemePulse.new(as_of: AS_OF, min_appearances: 1).top_themes(limit: 2).map(&:slug)
+      top = ThemePulse.new(jurisdiction: civic_jurisdictions(:sanjose), as_of: AS_OF, min_appearances: 1).top_themes(limit: 2).map(&:slug)
 
       assert_equal [ "housing", "transportation" ], top
     end
@@ -41,7 +41,7 @@ module Public
       housing = matter_with_primary("housing", 1)
       2.times { appearance(housing, CURRENT_DATE) } # only 2 appearances
 
-      heating = ThemePulse.new(as_of: AS_OF, min_appearances: 3).heating_up.map(&:slug)
+      heating = ThemePulse.new(jurisdiction: civic_jurisdictions(:sanjose), as_of: AS_OF, min_appearances: 3).heating_up.map(&:slug)
 
       assert_not_includes heating, "housing"
     end
@@ -53,7 +53,7 @@ module Public
       3.times { appearance(steady, CURRENT_DATE) }
       3.times { appearance(steady, PRIOR_DATE) }    # flat
 
-      heating = ThemePulse.new(as_of: AS_OF, min_appearances: 3).heating_up
+      heating = ThemePulse.new(jurisdiction: civic_jurisdictions(:sanjose), as_of: AS_OF, min_appearances: 3).heating_up
 
       assert_equal "homelessness", heating.first.slug
       assert heating.first.surging
@@ -64,7 +64,7 @@ module Public
       appearance(housing, CURRENT_DATE, body_name: "City Council")
       appearance(housing, CURRENT_DATE, body_name: "Planning Commission")
 
-      council = ThemePulse.new(as_of: AS_OF, body_name: "City Council", min_appearances: 1)
+      council = ThemePulse.new(jurisdiction: civic_jurisdictions(:sanjose), as_of: AS_OF, body_name: "City Council", min_appearances: 1)
 
       assert_equal 1, council.stats.find { |s| s.slug == "housing" }.current_appearances
     end
@@ -84,7 +84,7 @@ module Public
       matter.themes.create!(theme_slug: "land_use_zoning", rank: 2)
       appearance(matter, CURRENT_DATE)
 
-      pulse = ThemePulse.new(as_of: AS_OF, min_appearances: 1)
+      pulse = ThemePulse.new(jurisdiction: civic_jurisdictions(:sanjose), as_of: AS_OF, min_appearances: 1)
 
       assert_equal 1, pulse.stats.find { |s| s.slug == "housing" }.current_appearances
       assert_equal 0, pulse.stats.find { |s| s.slug == "land_use_zoning" }.current_appearances
@@ -117,7 +117,7 @@ module Public
     end
 
     def stat_for(slug, min_appearances:)
-      ThemePulse.new(as_of: AS_OF, min_appearances:).stats.find { |stat| stat.slug == slug }
+      ThemePulse.new(jurisdiction: civic_jurisdictions(:sanjose), as_of: AS_OF, min_appearances:).stats.find { |stat| stat.slug == slug }
     end
   end
 end

@@ -2,7 +2,7 @@ class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
 
-  helper_method :public_read_only_request?
+  helper_method :public_read_only_request?, :current_jurisdiction
 
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
@@ -11,6 +11,15 @@ class ApplicationController < ActionController::Base
   after_action :set_public_cache_headers, if: :public_read_only_request?
 
   private
+
+  # The jurisdiction whose records this request is scoped to, derived from the
+  # request host (sanjose.civicgallery.org -> sanjose, sjusd.civicgallery.org ->
+  # sjusd). Unknown hosts (localhost, IP, preview) fall back to the default
+  # jurisdiction, so single-host and development behavior is unchanged.
+  def current_jurisdiction
+    @current_jurisdiction ||=
+      Civic::Jurisdiction.find_by(primary_host: request.host) || Civic::Jurisdiction.default
+  end
 
   def public_read_only_request?
     (request.get? || request.head?) && controller_path.start_with?("public/")
