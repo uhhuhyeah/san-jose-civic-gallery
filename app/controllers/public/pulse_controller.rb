@@ -30,7 +30,6 @@ module Public
     end
 
     def load_homepage_context
-      @lead_item = cached_lead_item
       @events = records_in_cached_order(cached_recent_event_ids, Civic::Event.includes(:event_items))
       @stats = cached_stats
       @matter_type_counts = cached_matter_type_counts
@@ -51,23 +50,6 @@ module Public
       Rails.cache.fetch([ events_index_version, "pulse-body-options" ], expires_in: CACHE_TTL) do
         Civic::Event.current_from_source.where.not(body_name: [ nil, "" ]).distinct.order(:body_name).pluck(:body_name)
       end
-    end
-
-    def current_event_items
-      Civic::EventItem
-        .current_from_source
-        .includes(:event, matter: :attachments)
-        .where.not(civic_matter_id: nil)
-        .joins(:event)
-        .merge(Civic::Event.current_from_source)
-        .order("civic_events.event_date DESC, civic_event_items.agenda_sequence ASC, civic_event_items.legistar_event_item_id ASC")
-    end
-
-    def cached_lead_item
-      ids = Rails.cache.fetch([ events_index_version, "pulse-lead-item-id" ], expires_in: CACHE_TTL) do
-        current_event_items.limit(1).pluck(:id)
-      end
-      current_event_items.where(id: ids).first
     end
 
     def cached_recent_event_ids
