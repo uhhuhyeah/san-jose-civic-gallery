@@ -230,6 +230,7 @@ a:hover {
 .front-intro h1 {
   max-width: 90%;
   margin: 0;
+  margin-bottom: 20px;
   font-size: clamp(2rem, 5vw, 3.8rem);
   line-height: 1.05;
   letter-spacing: 0;
