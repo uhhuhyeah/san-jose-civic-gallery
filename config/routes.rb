@@ -13,7 +13,9 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  root "public/events#index"
+  # The Pulse theme-trends page is the homepage. The former events index still
+  # lives at /public/events. See docs/pulse.md.
+  root "public/pulse#show"
 
   namespace :public do
     get "meetings", to: "meetings#index"
@@ -28,9 +30,7 @@ Rails.application.routes.draw do
   # consistency with the other front-end controllers.
   get "data", to: "public/data#show", as: :data
 
-  # Pulse theme-trends preview. Unlinked work-in-progress page (noindex, no nav
-  # link). The "-v2" is a temporary route string; the controller is named
-  # neutrally so promotion to /pulse is a routes change, not a rename. See
-  # docs/pulse.md.
-  get "pulse-v2", to: "public/pulse#show", as: :pulse_v2
+  # Legacy preview path, now the homepage. Permanent-redirect any old shared
+  # links to root.
+  get "pulse-v2", to: redirect("/", status: 301)
 end

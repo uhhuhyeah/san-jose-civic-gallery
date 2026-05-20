@@ -21,7 +21,7 @@ module Public
     end
 
     test "gets the index" do
-      get root_url
+      get public_events_url
 
       assert_response :success
       assert_includes response.body, "San Jose Civic Gallery"

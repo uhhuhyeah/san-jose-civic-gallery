@@ -1,10 +1,8 @@
 module Public
-  # Unlinked work-in-progress candidate homepage for the Pulse theme trends.
-  # Reachable only by direct URL (/pulse-v2) and marked noindex, so it is not in
-  # nav or search while it is iterated on. It composes the theme Pulse with the
-  # existing homepage furniture (featured item, recent meetings, record counts);
-  # on promotion this controller's data loading is consolidated with
-  # EventsController#index. See docs/pulse.md.
+  # The homepage (root). Composes the theme Pulse with the homepage furniture
+  # (recent meetings, source-record and record-type counts). The former events
+  # index still lives at /public/events; its data loading could be consolidated
+  # here later. See docs/pulse.md.
   class PulseController < ApplicationController
     WINDOW = Public::ThemePulse::DEFAULT_WINDOW
     HEATING_UP_LIMIT = 6

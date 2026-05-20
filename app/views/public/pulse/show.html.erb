@@ -1,8 +1,4 @@
-<% content_for(:title) { "Pulse (preview)" } %>
-<% content_for(:description) { "Preview of which civic themes San Jose's bodies have been focused on lately, and which are heating up." } %>
-<% content_for(:head) do %>
-  <%= tag.meta name: "robots", content: "noindex, nofollow" %>
-<% end %>
+<% content_for(:description) { "San Jose Civic Gallery shows which civic themes the city's bodies are focused on, what is heating up, and the latest official agenda records, matters, and documents." } %>
 
 <main class="newspaper-shell pulse-page">
   <%= render "public/shared/topbar", active: :pulse %>
@@ -14,7 +10,7 @@
   <%# Band 1: Pulse selector (left) aligned with the source-record cards (right). %>
   <section class="newspaper-body">
     <div>
-      <%= form_with url: pulse_v2_path, method: :get, local: true, class: "search-form" do |form| %>
+      <%= form_with url: root_path, method: :get, local: true, class: "search-form" do |form| %>
         <div class="section-title">
           <h2>The Civic Gallery <em>Pulse</em></h2>
           <span>Themes trending across agendas this quarter</span>
@@ -37,7 +33,7 @@
             aria: { label: "Filter themes by body" } %>
           <%= form.submit "Update" %>
           <% if @body_name.present? %>
-            <%= link_to "View Citywide", pulse_v2_path, class: "button-secondary" %>
+            <%= link_to "View Citywide", root_path, class: "button-secondary" %>
           <% end %>
         </div>
       <% end %>
