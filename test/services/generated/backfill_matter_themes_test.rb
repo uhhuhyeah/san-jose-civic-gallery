@@ -59,6 +59,19 @@ module Generated
       assert_equal 1, @client.calls
     end
 
+    test "a classified procedural matter is not reselected" do
+      procedural = Civic::Matter.create!(
+        legistar_matter_id: 70_020,
+        matter_file: "26-420",
+        matter_type_name: "Closed Session Agenda"
+      )
+      ClassifyMatterThemes.call(matter: procedural, client: @client)
+
+      result = BackfillMatterThemes.call(limit: 10, dry_run: true, client: @client)
+
+      assert_not_includes result.candidates.map(&:id), procedural.id
+    end
+
     test "respects the limit" do
       matter(70_005, "26-404")
       matter(70_006, "26-405")

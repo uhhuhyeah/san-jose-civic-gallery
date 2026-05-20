@@ -46,8 +46,17 @@ module Generated
         assert_match(/travel authorization/, system_prompt)
       end
 
-      test "version is matter_themes_v4" do
-        assert_equal "matter_themes_v4", MatterThemesV1::VERSION
+      test "states the confused-theme boundaries" do
+        prompt = MatterThemesV1.build(matter: @matter, source_text: "Body text.")
+        system_prompt = prompt[:system_prompt]
+
+        assert_match(/Vision Zero.*Transportation/m, system_prompt)
+        assert_match(/Utilities, not Economic Development/, system_prompt)
+        assert_match(/funds or budgets another program/, system_prompt)
+      end
+
+      test "version is matter_themes_v5" do
+        assert_equal "matter_themes_v5", MatterThemesV1::VERSION
       end
 
       test "includes matter identity and source text in the user prompt" do
