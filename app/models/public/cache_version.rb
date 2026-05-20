@@ -3,28 +3,30 @@ require "digest"
 module Public
   class CacheVersion
     class << self
-      def events_index
+      def events_index(jurisdiction:)
         compose(
           "public/events-index/v1",
-          cache_component_for(Civic::Event.current_from_source),
-          cache_component_for(Civic::EventItem.current_from_source),
-          cache_component_for(Civic::Matter.all),
-          cache_component_for(Civic::MatterAttachment.current_from_source),
+          jurisdiction.slug,
+          cache_component_for(Civic::Event.current_from_source.for_jurisdiction(jurisdiction)),
+          cache_component_for(Civic::EventItem.current_from_source.for_jurisdiction(jurisdiction)),
+          cache_component_for(Civic::Matter.for_jurisdiction(jurisdiction)),
+          cache_component_for(Civic::MatterAttachment.current_from_source.for_jurisdiction(jurisdiction)),
           cache_component_for(Documents::ExtractedText.all),
           cache_component_for(Generated::Artifact.all)
         )
       end
 
-      def meetings_index(month:, query:, body_name:)
+      def meetings_index(month:, query:, body_name:, jurisdiction:)
         compose(
           "public/meetings/month-v1",
+          jurisdiction.slug,
           month.strftime("%Y-%m"),
           query_digest(query),
           value_digest(body_name),
-          cache_component_for(Civic::Event.current_from_source),
-          cache_component_for(Civic::EventItem.current_from_source),
-          cache_component_for(Civic::Matter.all),
-          cache_component_for(Civic::MatterAttachment.current_from_source)
+          cache_component_for(Civic::Event.current_from_source.for_jurisdiction(jurisdiction)),
+          cache_component_for(Civic::EventItem.current_from_source.for_jurisdiction(jurisdiction)),
+          cache_component_for(Civic::Matter.for_jurisdiction(jurisdiction)),
+          cache_component_for(Civic::MatterAttachment.current_from_source.for_jurisdiction(jurisdiction))
         )
       end
 
@@ -61,32 +63,34 @@ module Public
         )
       end
 
-      def matters_index(query:, theme: nil)
+      def matters_index(query:, jurisdiction:, theme: nil)
         compose(
           "public/matters-index/v1",
+          jurisdiction.slug,
           query_digest(query),
           value_digest(theme),
-          cache_component_for(Civic::Matter.all),
+          cache_component_for(Civic::Matter.for_jurisdiction(jurisdiction)),
           cache_component_for(Civic::MatterTheme.all),
-          cache_component_for(Civic::MatterAttachment.current_from_source),
+          cache_component_for(Civic::MatterAttachment.current_from_source.for_jurisdiction(jurisdiction)),
           cache_component_for(Documents::ExtractedText.all),
           cache_component_for(Generated::Artifact.all)
         )
       end
 
-      def data(snapshot = DataHealth::Snapshot.new)
+      def data(snapshot)
         compose("public/data/v1", snapshot.cache_key)
       end
 
-      def pulse(as_of:, body_name:, window:)
+      def pulse(as_of:, body_name:, window:, jurisdiction:)
         compose(
           "public/pulse/v1",
+          jurisdiction.slug,
           as_of.to_s,
           window.to_i,
           value_digest(body_name),
           cache_component_for(Civic::MatterTheme.all),
-          cache_component_for(Civic::EventItem.current_from_source),
-          cache_component_for(Civic::Event.current_from_source)
+          cache_component_for(Civic::EventItem.current_from_source.for_jurisdiction(jurisdiction)),
+          cache_component_for(Civic::Event.current_from_source.for_jurisdiction(jurisdiction))
         )
       end
 

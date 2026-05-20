@@ -22,7 +22,8 @@ module Public
       :current_rate, :prior_rate, :lift, :surging, :eligible
     )
 
-    def initialize(as_of: Date.current, body_name: nil, window: DEFAULT_WINDOW, min_appearances: DEFAULT_MIN_APPEARANCES)
+    def initialize(jurisdiction:, as_of: Date.current, body_name: nil, window: DEFAULT_WINDOW, min_appearances: DEFAULT_MIN_APPEARANCES)
+      @jurisdiction = jurisdiction
       @as_of = as_of
       @body_name = body_name.presence
       @window = window
@@ -48,7 +49,7 @@ module Public
 
     private
 
-    attr_reader :as_of, :body_name, :window, :min_appearances
+    attr_reader :jurisdiction, :as_of, :body_name, :window, :min_appearances
 
     def build_stats
       current = appearances_by_theme(current_range)
@@ -82,13 +83,13 @@ module Public
       scope = Civic::MatterTheme.primary
         .joins(matter: { event_items: :event })
         .where(civic_event_items: { source_present: true })
-        .where(civic_events: { source_present: true, event_date: range })
+        .where(civic_events: { source_present: true, event_date: range, civic_jurisdiction_id: jurisdiction.id })
       scope = scope.where(civic_events: { body_name: }) if body_name
       scope.group("civic_matter_themes.theme_slug").count
     end
 
     def meetings_in(range)
-      scope = Civic::Event.current_from_source.where(event_date: range)
+      scope = Civic::Event.current_from_source.for_jurisdiction(jurisdiction).where(event_date: range)
       scope = scope.where(body_name:) if body_name
       scope.count
     end

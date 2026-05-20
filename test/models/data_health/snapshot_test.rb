@@ -3,13 +3,13 @@ require "test_helper"
 module DataHealth
   class SnapshotTest < ActiveSupport::TestCase
     test "empty? is true when no ingestion has happened" do
-      assert_predicate Snapshot.new, :empty?
+      assert_predicate build_snapshot, :empty?
     end
 
     test "empty? is false once any record exists" do
       Civic::Matter.create!(legistar_matter_id: 1, matter_file: "26-001")
 
-      assert_not_predicate Snapshot.new, :empty?
+      assert_not_predicate build_snapshot, :empty?
     end
 
     test "counts matters, events, and current attachments" do
@@ -23,7 +23,7 @@ module DataHealth
       matter.all_attachments.create!(legistar_matter_attachment_id: 1000, name: "Active")
       matter.all_attachments.create!(legistar_matter_attachment_id: 1001, name: "Retracted", source_present: false)
 
-      snapshot = Snapshot.new
+      snapshot = build_snapshot
 
       assert_equal 1, snapshot.matter_count
       assert_equal 1, snapshot.event_count
@@ -34,7 +34,7 @@ module DataHealth
       Civic::Matter.create!(legistar_matter_id: 1, matter_file: "26-001", agenda_date: Date.new(2024, 6, 12))
       Civic::Matter.create!(legistar_matter_id: 2, matter_file: "26-002", agenda_date: Date.new(2026, 5, 19))
 
-      range = Snapshot.new.matter_date_range
+      range = build_snapshot.matter_date_range
       assert_equal Date.new(2024, 6, 12), range.first
       assert_equal Date.new(2026, 5, 19), range.last
     end
@@ -44,7 +44,7 @@ module DataHealth
       newer = Civic::Matter.create!(legistar_matter_id: 2, matter_file: "26-575", agenda_date: Date.new(2026, 5, 19))
       Civic::Matter.create!(legistar_matter_id: 3, matter_file: "26-003", agenda_date: nil)
 
-      assert_equal newer.id, Snapshot.new.most_recent_matter.id
+      assert_equal newer.id, build_snapshot.most_recent_matter.id
     end
 
     test "events_by_body groups, sorts, and rolls up the tail" do
@@ -55,7 +55,7 @@ module DataHealth
       mk.call(4, "Housing", 1)
       mk.call(5, "Parks", 1)
 
-      bodies = Snapshot.new.events_by_body
+      bodies = build_snapshot.events_by_body
 
       assert_equal [ [ "City Council", 5 ], [ "Rules", 3 ], [ "Transportation", 2 ] ], bodies[:top]
       assert_equal 2, bodies[:other_body_count]
@@ -83,7 +83,7 @@ module DataHealth
         hyperlink: nil
       )
 
-      snapshot = Snapshot.new
+      snapshot = build_snapshot
       assert_equal 2, snapshot.import_eligible_count
       assert_equal 1, snapshot.imported_count
       assert_equal 1, snapshot.pdf_imported_count
@@ -131,7 +131,7 @@ module DataHealth
         content: { "summary" => "stale" }
       )
 
-      snapshot = Snapshot.new
+      snapshot = build_snapshot
       assert_equal 3, snapshot.pdf_imported_count
       assert_equal 2, snapshot.pdf_extracted_count
       assert_equal 2, snapshot.summarizable_count
@@ -163,7 +163,7 @@ module DataHealth
 
       Civic::Matter.create!(legistar_matter_id: 12, matter_file: "26-012")
 
-      snapshot = Snapshot.new
+      snapshot = build_snapshot
       assert_equal 1, snapshot.theme_classified_count
       assert_equal 3, snapshot.matter_count
     end
@@ -194,7 +194,7 @@ module DataHealth
         content: { "summary" => "ok" }
       )
 
-      snapshot = Snapshot.new
+      snapshot = build_snapshot
       assert_equal 1, snapshot.import_eligible_count
       assert_equal 1, snapshot.pdf_imported_count
       assert_equal 1, snapshot.pdf_extracted_count
@@ -203,7 +203,7 @@ module DataHealth
     end
 
     test "freshness_level is :unknown with no sync, then green/amber/red at boundaries" do
-      assert_equal :unknown, Snapshot.new.freshness_level
+      assert_equal :unknown, build_snapshot.freshness_level
 
       now = Time.zone.parse("2026-05-18 12:00:00")
 
@@ -212,13 +212,13 @@ module DataHealth
         matter_file: "26-001",
         last_synced_at: now - 1.hour
       )
-      assert_equal :green, Snapshot.new(now: now).freshness_level
+      assert_equal :green, build_snapshot(now: now).freshness_level
 
       Civic::Matter.update_all(last_synced_at: now - 31.hours)
-      assert_equal :amber, Snapshot.new(now: now).freshness_level
+      assert_equal :amber, build_snapshot(now: now).freshness_level
 
       Civic::Matter.update_all(last_synced_at: now - 60.hours)
-      assert_equal :red, Snapshot.new(now: now).freshness_level
+      assert_equal :red, build_snapshot(now: now).freshness_level
     end
 
     test "last_synced_at takes the max across matters, events, and attachments" do
@@ -229,7 +229,7 @@ module DataHealth
       Civic::Event.create!(legistar_event_id: 1, event_date: Date.new(2026, 5, 18), last_synced_at: newer)
       matter.all_attachments.create!(legistar_matter_attachment_id: 1, name: "x", last_synced_at: older)
 
-      assert_equal newer, Snapshot.new.last_synced_at
+      assert_equal newer, build_snapshot.last_synced_at
     end
 
     test "reconciliation counts apply the window" do
@@ -247,28 +247,34 @@ module DataHealth
         source_present: false, source_missing_at: 5.days.ago
       )
 
-      snapshot = Snapshot.new
+      snapshot = build_snapshot
       assert_equal 1, snapshot.events_removed_since(30.days.ago)
       assert_equal 1, snapshot.attachments_removed_since(30.days.ago)
     end
 
     test "cache_key changes when underlying tables are written" do
-      first = Snapshot.new.cache_key
+      first = build_snapshot.cache_key
 
       travel_to(Time.current.change(usec: 123_456)) do
         Civic::Matter.create!(legistar_matter_id: 1, matter_file: "26-001")
-        assert_not_equal first, Snapshot.new.cache_key
+        assert_not_equal first, build_snapshot.cache_key
       end
     end
 
     test "cache_key preserves sub-second timestamp changes" do
       matter = Civic::Matter.create!(legistar_matter_id: 1, matter_file: "26-001")
       matter.update_column(:updated_at, Time.zone.parse("2026-05-18 12:00:00.100000"))
-      first = Snapshot.new.cache_key
+      first = build_snapshot.cache_key
 
       matter.update_column(:updated_at, Time.zone.parse("2026-05-18 12:00:00.900000"))
 
-      assert_not_equal first, Snapshot.new.cache_key
+      assert_not_equal first, build_snapshot.cache_key
+    end
+
+    private
+
+    def build_snapshot(**options)
+      Snapshot.new(jurisdiction: civic_jurisdictions(:sanjose), **options)
     end
   end
 end

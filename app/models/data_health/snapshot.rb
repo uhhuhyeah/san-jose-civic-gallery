@@ -3,6 +3,9 @@ module DataHealth
   # method per surfaced metric so each can be tested in isolation. All
   # queries hit indexed columns; numbers are intended to be cached at
   # the HTTP layer via the snapshot's cache_key.
+  #
+  # Scoped to a single jurisdiction so the /data page on each host reports
+  # only that jurisdiction's records.
   class Snapshot
     # Freshness thresholds, tuned for a daily cron. Adjust here when
     # the cadence firms up.
@@ -12,7 +15,8 @@ module DataHealth
     # Top N event bodies surfaced inline; the rest roll up into "other".
     EVENT_BODY_TOP_N = 3
 
-    def initialize(now: Time.current)
+    def initialize(jurisdiction:, now: Time.current)
+      @jurisdiction = jurisdiction
       @now = now
     end
 
@@ -24,9 +28,9 @@ module DataHealth
 
     def last_synced_at
       @last_synced_at ||= [
-        Civic::Matter.maximum(:last_synced_at),
-        Civic::Event.maximum(:last_synced_at),
-        Civic::MatterAttachment.maximum(:last_synced_at)
+        matters.maximum(:last_synced_at),
+        events.maximum(:last_synced_at),
+        attachments.maximum(:last_synced_at)
       ].compact.max
     end
 
@@ -41,31 +45,31 @@ module DataHealth
     end
 
     def matters_synced_since(cutoff)
-      Civic::Matter.where(last_synced_at: cutoff..).count
+      matters.where(last_synced_at: cutoff..).count
     end
 
     def events_synced_since(cutoff)
-      Civic::Event.where(last_synced_at: cutoff..).count
+      events.where(last_synced_at: cutoff..).count
     end
 
     # --- Breadth -------------------------------------------------------
 
     def matter_count
-      @matter_count ||= Civic::Matter.count
+      @matter_count ||= matters.count
     end
 
     def event_count
-      @event_count ||= Civic::Event.current_from_source.count
+      @event_count ||= events.current_from_source.count
     end
 
     def attachment_count
-      @attachment_count ||= Civic::MatterAttachment.current_from_source.count
+      @attachment_count ||= attachments.current_from_source.count
     end
 
     def matter_date_range
       return nil if matter_count.zero?
 
-      min, max = Civic::Matter
+      min, max = matters
         .where.not(agenda_date: nil)
         .pick(Arel.sql("MIN(agenda_date), MAX(agenda_date)"))
       return nil if min.nil? || max.nil?
@@ -74,11 +78,11 @@ module DataHealth
     end
 
     def most_recent_matter
-      Civic::Matter.where.not(agenda_date: nil).order(agenda_date: :desc).first
+      matters.where.not(agenda_date: nil).order(agenda_date: :desc).first
     end
 
     def events_by_body
-      counts = Civic::Event
+      counts = events
         .current_from_source
         .where.not(body_name: [ nil, "" ])
         .group(:body_name)
@@ -132,29 +136,30 @@ module DataHealth
     # Measured against all matters (not attachments); procedural matters count
     # as classified even though they are intentionally tagged with no themes.
     def theme_classified_count
-      @theme_classified_count ||= Civic::Matter.where(id: current_theme_target_ids).count
+      @theme_classified_count ||= matters.where(id: current_theme_target_ids).count
     end
 
     # --- Reconciliation -----------------------------------------------
 
     def events_removed_since(cutoff)
-      Civic::Event.where(source_present: false, source_missing_at: cutoff..).count
+      events.where(source_present: false, source_missing_at: cutoff..).count
     end
 
     def attachments_removed_since(cutoff)
-      Civic::MatterAttachment.where(source_present: false, source_missing_at: cutoff..).count
+      attachments.where(source_present: false, source_missing_at: cutoff..).count
     end
 
     # --- Caching -------------------------------------------------------
 
-    # Identity changes any time an ingested record is written. Suitable
-    # for HTTP ETag / fragment caching; clients get 304s until the next
-    # write.
+    # Identity changes any time an ingested record in this jurisdiction is
+    # written. Suitable for HTTP ETag / fragment caching; clients get 304s
+    # until the next write.
     def cache_key
       [
-        cache_component_for(Civic::Matter),
-        cache_component_for(Civic::Event),
-        cache_component_for(Civic::MatterAttachment),
+        @jurisdiction.slug,
+        cache_component_for(matters),
+        cache_component_for(events),
+        cache_component_for(attachments),
         cache_component_for(Documents::ExtractedText),
         cache_component_for(Generated::Artifact)
       ].join("/")
@@ -162,8 +167,20 @@ module DataHealth
 
     private
 
+    def matters
+      Civic::Matter.for_jurisdiction(@jurisdiction)
+    end
+
+    def events
+      Civic::Event.for_jurisdiction(@jurisdiction)
+    end
+
+    def attachments
+      Civic::MatterAttachment.for_jurisdiction(@jurisdiction)
+    end
+
     def attachments_with_hyperlink
-      Civic::MatterAttachment
+      attachments
         .current_from_source
         .where.not(hyperlink: [ nil, "" ])
     end
@@ -207,10 +224,10 @@ module DataHealth
         .select(:target_id)
     end
 
-    def cache_component_for(model)
+    def cache_component_for(relation)
       [
-        model.count,
-        model.maximum(:updated_at)&.utc&.iso8601(6) || "none"
+        relation.count,
+        relation.maximum(:updated_at)&.utc&.iso8601(6) || "none"
       ].join(":")
     end
   end
