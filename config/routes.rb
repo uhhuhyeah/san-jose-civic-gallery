@@ -27,4 +27,10 @@ Rails.application.routes.draw do
   # for discoverability; controller stays in Public:: for organizational
   # consistency with the other front-end controllers.
   get "data", to: "public/data#show", as: :data
+
+  # Pulse theme-trends preview. Unlinked work-in-progress page (noindex, no nav
+  # link). The "-v2" is a temporary route string; the controller is named
+  # neutrally so promotion to /pulse is a routes change, not a rename. See
+  # docs/pulse.md.
+  get "pulse-v2", to: "public/pulse#show", as: :pulse_v2
 end
