@@ -3,6 +3,7 @@ module Civic
     self.table_name = "civic_matters"
 
     include JurisdictionScoped
+    include SourceIdentified
 
     belongs_to :last_source_snapshot, class_name: "Ingestion::SourceSnapshot", optional: true
 
@@ -12,8 +13,9 @@ module Civic
     has_many :themes, class_name: "Civic::MatterTheme", foreign_key: :civic_matter_id, inverse_of: :matter, dependent: :delete_all
 
     validates :source_system, presence: true
-    validates :legistar_matter_id, presence: true, uniqueness: { scope: :source_system }
     validates :matter_file, presence: true
+
+    source_identity generic: :source_matter_id, legacy: :legistar_matter_id
 
     scope :recent_first, -> { order(agenda_date: :desc, intro_date: :desc, legistar_matter_id: :desc) }
     scope :search, ->(query) {

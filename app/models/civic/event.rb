@@ -3,6 +3,7 @@ module Civic
     self.table_name = "civic_events"
 
     include JurisdictionScoped
+    include SourceIdentified
 
     belongs_to :last_source_snapshot, class_name: "Ingestion::SourceSnapshot", optional: true
 
@@ -10,8 +11,9 @@ module Civic
     has_many :event_items, -> { current_from_source.agenda_order }, class_name: "Civic::EventItem", foreign_key: :civic_event_id, inverse_of: :event
 
     validates :source_system, presence: true
-    validates :legistar_event_id, presence: true, uniqueness: { scope: :source_system }
     validates :event_date, presence: true
+
+    source_identity generic: :source_event_id, legacy: :legistar_event_id
 
     scope :current_from_source, -> { where(source_present: true) }
     scope :recent_first, -> { order(event_date: :desc, legistar_event_id: :desc) }

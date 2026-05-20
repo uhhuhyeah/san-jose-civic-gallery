@@ -9,11 +9,11 @@ module Civic
       )
     end
 
-    test "requires legistar_matter_attachment_id and name" do
+    test "requires source_attachment_id and name" do
       attachment = MatterAttachment.new(matter: @matter)
 
       assert_not attachment.valid?
-      assert_includes attachment.errors[:legistar_matter_attachment_id], "can't be blank"
+      assert_includes attachment.errors[:source_attachment_id], "can't be blank"
       assert_includes attachment.errors[:name], "can't be blank"
     end
 

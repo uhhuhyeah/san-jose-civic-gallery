@@ -10,11 +10,11 @@ module Civic
       )
     end
 
-    test "requires legistar_event_item_id" do
+    test "requires source_event_item_id" do
       event_item = EventItem.new(event: @event)
 
       assert_not event_item.valid?
-      assert_includes event_item.errors[:legistar_event_item_id], "can't be blank"
+      assert_includes event_item.errors[:source_event_item_id], "can't be blank"
     end
   end
 end
