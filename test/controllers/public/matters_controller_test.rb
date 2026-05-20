@@ -60,6 +60,39 @@ module Public
       assert_not_includes response.body, "26-999"
     end
 
+    test "filters matters by theme with primary-theme matters first" do
+      @matter.themes.create!(theme_slug: "housing", rank: 2)
+      primary = Civic::Matter.create!(legistar_matter_id: 16000, matter_file: "26-800", title: "Primary housing matter")
+      primary.themes.create!(theme_slug: "housing", rank: 1)
+      transit = Civic::Matter.create!(legistar_matter_id: 16001, matter_file: "26-801", title: "Transit matter")
+      transit.themes.create!(theme_slug: "transportation", rank: 1)
+
+      get public_matters_url(theme: "housing")
+
+      assert_response :success
+      assert_includes response.body, "Housing"
+      assert_includes response.body, "26-800"
+      assert_includes response.body, "26-575"
+      assert_not_includes response.body, "26-801"
+      assert_operator response.body.index("26-800"), :<, response.body.index("26-575")
+    end
+
+    test "ignores an unknown theme slug" do
+      get public_matters_url(theme: "not_a_theme")
+
+      assert_response :success
+      assert_includes response.body, "26-575"
+    end
+
+    test "shows the primary theme as a pill linking to the theme filter" do
+      @matter.themes.create!(theme_slug: "housing", rank: 1)
+
+      get public_matter_url(@matter)
+
+      assert_response :success
+      assert_select "a.pill[href=?]", public_matters_path(theme: "housing"), text: "Housing"
+    end
+
     test "finds matters by successful extracted document text" do
       other = Civic::Matter.create!(
         legistar_matter_id: 15887,

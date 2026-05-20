@@ -2,6 +2,8 @@ module Public
   class MattersController < ApplicationController
     def index
       @query = params[:q].to_s.strip
+      @theme = normalized_theme
+      @theme_label = Civic::ThemeTaxonomy.label_for(@theme) if @theme
       return unless stale?(etag: matters_index_cache_version, public: true)
 
       @document_matches = document_matches_for(@query)
@@ -13,6 +15,7 @@ module Public
     def show
       @matter = Civic::Matter
         .includes(
+          :themes,
           event_items: :event,
           attachments: [
             { source_file_attachment: :blob },
@@ -22,6 +25,7 @@ module Public
         )
         .find(params[:id])
       @event_items = @matter.event_items.agenda_order.includes(:event)
+      @primary_theme = @matter.themes.detect { |theme| theme.rank == 1 }
       @matter_cache_version = Public::CacheVersion.matter_show(@matter)
       stale?(etag: @matter_cache_version, public: true)
     end
@@ -30,8 +34,13 @@ module Public
 
     INDEX_CACHE_TTL = 5.minutes
 
+    def normalized_theme
+      slug = params[:theme].to_s.strip
+      slug if Civic::ThemeTaxonomy.valid_slug?(slug)
+    end
+
     def matters_index_cache_version
-      @matters_index_cache_version ||= Public::CacheVersion.matters_index(query: @query)
+      @matters_index_cache_version ||= Public::CacheVersion.matters_index(query: @query, theme: @theme)
     end
 
     def document_matches_for(query)
@@ -65,7 +74,19 @@ module Public
       Rails.cache.fetch([ matters_index_cache_version, "matter-ids" ], expires_in: INDEX_CACHE_TTL) do
         scope = Civic::Matter.all
         scope = scope.where(id: matching_matter_ids(query, document_matter_ids)) if query.present?
-        scope.recent_first.limit(50).pluck(:id)
+        if @theme
+          # Any-rank match (primary or secondary), but surface the matters where
+          # this is the primary theme first.
+          scope
+            .joins(:themes)
+            .where(civic_matter_themes: { theme_slug: @theme })
+            .order(Arel.sql("civic_matter_themes.rank ASC"))
+            .recent_first
+            .limit(50)
+            .pluck(:id)
+        else
+          scope.recent_first.limit(50).pluck(:id)
+        end
       end
     end
 

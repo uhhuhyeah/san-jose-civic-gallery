@@ -56,15 +56,18 @@ module Public
           cache_component_for(Civic::Event.where(id: related_event_ids)),
           cache_component_for(Civic::MatterAttachment.where(civic_matter_id: matter.id)),
           cache_component_for(Documents::ExtractedText.where(civic_matter_attachment_id: attachment_ids)),
-          cache_component_for(Generated::Artifact.where(target_type: "Civic::MatterAttachment", target_id: attachment_ids))
+          cache_component_for(Generated::Artifact.where(target_type: "Civic::MatterAttachment", target_id: attachment_ids)),
+          cache_component_for(Civic::MatterTheme.where(civic_matter_id: matter.id))
         )
       end
 
-      def matters_index(query:)
+      def matters_index(query:, theme: nil)
         compose(
           "public/matters-index/v1",
           query_digest(query),
+          value_digest(theme),
           cache_component_for(Civic::Matter.all),
+          cache_component_for(Civic::MatterTheme.all),
           cache_component_for(Civic::MatterAttachment.current_from_source),
           cache_component_for(Documents::ExtractedText.all),
           cache_component_for(Generated::Artifact.all)

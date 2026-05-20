@@ -90,7 +90,7 @@
           <% if @heating_up.any? %>
             <% @heating_up.each do |stat| %>
               <article class="item">
-                <h3 class="item-title"><%= stat.label %></h3>
+                <h3 class="item-title"><%= link_to stat.label, public_matters_path(theme: stat.slug) %></h3>
                 <div class="tags">
                   <% if stat.surging %>
                     <span class="pill gold">New this quarter</span>
@@ -115,7 +115,7 @@
         <div class="topic-grid">
           <% @top_themes.each do |stat| %>
             <div class="topic-tile">
-              <strong><%= stat.label %></strong>
+              <strong><%= link_to stat.label, public_matters_path(theme: stat.slug) %></strong>
               <span><%= pluralize(stat.current_appearances, "appearance") %></span>
             </div>
           <% end %>
