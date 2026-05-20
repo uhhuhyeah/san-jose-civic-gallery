@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_19_220000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_20_120100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -49,6 +49,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_220000) do
     t.string "agenda_number"
     t.integer "agenda_sequence"
     t.bigint "civic_event_id", null: false
+    t.bigint "civic_jurisdiction_id", null: false
     t.bigint "civic_matter_id"
     t.integer "consent"
     t.datetime "created_at", null: false
@@ -75,6 +76,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_220000) do
     t.index ["civic_event_id", "agenda_sequence"], name: "idx_civic_event_items_agenda_order"
     t.index ["civic_event_id", "source_present"], name: "idx_civic_event_items_source_presence"
     t.index ["civic_event_id"], name: "index_civic_event_items_on_civic_event_id"
+    t.index ["civic_jurisdiction_id"], name: "index_civic_event_items_on_civic_jurisdiction_id"
     t.index ["civic_matter_id"], name: "index_civic_event_items_on_civic_matter_id"
     t.index ["last_source_snapshot_id"], name: "index_civic_event_items_on_last_source_snapshot_id"
     t.index ["source_system", "legistar_event_item_id"], name: "idx_civic_event_items_unique_per_source", unique: true
@@ -86,6 +88,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_220000) do
     t.string "agenda_file_uri"
     t.string "agenda_status_name"
     t.string "body_name"
+    t.bigint "civic_jurisdiction_id", null: false
     t.datetime "created_at", null: false
     t.date "event_date", null: false
     t.string "event_time"
@@ -103,6 +106,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_220000) do
     t.string "source_system", default: "legistar.sanjose", null: false
     t.string "title"
     t.datetime "updated_at", null: false
+    t.index ["civic_jurisdiction_id"], name: "index_civic_events_on_civic_jurisdiction_id"
     t.index ["event_date"], name: "index_civic_events_on_event_date"
     t.index ["last_source_snapshot_id"], name: "index_civic_events_on_last_source_snapshot_id"
     t.index ["source_present"], name: "idx_civic_events_source_presence"
@@ -110,7 +114,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_220000) do
     t.index ["updated_at"], name: "index_civic_events_on_updated_at"
   end
 
+  create_table "civic_jurisdictions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "kind", null: false
+    t.string "name", null: false
+    t.string "primary_host", null: false
+    t.string "slug", null: false
+    t.string "source_system_default"
+    t.datetime "updated_at", null: false
+    t.index ["primary_host"], name: "index_civic_jurisdictions_on_primary_host", unique: true
+    t.index ["slug"], name: "index_civic_jurisdictions_on_slug", unique: true
+    t.index ["source_system_default"], name: "idx_civic_jurisdictions_source_system_default", unique: true, where: "(source_system_default IS NOT NULL)"
+  end
+
   create_table "civic_matter_attachments", force: :cascade do |t|
+    t.bigint "civic_jurisdiction_id", null: false
     t.bigint "civic_matter_id", null: false
     t.datetime "created_at", null: false
     t.text "description"
@@ -146,6 +164,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_220000) do
     t.boolean "source_present", default: true, null: false
     t.string "source_system", default: "legistar.sanjose", null: false
     t.datetime "updated_at", null: false
+    t.index ["civic_jurisdiction_id"], name: "index_civic_matter_attachments_on_civic_jurisdiction_id"
     t.index ["civic_matter_id", "sort_order"], name: "idx_civic_matter_attachments_order"
     t.index ["civic_matter_id", "source_present"], name: "idx_civic_matter_attachments_source_presence"
     t.index ["civic_matter_id"], name: "index_civic_matter_attachments_on_civic_matter_id"
@@ -172,6 +191,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_220000) do
   create_table "civic_matters", force: :cascade do |t|
     t.date "agenda_date"
     t.string "body_name"
+    t.bigint "civic_jurisdiction_id", null: false
     t.datetime "created_at", null: false
     t.date "enactment_date"
     t.string "enactment_number"
@@ -192,6 +212,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_220000) do
     t.text "title"
     t.datetime "updated_at", null: false
     t.string "version"
+    t.index ["civic_jurisdiction_id"], name: "index_civic_matters_on_civic_jurisdiction_id"
     t.index ["last_source_snapshot_id"], name: "index_civic_matters_on_last_source_snapshot_id"
     t.index ["matter_file"], name: "index_civic_matters_on_matter_file"
     t.index ["source_system", "legistar_matter_id"], name: "idx_civic_matters_unique_per_source", unique: true
@@ -260,13 +281,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_220000) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "civic_event_items", "civic_events"
+  add_foreign_key "civic_event_items", "civic_jurisdictions"
   add_foreign_key "civic_event_items", "civic_matters"
   add_foreign_key "civic_event_items", "ingestion_source_snapshots", column: "last_source_snapshot_id", on_delete: :nullify
+  add_foreign_key "civic_events", "civic_jurisdictions"
   add_foreign_key "civic_events", "ingestion_source_snapshots", column: "last_source_snapshot_id", on_delete: :nullify
+  add_foreign_key "civic_matter_attachments", "civic_jurisdictions"
   add_foreign_key "civic_matter_attachments", "civic_matters"
   add_foreign_key "civic_matter_attachments", "ingestion_source_snapshots", column: "last_source_snapshot_id", on_delete: :nullify
   add_foreign_key "civic_matter_themes", "civic_matters"
   add_foreign_key "civic_matter_themes", "generated_artifacts", column: "source_artifact_id", on_delete: :nullify
+  add_foreign_key "civic_matters", "civic_jurisdictions"
   add_foreign_key "civic_matters", "ingestion_source_snapshots", column: "last_source_snapshot_id", on_delete: :nullify
   add_foreign_key "document_extracted_texts", "civic_matter_attachments"
 end

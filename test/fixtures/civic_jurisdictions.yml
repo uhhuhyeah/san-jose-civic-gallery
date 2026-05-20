@@ -1,0 +1,13 @@
+sanjose:
+  slug: sanjose
+  name: San Jose City Government
+  kind: city
+  primary_host: sanjose.civicgallery.org
+  source_system_default: legistar.sanjose
+
+sjusd:
+  slug: sjusd
+  name: San Jose Unified School District
+  kind: school_district
+  primary_host: sjusd.civicgallery.org
+  source_system_default: simbli.sjusd

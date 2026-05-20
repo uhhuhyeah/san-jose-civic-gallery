@@ -54,7 +54,7 @@ module Ingestion
       )
       b, _ = PersistEvent.call(
         event_payload: payload.call(7621),
-        source_system: "legistar.santaclara",
+        source_system: "simbli.sjusd",
         request_url: "https://example.test/Events",
         fetched_at: Time.current,
         http_status: 200,
@@ -63,7 +63,7 @@ module Ingestion
 
       assert_not_equal a.id, b.id
       assert_equal "legistar.sanjose", a.source_system
-      assert_equal "legistar.santaclara", b.source_system
+      assert_equal "simbli.sjusd", b.source_system
     end
   end
 end

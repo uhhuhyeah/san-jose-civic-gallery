@@ -7,3 +7,8 @@
 #   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
 #     MovieGenre.find_or_create_by!(name: genre_name)
 #   end
+
+# Civic jurisdictions back every civic record. Required in all environments;
+# fresh (schema-loaded) databases get these here since migration backfills do
+# not run on schema:load.
+Civic::Jurisdiction.seed_defaults!
