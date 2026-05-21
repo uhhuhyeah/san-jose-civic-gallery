@@ -12,7 +12,9 @@ servers:
 
 proxy:
   ssl: true
-  host: sanjose.civicgallery.org
+  hosts:
+    - sanjose.civicgallery.org
+    - sjusd.civicgallery.org
   app_port: 80
 
 registry:
