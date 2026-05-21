@@ -33,6 +33,19 @@ ENV RAILS_ENV="production" \
     LD_PRELOAD="/usr/local/lib/libjemalloc.so" \
     OCR_PDF_LANGUAGES="eng+spa+vie"
 
+# Node + Playwright system libraries for the browser-backed Simbli fetcher
+# (lib/simbli/fetch.mjs). Only the jobs role uses these. The Chromium browser
+# binary itself is installed in the build stage under PLAYWRIGHT_BROWSERS_PATH
+# (inside /rails, so it is copied into the final image); here we install Node
+# and the matching system libraries that must exist at runtime.
+ENV PLAYWRIGHT_BROWSERS_PATH="/rails/.playwright-browsers"
+RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
+    apt-get install --no-install-recommends -y nodejs && \
+    npm install -g playwright@1.60.0 && \
+    playwright install-deps chromium && \
+    npm cache clean --force && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
 # Throw-away build stage to reduce size of final image
 FROM base AS build
 
@@ -52,6 +65,13 @@ RUN bundle install && \
 
 # Copy application code
 COPY . .
+
+# Install the Simbli fetcher's Node deps and the Chromium browser. Browsers
+# land under PLAYWRIGHT_BROWSERS_PATH (inside /rails) so they are carried into
+# the final image by the /rails copy; the system libraries were installed in
+# the base stage.
+RUN cd lib/simbli && npm install --no-audit --no-fund && \
+    npx playwright install chromium
 
 # Precompile bootsnap code for faster boot times.
 # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
