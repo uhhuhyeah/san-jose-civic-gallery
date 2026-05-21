@@ -4,8 +4,8 @@
       <%= image_tag "/icon.svg", alt: "", width: 36, height: 36 %>
     </span>
     <span class="brand-text">
-      <strong>San Jose Civic Gallery</strong>
-      <span>City Hall agenda intelligence</span>
+      <strong><%= current_jurisdiction.site_title %></strong>
+      <span><%= current_jurisdiction.tagline %></span>
     </span>
   <% end %>
 

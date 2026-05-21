@@ -1,5 +1,5 @@
 <% content_for(:title) { "Data Health" } %>
-<% content_for(:description) { "Review San Jose Civic Gallery ingestion freshness, record counts, attachment processing, extraction coverage, and source-data reliability." } %>
+<% content_for(:description) { "Review #{current_jurisdiction.site_title} ingestion freshness, record counts, attachment processing, extraction coverage, and source-data reliability." } %>
 
 <main class="newspaper-shell">
   <%= render "public/shared/topbar", active: :data %>
@@ -159,36 +159,10 @@
   <section class="inset-panel data-about">
     <h2>About this page</h2>
     <p>
-      This page reports what's been ingested from Legistar and how
+      This page reports what's been ingested from <%= current_jurisdiction.ingestion_source_label %> and how
       complete the processing pipeline has been.
     </p>
-    <p>The data on this page comes from three Legistar hosts:</p>
-    <ul>
-      <li>
-        <code>webapi.legistar.com/v1/sanjose</code>
-        <ul>
-          <li>
-            Legistar API, the primary source for matters, events, and attachment metadata.
-          </li>
-        </ul>
-      </li>
-      <li>
-        <code>sanjose.legistar.com</code>
-        <ul>
-          <li>
-            The public Legistar site that attachment hyperlinks point to.
-          </li>
-        </ul>
-      </li>
-      <li>
-        <code>legistar.granicus.com</code>
-        <ul>
-          <li>
-            The Granicus CDN that <code>sanjose.legistar.com</code> redirects attachment downloads to.
-          </li>
-        </ul>
-      </li>
-    </ul>
+    <%= render "public/data/sources_#{current_jurisdiction.slug}" %>
     <p>
       Read more about the project:
       <a href="https://github.com/uhhuhyeah/san-jose-civic-gallery/blob/main/docs/architecture.md">architecture</a>

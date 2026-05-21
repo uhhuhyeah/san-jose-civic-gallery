@@ -1,5 +1,5 @@
 <% content_for(:title) { "Meetings" } %>
-<% content_for(:description) { "Browse San Jose public meetings by month, body, agenda item, linked matter, and official source record." } %>
+<% content_for(:description) { "Browse #{current_jurisdiction.short_name} public meetings by month, body, agenda item, linked matter, and official source record." } %>
 
 <main class="newspaper-shell">
   <%= render "public/shared/topbar", active: :meetings %>
@@ -7,7 +7,7 @@
   <header class="page-header inset-header">
     <p class="eyebrow">Official Meetings</p>
     <h1>Meetings</h1>
-    <p>Use meeting agendas as an entry point into what City Hall is talking about this month.</p>
+    <p>Use meeting agendas as an entry point into what <%= current_jurisdiction.civic_subject %> is talking about this month.</p>
   </header>
 
   <section class="inset-panel meeting-month-nav" aria-label="Meeting month navigation">

@@ -56,6 +56,39 @@ module Civic
       assert_equal civic_jurisdictions(:sjusd), sjusd_event.civic_jurisdiction
     end
 
+    test "presentation copy is city-specific for the city jurisdiction" do
+      sanjose = civic_jurisdictions(:sanjose)
+
+      assert_equal "San Jose", sanjose.short_name
+      assert_equal "San Jose Civic Gallery", sanjose.site_title
+      assert_equal "City Hall agenda intelligence", sanjose.tagline
+      assert_equal "Citywide", sanjose.all_scope_label
+      assert_equal "All bodies (citywide)", sanjose.all_bodies_option_label
+      assert_equal "View Citywide", sanjose.view_all_scope_label
+      assert_equal "the city's bodies", sanjose.governing_bodies_phrase
+      assert_equal "City Hall", sanjose.civic_subject
+      assert_equal "sanjose.legistar.com", sanjose.source_host
+      assert_equal "Legistar", sanjose.ingestion_source_label
+      assert_includes sanjose.default_description, "San Jose City Hall agendas"
+    end
+
+    test "presentation copy is district-specific for a school district" do
+      sjusd = civic_jurisdictions(:sjusd)
+
+      assert_equal "San Jose Unified", sjusd.short_name
+      assert_equal "San Jose Unified Civic Gallery", sjusd.site_title
+      assert_equal "School board agenda intelligence", sjusd.tagline
+      assert_equal "All bodies", sjusd.all_scope_label
+      assert_equal "All bodies", sjusd.all_bodies_option_label
+      assert_equal "View all bodies", sjusd.view_all_scope_label
+      assert_equal "the district's bodies", sjusd.governing_bodies_phrase
+      assert_equal "the district", sjusd.civic_subject
+      assert_equal "simbli.eboardsolutions.com", sjusd.source_host
+      assert_equal "Simbli (eBoardSolutions)", sjusd.ingestion_source_label
+      assert_includes sjusd.default_description, "San Jose Unified School District board agendas"
+      assert_not_includes sjusd.default_description, "City Hall"
+    end
+
     test "for_jurisdiction scopes civic records to a single jurisdiction" do
       sanjose_event = Event.create!(legistar_event_id: 91003, event_date: Date.new(2026, 5, 1))
       sjusd_event = Event.create!(

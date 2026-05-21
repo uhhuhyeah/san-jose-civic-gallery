@@ -1,10 +1,10 @@
-<% content_for(:description) { "San Jose Civic Gallery shows which civic themes the city's bodies are focused on, what is heating up, and the latest official agenda records, matters, and documents." } %>
+<% content_for(:description) { "#{current_jurisdiction.site_title} shows which civic themes #{current_jurisdiction.governing_bodies_phrase} are focused on, what is heating up, and the latest official agenda records, matters, and documents." } %>
 
 <main class="newspaper-shell pulse-page">
   <%= render "public/shared/topbar", active: :pulse %>
 
   <section class="front-intro">
-    <h1>San Jose Civic Gallery</h1>
+    <h1><%= current_jurisdiction.site_title %></h1>
   </section>
 
   <%# Band 1: Pulse selector (left) aligned with the source-record cards (right). %>
@@ -16,7 +16,7 @@
           <span>Themes trending across agendas this quarter</span>
         </div>
         <p class="data-section-note">
-          The <em>"Pulse"</em> shows which themes the city's bodies have been focused on
+          The <em>"Pulse"</em> shows which themes <%= current_jurisdiction.governing_bodies_phrase %> have been focused on
           this quarter and what is heating up, alongside the latest official
           agenda materials.
         </p>
@@ -27,13 +27,13 @@
         <%= form.label :body_name, "Show themes for", for: "pulse-body-name" %>
         <div class="search-row">
           <%= form.select :body_name,
-            options_for_select([ [ "All bodies (citywide)", "" ] ] + @body_options.map { |body| [ body, body ] }, @body_name),
+            options_for_select([ [ current_jurisdiction.all_bodies_option_label, "" ] ] + @body_options.map { |body| [ body, body ] }, @body_name),
             {},
             id: "pulse-body-name",
             aria: { label: "Filter themes by body" } %>
           <%= form.submit "Update" %>
           <% if @body_name.present? %>
-            <%= link_to "View Citywide", root_path, class: "button-secondary" %>
+            <%= link_to current_jurisdiction.view_all_scope_label, root_path, class: "button-secondary" %>
           <% end %>
         </div>
       <% end %>
@@ -61,7 +61,7 @@
   <%# Band 2: Heating up / Most active / Recent meetings (left) aligned with Record Pulse (right). %>
   <section class="newspaper-body">
     <div>
-      <% scope_label = @body_name.presence || "Citywide" %>
+      <% scope_label = @body_name.presence || current_jurisdiction.all_scope_label %>
       <% if @heating_up.empty? && @top_themes.empty? %>
         <div class="section-title">
           <h2>Heating up <span class="subtle">&middot; <%= scope_label %></span></h2>
@@ -73,7 +73,7 @@
             <p>
               There are not enough tagged agenda appearances in this window
               <% if @body_name.present? %>for <%= @body_name %> <% end %>to show a
-              pulse. Try the citywide view, or check back as more meetings are
+              pulse. Try viewing <%= current_jurisdiction.all_scope_label.downcase %>, or check back as more meetings are
               ingested.
             </p>
           </article>

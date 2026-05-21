@@ -1,5 +1,5 @@
 <% content_for(:title) { "Matters" } %>
-<% content_for(:description) { "Browse San Jose legislative matters, agenda files, official attachments, extracted document text, and source links." } %>
+<% content_for(:description) { "Browse #{current_jurisdiction.short_name} legislative matters, agenda files, official attachments, extracted document text, and source links." } %>
 
 <main class="newspaper-shell">
   <%= render "public/shared/topbar", active: :matters %>
@@ -7,7 +7,7 @@
   <header class="page-header inset-header">
     <p class="eyebrow">Official Records</p>
     <h1>Matters</h1>
-    <p>Browse legislative files linked from recent San Jose meetings.</p>
+    <p>Browse legislative files linked from recent <%= current_jurisdiction.short_name %> meetings.</p>
   </header>
 
   <% if @theme %>
