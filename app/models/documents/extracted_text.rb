@@ -11,6 +11,9 @@ module Documents
     validates :matter_attachment, presence: true
     validates :extractor_name, presence: true
 
+    SEARCH_VECTOR_SQL = "to_tsvector('english', coalesce(document_extracted_texts.content, ''))"
+    SEARCH_MATCH_SQL = "#{SEARCH_VECTOR_SQL} @@ plainto_tsquery('english', ?)"
+
     def self.search(query)
       matching_latest(query)
         .with_search_snippet(query)
@@ -29,10 +32,8 @@ module Documents
       successful
         .with_content
         .where(id: latest_ok_per_attachment)
-        .where(
-          "to_tsvector('english', coalesce(document_extracted_texts.content, '')) @@ plainto_tsquery('english', ?)",
-          normalized
-        )
+        # Keep this expression aligned with idx_document_extracted_texts_content_search.
+        .where(SEARCH_MATCH_SQL, normalized)
     end
 
     def self.with_search_snippet(query)
@@ -48,14 +49,10 @@ module Documents
       )
     end
 
-    def self.search_vector_sql
-      "to_tsvector('english', coalesce(#{table_name}.content, ''))"
-    end
-
     def self.tsquery_sql(normalized)
       "plainto_tsquery('english', #{connection.quote(normalized)})"
     end
 
-    private_class_method :search_vector_sql, :tsquery_sql
+    private_class_method :tsquery_sql
   end
 end
