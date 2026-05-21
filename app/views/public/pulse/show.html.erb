@@ -1,4 +1,5 @@
 <% content_for(:description) { "#{current_jurisdiction.site_title} shows which civic themes #{current_jurisdiction.governing_bodies_phrase} are focused on, what is heating up, and the latest official agenda records, matters, and documents." } %>
+<% content_for(:robots) { "noindex,follow" } if @body_name.present? %>
 
 <main class="newspaper-shell pulse-page">
   <%= render "public/shared/topbar", active: :pulse %>

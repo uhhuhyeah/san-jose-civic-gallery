@@ -1,5 +1,6 @@
 <% content_for(:title) { "Matters" } %>
 <% content_for(:description) { "Browse #{current_jurisdiction.short_name} legislative matters, agenda files, official attachments, extracted document text, and source links." } %>
+<% content_for(:robots) { "noindex,follow" } if @query.present? %>
 
 <main class="newspaper-shell">
   <%= render "public/shared/topbar", active: :matters %>

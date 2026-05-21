@@ -39,3 +39,10 @@
   meeting discovery.
   - Follow-up: add richer "what changed since last sync" signals once
     production ingestion cadence is known.
+
+## Discovery
+
+- Verify both production hosts in Google Search Console and submit each
+  host-scoped sitemap:
+  - `https://sanjose.civicgallery.org/sitemap.xml`
+  - `https://sjusd.civicgallery.org/sitemap.xml`

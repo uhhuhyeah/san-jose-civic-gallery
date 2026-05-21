@@ -21,6 +21,14 @@ module ApplicationHelper
     content_for(:description).presence || current_jurisdiction.default_description
   end
 
+  def canonical_url
+    content_for(:canonical_url).presence || request.base_url + request.path
+  end
+
+  def page_robots
+    content_for(:robots).presence
+  end
+
   def official_source_url(raw_url)
     return if raw_url.blank?
 

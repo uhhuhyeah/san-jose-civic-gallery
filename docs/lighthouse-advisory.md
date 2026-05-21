@@ -262,8 +262,8 @@ Priority: Medium
 Effort: Small operational decision
 Expected impact: SEO score improvement if changed
 
-The repository's `public/robots.txt` is minimal and valid, but the live
-`robots.txt` is being augmented by Cloudflare Managed Content:
+The app serves a valid host-scoped `/robots.txt`, but the live response may
+still be augmented by Cloudflare Managed Content:
 
 ```text
 User-agent: *
@@ -286,7 +286,8 @@ Recommendation:
 
 - If SEO score cleanliness matters more than that specific machine-readable
   content signal, disable the Cloudflare managed `Content-Signal` injection and
-  keep only standard `User-agent`, `Allow`, and `Disallow` directives.
+  keep only standard directives such as `User-agent`, `Allow`, `Disallow`, and
+  `Sitemap`.
 - If the AI crawl-control signal is intentional and valuable, accept the
   Lighthouse SEO penalty and document the tradeoff.
 

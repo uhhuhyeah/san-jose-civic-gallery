@@ -17,6 +17,10 @@ Rails.application.routes.draw do
   # lives at /public/events. See docs/pulse.md.
   root "public/pulse#show"
 
+  get "robots.txt", to: "public/discovery#robots", defaults: { format: :text }, as: :robots
+  get "sitemap.xml", to: "public/discovery#sitemap", defaults: { format: :xml }, as: :sitemap
+  get "llms.txt", to: "public/discovery#llms", defaults: { format: :text }, as: :llms
+
   namespace :public do
     get "meetings", to: "meetings#index"
     resources :events, only: [ :show ]
