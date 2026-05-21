@@ -160,6 +160,29 @@ module Public
       assert_not_includes response.body, "26-999"
     end
 
+    test "document text search does not rank the broad candidate query" do
+      @attachment.extracted_texts.create!(
+        extractor_name: "pdftotext",
+        status: "ok",
+        content: "This staff report describes library outreach funding.",
+        character_count: 52
+      )
+      sql_queries = []
+      subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |_name, _started, _finished, _unique_id, payload|
+        sql_queries << payload[:sql]
+      end
+
+      begin
+        get public_matters_url(q: "library outreach")
+      ensure
+        ActiveSupport::Notifications.unsubscribe(subscriber)
+      end
+
+      assert_response :success
+      assert_not sql_queries.any? { |sql| sql.include?("ts_rank_cd") }
+      assert sql_queries.any? { |sql| sql.include?("ts_headline") }
+    end
+
     test "excludes document matches from attachments no longer present in source" do
       archived = @matter.all_attachments.create!(
         legistar_matter_attachment_id: 39137,

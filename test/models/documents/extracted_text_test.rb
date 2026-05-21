@@ -22,7 +22,7 @@ module Documents
       assert_includes extracted_text.errors[:extractor_name], "can't be blank"
     end
 
-    test "search finds successful extracted text with ranked snippets" do
+    test "search finds successful extracted text with snippets" do
       match = @attachment.extracted_texts.create!(
         extractor_name: "pdftotext",
         status: "ok",
@@ -40,6 +40,15 @@ module Documents
 
       assert_equal [ match.id ], results.map(&:id)
       assert_includes results.first.search_snippet, "<mark>library</mark>"
+    end
+
+    test "matching latest repeats the partial index predicate on the outer query" do
+      sql = ExtractedText.matching_latest("library outreach").to_sql
+
+      assert_operator sql.scan(%("document_extracted_texts"."status" = 'ok')).size, :>=, 1
+      assert_includes sql, "to_tsvector('english', coalesce(document_extracted_texts.content, ''))"
+      assert_not_includes sql, "ts_rank_cd"
+      assert_not_includes sql, "ts_headline"
     end
 
     test "search returns only the latest successful extraction per attachment" do
