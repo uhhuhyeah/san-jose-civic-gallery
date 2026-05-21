@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "type": "module",
+  "description": "Simbli browser fetch primitive driven by Simbli::Client. Browsers install to PLAYWRIGHT_BROWSERS_PATH (set in the Dockerfile).",
+  "dependencies": {
+    "playwright": "1.52.0"
+  }
+}

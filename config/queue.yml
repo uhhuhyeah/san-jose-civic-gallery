@@ -27,6 +27,12 @@ default: &default
       threads: 1
       processes: 1
       polling_interval: 1
+    # Browser-backed Simbli ingestion. Single-threaded so we stay a polite,
+    # low-rate guest on the vendor platform and never run parallel browsers.
+    - queues: [ "simbli_ingestion" ]
+      threads: 1
+      processes: 1
+      polling_interval: 1
 
 development:
   <<: *default
