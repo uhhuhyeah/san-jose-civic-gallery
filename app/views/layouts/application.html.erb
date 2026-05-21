@@ -8,13 +8,15 @@
     <meta name="application-name" content="<%= current_jurisdiction.site_title %>">
     <meta name="mobile-web-app-capable" content="yes">
     <%= tag.meta name: "robots", content: page_robots if page_robots.present? %>
-    <%= tag.link rel: "canonical", href: canonical_url %>
+    <%= tag.link rel: "canonical", href: canonical_url unless page_noindex? %>
     <%= tag.meta property: "og:title", content: page_title %>
     <%= tag.meta property: "og:description", content: page_description %>
     <%= tag.meta property: "og:type", content: "website" %>
     <%= tag.meta property: "og:url", content: canonical_url %>
     <%= tag.meta property: "og:site_name", content: current_jurisdiction.site_title %>
+    <%= tag.meta property: "og:image", content: social_image_url %>
     <%= tag.meta name: "twitter:card", content: "summary" %>
+    <%= tag.meta name: "twitter:image", content: social_image_url %>
     <%= csrf_meta_tags unless public_read_only_request? %>
     <%= csp_meta_tag %>
 

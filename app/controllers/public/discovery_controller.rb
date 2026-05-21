@@ -14,15 +14,19 @@ module Public
     end
 
     def sitemap
+      events = Civic::Event.current_from_source.for_jurisdiction(current_jurisdiction)
+      matters = Civic::Matter.for_jurisdiction(current_jurisdiction)
+
+      # Crawlers poll this endpoint repeatedly. Serve a Last-Modified so an
+      # unchanged sitemap returns 304 without building up to 40k URL rows, and
+      # an expiry so intermediaries can hold it briefly.
+      last_modified = [ events.maximum(:updated_at), matters.maximum(:updated_at) ].compact.max
+      expires_in 1.hour, public: true
+      return unless stale?(last_modified: last_modified, public: true)
+
       @static_urls = static_sitemap_urls
-      @events = Civic::Event.current_from_source
-        .for_jurisdiction(current_jurisdiction)
-        .recent_first
-        .limit(RECORD_LIMIT)
-      @matters = Civic::Matter
-        .for_jurisdiction(current_jurisdiction)
-        .recent_first
-        .limit(RECORD_LIMIT)
+      @events = events.recent_first.limit(RECORD_LIMIT)
+      @matters = matters.recent_first.limit(RECORD_LIMIT)
 
       render formats: :xml
     end

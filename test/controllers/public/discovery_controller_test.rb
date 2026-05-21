@@ -66,16 +66,44 @@ module Public
       assert_not_includes response.body, public_matter_url(sanjose_matter)
     end
 
-    test "public pages emit canonical and social metadata" do
+    test "indexable public pages emit canonical and social metadata" do
+      host! SANJOSE_HOST
+
+      get public_matters_url
+
+      assert_response :success
+      assert_select "link[rel='canonical'][href='http://#{SANJOSE_HOST}/public/matters']"
+      assert_select "meta[property='og:url'][content='http://#{SANJOSE_HOST}/public/matters']"
+      assert_select "meta[property='og:image'][content='http://#{SANJOSE_HOST}/icon.png']"
+      assert_select "meta[name='twitter:card'][content='summary']"
+      assert_select "meta[name='twitter:image'][content='http://#{SANJOSE_HOST}/icon.png']"
+      assert_select "meta[name='robots']", false
+    end
+
+    test "canonical and social URLs are https behind a TLS-terminating proxy" do
+      host! SANJOSE_HOST
+
+      # kamal-proxy terminates TLS and forwards to the app on :80 with this
+      # header. Production canonicals must be https, not the origin's http.
+      get public_matters_url, headers: { "X-Forwarded-Proto" => "https" }
+
+      assert_response :success
+      assert_select "link[rel='canonical'][href='https://#{SANJOSE_HOST}/public/matters']"
+      assert_select "meta[property='og:url'][content='https://#{SANJOSE_HOST}/public/matters']"
+      assert_select "meta[property='og:image'][content='https://#{SANJOSE_HOST}/icon.png']"
+    end
+
+    test "noindex result variants suppress the canonical link" do
       host! SANJOSE_HOST
 
       get public_matters_url(q: "housing")
 
       assert_response :success
-      assert_select "link[rel='canonical'][href='http://#{SANJOSE_HOST}/public/matters']"
-      assert_select "meta[property='og:url'][content='http://#{SANJOSE_HOST}/public/matters']"
       assert_select "meta[name='robots'][content='noindex,follow']"
-      assert_select "meta[name='twitter:card'][content='summary']"
+      # noindex and rel=canonical are contradictory signals; canonical is omitted.
+      assert_select "link[rel='canonical']", false
+      # og:url still resolves to the unparameterized page for social unfurls.
+      assert_select "meta[property='og:url'][content='http://#{SANJOSE_HOST}/public/matters']"
     end
   end
 end

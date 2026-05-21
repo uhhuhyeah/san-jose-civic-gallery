@@ -29,6 +29,20 @@ module ApplicationHelper
     content_for(:robots).presence
   end
 
+  # A page asking crawlers not to index it should not also send a canonical
+  # link: noindex and rel=canonical are contradictory signals. Used by the
+  # layout to suppress the canonical tag on noindex variants.
+  def page_noindex?
+    page_robots.to_s.include?("noindex")
+  end
+
+  # Absolute URL to the social-share image. og:image/twitter:image require an
+  # absolute URL, and icon.png lives in public/ (outside the asset pipeline),
+  # so build it from the request base URL rather than image_url.
+  def social_image_url
+    "#{request.base_url}/icon.png"
+  end
+
   def official_source_url(raw_url)
     return if raw_url.blank?
 
