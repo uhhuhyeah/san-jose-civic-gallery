@@ -20,10 +20,24 @@ namespace :attachments do
        "file. Default: rows that failed the automated import (honors STATUS to " \
        "filter by error_status, e.g. STATUS=403). With JURISDICTION=<slug> " \
        "(e.g. sjusd): rows lacking a stored file for that jurisdiction, whose " \
-       "downloads are blocked at the source (no STATUS filter)."
+       "downloads are blocked at the source (no STATUS filter). Narrow by meeting " \
+       "date with YEAR=2026 or FROM_DATE/TO_DATE=YYYY-MM-DD."
   task needs_manual_upload: :environment do
     jurisdiction_slug = ENV["JURISDICTION"].to_s.strip.presence
     status_filter = ENV["STATUS"].to_s.strip.presence
+
+    from_date = to_date = nil
+    begin
+      if (year = ENV["YEAR"].to_s.strip.presence)
+        from_date = Date.new(Integer(year), 1, 1)
+        to_date = Date.new(Integer(year), 12, 31)
+      else
+        from_date = ENV["FROM_DATE"].to_s.strip.presence&.then { |d| Date.iso8601(d) }
+        to_date = ENV["TO_DATE"].to_s.strip.presence&.then { |d| Date.iso8601(d) }
+      end
+    rescue ArgumentError, TypeError => error
+      abort "Invalid date filter (use YEAR=2026 or FROM_DATE/TO_DATE=YYYY-MM-DD): #{error.message}"
+    end
 
     if jurisdiction_slug
       jurisdiction = Civic::Jurisdiction.find_by!(slug: jurisdiction_slug)
@@ -31,6 +45,21 @@ namespace :attachments do
       status_filter = nil # no recorded errors on these; STATUS does not apply
     else
       candidates = Civic::MatterAttachment.needs_manual_upload
+    end
+
+    # Narrow by the meeting (event) date. SJUSD synthetic matters carry no
+    # agenda_date, so the only reliable date is the event their agenda item
+    # belongs to: attachment -> matter -> event_items -> event.
+    if from_date || to_date
+      date_range =
+        if from_date && to_date then from_date..to_date
+        elsif from_date then from_date..
+        else ..to_date
+        end
+      candidates = candidates
+        .joins(matter: { event_items: :event })
+        .where(civic_events: { event_date: date_range })
+        .distinct
     end
 
     candidates = candidates.includes(:matter, :civic_jurisdiction).order(:created_at)
@@ -77,6 +106,7 @@ namespace :attachments do
 
     summary = "needs_manual_upload: #{rows.size} rows"
     summary += " for jurisdiction=#{jurisdiction_slug}" if jurisdiction_slug
+    summary += " (meeting date #{from_date}..#{to_date})" if from_date || to_date
     summary += " (#{filtered_out} filtered out by STATUS=#{status_filter})" if status_filter
     warn summary
   end

@@ -12,6 +12,8 @@ This repository is intentionally documented in a compact way so contributors and
 - `schema-guide.md`: source-system and app-schema contributor guide
 - `document-backfill.md`: operator workflow for importing and extracting
   historical matter attachments
+- `manual-attachment-upload.md`: operator playbook for hand-uploading
+  attachment PDFs the importer cannot fetch (San Jose 403s, all SJUSD files)
 - `attachment-revalidation.md`: operator workflow for validating
   imported attachment files against remote source metadata
 - `event-window-sync.md`: bounded event sync and missing-event

@@ -6,6 +6,7 @@ class AttachmentsNeedsManualUploadTest < ActiveSupport::TestCase
   BEGIN_SENTINEL = "===NEEDS_MANUAL_UPLOAD_CSV_BEGIN===".freeze
   END_SENTINEL = "===NEEDS_MANUAL_UPLOAD_CSV_END===".freeze
   EXPECTED_HEADER = "attachment_id,jurisdiction,source_system,matter_file,attachment_name,error_status,error_message,hyperlink,pdf_path,reason".freeze
+  DATE_ENV = %w[STATUS YEAR FROM_DATE TO_DATE].freeze
 
   setup do
     Rails.application.load_tasks if Rake::Task.tasks.empty?
@@ -15,11 +16,11 @@ class AttachmentsNeedsManualUploadTest < ActiveSupport::TestCase
       legistar_matter_id: 99001,
       matter_file: "TEST-99001"
     )
-    ENV.delete("STATUS")
+    DATE_ENV.each { |key| ENV.delete(key) }
   end
 
   teardown do
-    ENV.delete("STATUS")
+    DATE_ENV.each { |key| ENV.delete(key) }
   end
 
   test "with no candidates, emits a header-only CSV inside the sentinels" do
@@ -82,6 +83,20 @@ class AttachmentsNeedsManualUploadTest < ActiveSupport::TestCase
     assert_equal "403", rows.first["error_status"]
   end
 
+  test "YEAR narrows candidates by meeting (event) date" do
+    in_2026 = attachment_on_event(matter_id: 99100, file: "TEST-2026", att_id: 81001,
+      event_id: 70001, item_id: 71001, event_date: Date.new(2026, 3, 1))
+    in_2025 = attachment_on_event(matter_id: 99101, file: "TEST-2025", att_id: 81002,
+      event_id: 70002, item_id: 71002, event_date: Date.new(2025, 3, 1))
+
+    ENV["YEAR"] = "2026"
+    stdout, _stderr = run_task
+    ids = parse_csv(stdout).map { |row| row["attachment_id"] }
+
+    assert_includes ids, in_2026.id.to_s
+    assert_not_includes ids, in_2025.id.to_s
+  end
+
   test "CSV escaping survives a hyperlink containing a comma" do
     tricky = "https://example.com/path?a=1,b=2&name=\"weird,thing\""
     attachment = @matter.all_attachments.create!(
@@ -100,6 +115,20 @@ class AttachmentsNeedsManualUploadTest < ActiveSupport::TestCase
   end
 
   private
+
+  # A failed-import attachment whose matter appears on an event with the given
+  # date, so the meeting-date filter has something to match.
+  def attachment_on_event(matter_id:, file:, att_id:, event_id:, item_id:, event_date:)
+    matter = Civic::Matter.create!(legistar_matter_id: matter_id, matter_file: file)
+    attachment = matter.all_attachments.create!(
+      legistar_matter_attachment_id: att_id,
+      name: "Doc #{att_id}",
+      source_file_import_error: "Documents::SafeHttpClient::HttpError: HTTP 403"
+    )
+    event = Civic::Event.create!(legistar_event_id: event_id, body_name: "City Council", event_date: event_date)
+    Civic::EventItem.create!(legistar_event_item_id: item_id, civic_event_id: event.id, civic_matter_id: matter.id)
+    attachment
+  end
 
   def run_task
     capture_io { @task.execute }

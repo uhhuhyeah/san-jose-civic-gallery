@@ -11,13 +11,23 @@
 #   bin/needs_manual_upload [OUTPUT_PATH]
 #
 # Environment overrides:
-#   STATUS    passed through to the rake task. Filters rows by
-#             error_status (e.g. STATUS=403, STATUS=ERR).
+#   JURISDICTION  passed through to the rake task. Scopes to one
+#                 jurisdiction's fileless attachments (e.g.
+#                 JURISDICTION=sjusd). Takes precedence over STATUS.
+#   STATUS        passed through to the rake task. Filters rows by
+#                 error_status (e.g. STATUS=403, STATUS=ERR). Ignored
+#                 when JURISDICTION is set.
+#   YEAR          shortcut to narrow by meeting (event) date to one
+#                 calendar year, e.g. YEAR=2026.
+#   FROM_DATE     narrow by meeting date, YYYY-MM-DD (open-ended if only
+#   TO_DATE       one is given). Ignored when YEAR is set.
 #
 # Examples:
 #   bin/needs_manual_upload
 #   bin/needs_manual_upload ./candidates.csv
 #   STATUS=403 bin/needs_manual_upload
+#   JURISDICTION=sjusd bin/needs_manual_upload
+#   JURISDICTION=sjusd YEAR=2026 bin/needs_manual_upload ./sjusd-2026.csv
 
 require "open3"
 require "shellwords"
@@ -44,9 +54,14 @@ def usage_and_exit
       bin/manual_upload --csv <path>
 
     Environment overrides:
-      STATUS   pass-through filter on error_status (e.g. STATUS=403,
-               STATUS=ERR for the non-HTTP fallback bucket). Default
-               unset (all candidates).
+      JURISDICTION  scope to one jurisdiction's fileless attachments
+                    (e.g. JURISDICTION=sjusd). Takes precedence over STATUS.
+      STATUS        pass-through filter on error_status (e.g. STATUS=403,
+                    STATUS=ERR for the non-HTTP fallback bucket). Ignored
+                    when JURISDICTION is set. Default unset (all candidates).
+      YEAR          narrow by meeting date to one calendar year (YEAR=2026).
+      FROM_DATE     narrow by meeting date, YYYY-MM-DD (open-ended if only
+      TO_DATE       one is set). Ignored when YEAR is set.
   USAGE
 end
 
@@ -54,13 +69,23 @@ usage_and_exit if %w[-h --help].include?(ARGV[0])
 
 output_path = ARGV[0] || DEFAULT_OUTPUT_PATH
 status = ENV["STATUS"].to_s.strip
+jurisdiction = ENV["JURISDICTION"].to_s.strip
+# Date filters narrow the worklist by meeting date (passed straight through).
+date_env = %w[YEAR FROM_DATE TO_DATE].each_with_object({}) do |key, acc|
+  value = ENV[key].to_s.strip
+  acc[key] = value unless value.empty?
+end
 
 deploy_config_path = File.expand_path("../config/deploy.yml", __dir__)
 deploy_config = YAML.load_file(deploy_config_path)
 host = deploy_config.dig("servers", "web", "hosts")&.first
 abort_with "Could not read servers.web.hosts from #{deploy_config_path}" if host.to_s.empty?
 
-env_prefix = status.empty? ? "" : "STATUS=#{Shellwords.escape(status)} "
+env_parts = []
+env_parts << "JURISDICTION=#{Shellwords.escape(jurisdiction)}" unless jurisdiction.empty?
+env_parts << "STATUS=#{Shellwords.escape(status)}" unless status.empty?
+date_env.each { |key, value| env_parts << "#{key}=#{Shellwords.escape(value)}" }
+env_prefix = env_parts.empty? ? "" : "#{env_parts.join(' ')} "
 inner_command = "#{env_prefix}bin/rails attachments:needs_manual_upload"
 inner_cmd = "bash -c #{Shellwords.escape(inner_command)}"
 
