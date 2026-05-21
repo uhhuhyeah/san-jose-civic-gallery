@@ -73,6 +73,11 @@ module Civic
       "simbli.sjusd" => "simbli.eboardsolutions.com"
     }.freeze
 
+    SOURCE_LABELS = {
+      "legistar.sanjose" => "Legistar",
+      "simbli.sjusd" => "Simbli (eBoardSolutions)"
+    }.freeze
+
     # Brand-facing label, shorter than the formal `name`.
     def short_name
       SHORT_NAMES[slug] || name
@@ -122,6 +127,11 @@ module Civic
     # Public source host this jurisdiction's records are mirrored from.
     def source_host
       SOURCE_HOSTS[source_system_default]
+    end
+
+    # Human label for the upstream system records are ingested from.
+    def ingestion_source_label
+      SOURCE_LABELS[source_system_default]
     end
 
     def city?

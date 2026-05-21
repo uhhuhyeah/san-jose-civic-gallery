@@ -68,6 +68,7 @@ module Civic
       assert_equal "the city's bodies", sanjose.governing_bodies_phrase
       assert_equal "City Hall", sanjose.civic_subject
       assert_equal "sanjose.legistar.com", sanjose.source_host
+      assert_equal "Legistar", sanjose.ingestion_source_label
       assert_includes sanjose.default_description, "San Jose City Hall agendas"
     end
 
@@ -83,6 +84,7 @@ module Civic
       assert_equal "the district's bodies", sjusd.governing_bodies_phrase
       assert_equal "the district", sjusd.civic_subject
       assert_equal "simbli.eboardsolutions.com", sjusd.source_host
+      assert_equal "Simbli (eBoardSolutions)", sjusd.ingestion_source_label
       assert_includes sjusd.default_description, "San Jose Unified School District board agendas"
       assert_not_includes sjusd.default_description, "City Hall"
     end

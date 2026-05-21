@@ -73,6 +73,19 @@ module Public
       assert_includes response.body, "26-001"
     end
 
+    test "About section cites the Simbli portal on the SJUSD host" do
+      host! "sjusd.civicgallery.org"
+      get data_url
+
+      assert_response :success
+      assert_includes response.body, "About this page"
+      assert_includes response.body, "ingested from Simbli (eBoardSolutions)"
+      assert_includes response.body, "simbli.eboardsolutions.com"
+      # Legistar source hosts must not appear on the district host.
+      assert_not_includes response.body, "webapi.legistar.com/v1/sanjose"
+      assert_not_includes response.body, "legistar.granicus.com"
+    end
+
     test "returns 304 when client ETag matches" do
       Civic::Matter.create!(legistar_matter_id: 1, matter_file: "26-001", last_synced_at: 2.hours.ago)
 
