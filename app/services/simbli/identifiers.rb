@@ -10,6 +10,7 @@ module Simbli
     SOURCE_SYSTEM = "simbli.sjusd".freeze
     ATTACHMENT_BASE_URL = "https://simbli.eboardsolutions.com/Meetings/Attachment.aspx".freeze
     MEETING_BASE_URL = "https://simbli.eboardsolutions.com/SB_Meetings/ViewMeeting.aspx".freeze
+    LISTING_BASE_URL = "https://simbli.eboardsolutions.com/SB_Meetings/SB_MeetingListing.aspx".freeze
 
     # Simbli has no clean governing-body field, so SJUSD meetings get a
     # deliberate default body. The Meeting Type is preserved separately.
@@ -19,6 +20,10 @@ module Simbli
 
     def meeting_url(school_id:, mid:)
       "#{MEETING_BASE_URL}?S=#{school_id}&MID=#{mid}"
+    end
+
+    def listing_url(school_id:)
+      "#{LISTING_BASE_URL}?S=#{school_id}"
     end
 
     def event_source_id(school_id:, mid:)
