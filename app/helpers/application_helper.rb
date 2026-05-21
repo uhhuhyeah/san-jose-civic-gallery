@@ -1,6 +1,4 @@
 module ApplicationHelper
-  DEFAULT_PAGE_TITLE = "San Jose Civic Gallery"
-  DEFAULT_PAGE_DESCRIPTION = "San Jose Civic Gallery helps residents browse San Jose City Hall agendas, matters, attachments, minutes, extracted document text, and official source links."
   OFFICIAL_SOURCE_HOSTS = %w[
     sanjose.legistar.com
     www.sanjoseca.gov
@@ -12,14 +10,15 @@ module ApplicationHelper
   GENERATED_SUMMARY_PROMPT_VERSION = Generated::SummarizeMatterAttachment::PROMPT::VERSION
 
   def page_title
+    base = current_jurisdiction.site_title
     title = content_for(:title).presence
-    return DEFAULT_PAGE_TITLE if title.blank? || title == DEFAULT_PAGE_TITLE
+    return base if title.blank? || title == base
 
-    "#{title} | #{DEFAULT_PAGE_TITLE}"
+    "#{title} | #{base}"
   end
 
   def page_description
-    content_for(:description).presence || DEFAULT_PAGE_DESCRIPTION
+    content_for(:description).presence || current_jurisdiction.default_description
   end
 
   def official_source_url(raw_url)

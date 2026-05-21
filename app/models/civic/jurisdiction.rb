@@ -56,5 +56,86 @@ module Civic
     def to_param
       slug
     end
+
+    # --- Presentation -------------------------------------------------------
+    # Jurisdiction-aware copy used across the public UI so a non-default host
+    # (e.g. sjusd.civicgallery.org) never reads as San Jose city government.
+    # Vocabulary keys off `kind` so future jurisdictions of the same kind work
+    # without new branches.
+
+    SHORT_NAMES = {
+      "sanjose" => "San Jose",
+      "sjusd" => "San Jose Unified"
+    }.freeze
+
+    SOURCE_HOSTS = {
+      "legistar.sanjose" => "sanjose.legistar.com",
+      "simbli.sjusd" => "simbli.eboardsolutions.com"
+    }.freeze
+
+    # Brand-facing label, shorter than the formal `name`.
+    def short_name
+      SHORT_NAMES[slug] || name
+    end
+
+    # Site/brand title shown in the topbar, page <title>, and metadata.
+    def site_title
+      "#{short_name} Civic Gallery"
+    end
+
+    # Tagline beneath the brand in the topbar.
+    def tagline
+      city? ? "City Hall agenda intelligence" : "School board agenda intelligence"
+    end
+
+    # Default meta description when a page does not set its own.
+    def default_description
+      "#{site_title} helps residents browse #{records_phrase}, attachments, " \
+        "minutes, extracted document text, and official source links."
+    end
+
+    # Label for the unfiltered (whole-jurisdiction) scope.
+    def all_scope_label
+      city? ? "Citywide" : "All bodies"
+    end
+
+    # Option label in the body-filter <select>.
+    def all_bodies_option_label
+      city? ? "All bodies (citywide)" : "All bodies"
+    end
+
+    # Link label that returns to the unfiltered view.
+    def view_all_scope_label
+      city? ? "View Citywide" : "View all bodies"
+    end
+
+    # Possessive phrase: "the city's bodies" / "the district's bodies".
+    def governing_bodies_phrase
+      city? ? "the city's bodies" : "the district's bodies"
+    end
+
+    # Subject noun for sentences like "what <subject> is talking about".
+    def civic_subject
+      city? ? "City Hall" : "the district"
+    end
+
+    # Public source host this jurisdiction's records are mirrored from.
+    def source_host
+      SOURCE_HOSTS[source_system_default]
+    end
+
+    def city?
+      kind == "city"
+    end
+
+    private
+
+    def records_phrase
+      if city?
+        "#{short_name} City Hall agendas, matters"
+      else
+        "#{name} board agendas, matters"
+      end
+    end
   end
 end

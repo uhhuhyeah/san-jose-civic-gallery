@@ -64,4 +64,41 @@ class JurisdictionScopingTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "San Jose Council Meeting"
     assert_not_includes response.body, "SJUSD Board Meeting"
   end
+
+  test "the homepage on the San Jose host shows city-government copy" do
+    host! SANJOSE_HOST
+    get root_url
+
+    assert_response :success
+    assert_includes response.body, "San Jose Civic Gallery"
+    assert_includes response.body, "City Hall agenda intelligence"
+    assert_includes response.body, "Citywide"
+  end
+
+  test "the homepage on the SJUSD host shows school-district copy, not city copy" do
+    host! SJUSD_HOST
+    get root_url
+
+    assert_response :success
+    assert_includes response.body, "San Jose Unified Civic Gallery"
+    assert_includes response.body, "School board agenda intelligence"
+    assert_not_includes response.body, "City Hall agenda intelligence"
+    assert_not_includes response.body, "(citywide)"
+  end
+
+  test "the footer cites the San Jose source host on the San Jose host" do
+    host! SANJOSE_HOST
+    get public_meetings_url
+
+    assert_includes response.body, "sanjose.legistar.com"
+    assert_not_includes response.body, "simbli.eboardsolutions.com"
+  end
+
+  test "the footer cites the Simbli source host on the SJUSD host" do
+    host! SJUSD_HOST
+    get public_meetings_url
+
+    assert_includes response.body, "simbli.eboardsolutions.com"
+    assert_not_includes response.body, "sanjose.legistar.com"
+  end
 end
