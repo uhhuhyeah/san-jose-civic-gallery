@@ -12,8 +12,8 @@ module Generated
         )
       end
 
-      test "version is sjusd_matter_themes_v1" do
-        assert_equal "sjusd_matter_themes_v1", SjusdMatterThemesV1::VERSION
+      test "version is sjusd_matter_themes_v2" do
+        assert_equal "sjusd_matter_themes_v2", SjusdMatterThemesV1::VERSION
       end
 
       test "embeds the SJUSD taxonomy, not the city one" do
@@ -33,6 +33,13 @@ module Generated
         assert_match(/Facilities & Bonds, not Budget/, system_prompt)
         assert_match(/empty array for procedural/, system_prompt)
         assert_includes system_prompt, "at most two"
+      end
+
+      test "routes a contract for a purpose to its subject, not Contracts & Procurement" do
+        system_prompt = SjusdMatterThemesV1.build(matter: @matter, source_text: "Body text.")[:system_prompt]
+
+        assert_match(/tagged by that subject, not Contracts &\s+Procurement/, system_prompt)
+        assert_match(/Reserve Contracts &\s+Procurement for routine purchasing/, system_prompt)
       end
 
       test "includes matter identity and source text in the user prompt" do
