@@ -44,24 +44,40 @@ weaker secondary tags from inflating the rankings. The full multi-label set
 
 ## Classifier
 
-The vocabulary is `Civic::ThemeTaxonomy`: a closed list of ~17 civic themes
-(slug + label). The model may only choose from it; editing the list requires
-bumping the prompt version (below), which re-tags everything.
+The vocabulary is `Civic::ThemeTaxonomy`: a per-jurisdiction registry of closed
+theme lists (slug + label), `SANJOSE` (~17 city themes) and `SJUSD` (16
+school-district themes), resolved by a matter's jurisdiction (`themes_for`,
+`slugs_for`, `valid_slug?`, `label_for`, defaulting to the city list for
+unknown/nil). The model may only choose from its jurisdiction's list. Editing a
+list requires bumping that jurisdiction's prompt version (below), which re-tags
+only that jurisdiction's matters; the same slug may appear in more than one list
+without collision because slugs are validated per jurisdiction.
 
 The classification pipeline mirrors `Generated::SummarizeMatterAttachment`:
 
-- `Generated::Prompts::MatterThemesV1`: the versioned prompt. It embeds the
-  taxonomy, asks for the primary subject(s) only (capped at two), and returns
-  strict `{ "themes": [...] }` JSON. Untrusted source text is wrapped in
-  `<source_text>` tags.
-- `Generated::ThemesClient`: an OpenAI-compatible client. It validates the
-  model's output against the taxonomy and silently drops unknown slugs. It
-  reuses `GENERATED_SUMMARY_API_KEY` / `GENERATED_SUMMARY_API_BASE`, with
-  themes-specific `GENERATED_THEMES_MODEL`, `GENERATED_THEMES_TIMEOUT_SECONDS`,
-  and `GENERATED_THEMES_MAX_INPUT_CHARS`.
-- `Generated::ClassifyMatterThemes`: the service. Source text is the matter's
-  attachment summaries, falling back to extracted text, then to the matter's
-  title/file alone. It writes the artifact and syncs the projection (with rank).
+- `Generated::Prompts::MatterThemesBase`: the shared prompt mechanics (user
+  prompt, input hashing, truncation). Per-jurisdiction subclasses supply a
+  VERSION, the jurisdiction's taxonomy, and the system prompt:
+  `MatterThemesV1` (city, `matter_themes_v5`) and `SjusdMatterThemesV1`
+  (`sjusd_matter_themes_v1`, school-district boundaries). Each embeds its
+  jurisdiction's taxonomy, asks for the primary subject(s) only (capped at two),
+  and returns strict `{ "themes": [...] }` JSON. Untrusted source text is wrapped
+  in `<source_text>` tags.
+- `Generated::ThemesClient`: an OpenAI-compatible client. It is
+  taxonomy-agnostic (it does not know the matter), so it only validates the
+  response shape and stringifies the returned values; filtering against the
+  vocabulary is the service's job. It reuses `GENERATED_SUMMARY_API_KEY` /
+  `GENERATED_SUMMARY_API_BASE`, with themes-specific `GENERATED_THEMES_MODEL`,
+  `GENERATED_THEMES_TIMEOUT_SECONDS`, and `GENERATED_THEMES_MAX_INPUT_CHARS`.
+- `Generated::ClassifyMatterThemes`: the service. It resolves the prompt and
+  version by the matter's jurisdiction (`PROMPTS_BY_JURISDICTION`) and filters
+  the model's returned slugs against that jurisdiction's vocabulary (dropping
+  unknown slugs, normalizing case, de-duplicating, preserving order). Source
+  text is the matter's attachment summaries, falling back to extracted text,
+  then to the matter's title/file alone. It writes the artifact and syncs the
+  projection (with rank). Because `prompt_version` is part of the artifact
+  idempotency key and is resolved per jurisdiction, city and SJUSD
+  classifications never collide.
 
 ### Procedural skip
 
@@ -108,21 +124,26 @@ The data is also inspectable from the CLI via the rake task below.
 Tag matters (dry-run lists candidates; `RUN=true` calls the model):
 
 ```bash
-bin/rails generated:classify_matter_themes              # dry run
+bin/rails generated:classify_matter_themes                        # dry run, all jurisdictions
 RUN=true LIMIT=150 bin/rails generated:classify_matter_themes
 RUN=true FORCE=true LIMIT=150 bin/rails generated:classify_matter_themes
+RUN=true JURISDICTION=sjusd LIMIT=50 bin/rails generated:classify_matter_themes  # scope to one jurisdiction
 ```
 
 Candidates are selected newest-agendized first, so a re-tag after a prompt change
 converges on the most pulse-relevant matters first. The backfill skips matters
-that already succeeded for the current model and prompt version.
+that already succeeded for the current model and prompt version (resolved per
+jurisdiction), so an unscoped run also picks up any jurisdiction's unclassified
+matters; pass `JURISDICTION=<slug>` to scope a controlled run.
 
-Inspect the result before any UI exists:
+Inspect the result before any UI exists (defaults to the city; pass
+`JURISDICTION=<slug>` for another):
 
 ```bash
-bin/rails pulse:preview                 # all-time
-WEEKS=13 bin/rails pulse:preview        # window appearances to last 13 weeks
-SAMPLES=5 bin/rails pulse:preview       # sample matters per theme
+bin/rails pulse:preview                          # all-time, sanjose
+WEEKS=13 bin/rails pulse:preview                 # window appearances to last 13 weeks
+SAMPLES=5 bin/rails pulse:preview                # sample matters per theme
+JURISDICTION=sjusd bin/rails pulse:preview       # the SJUSD vocabulary
 ```
 
 The preview prints, per theme: total tagged matters, **Primary** (rank 1) count,
@@ -137,13 +158,16 @@ skip-safe to run repeatedly.
 
 ### Re-tagging after a change
 
-Bumping `MatterThemesV1::VERSION` (or editing the taxonomy) makes every matter a
-candidate again. The next backfill runs re-classify against the new prompt and
-overwrite the projection. The previous version's artifacts remain as history; to
-confirm a sweep is complete, count matters with a current-version artifact:
+Bumping a jurisdiction's prompt VERSION (`MatterThemesV1::VERSION` for the city,
+`SjusdMatterThemesV1::VERSION` for SJUSD), or editing that jurisdiction's
+taxonomy, makes that jurisdiction's matters candidates again. The next backfill
+runs re-classify against the new prompt and overwrite the projection; the change
+is scoped to that jurisdiction, never the other. The previous version's
+artifacts remain as history. To confirm a sweep is complete, count that
+jurisdiction's matters lacking a current-version artifact (city shown):
 
 ```bash
-bin/rails runner 'puts Civic::Matter.where.not(id: Generated::Artifact.where(kind: "matter_themes", prompt_version: Generated::Prompts::MatterThemesV1::VERSION, status: "succeeded").select(:target_id)).count'
+bin/rails runner 'j = Civic::Jurisdiction.find_by!(slug: "sanjose"); puts Civic::Matter.for_jurisdiction(j).where.not(id: Generated::Artifact.where(kind: "matter_themes", prompt_version: Generated::Prompts::MatterThemesV1::VERSION, status: "succeeded").select(:target_id)).count'
 ```
 
 When that prints `0`, the sweep is done.
@@ -188,6 +212,7 @@ Other limits, same spirit as generated summaries:
 - **Prompt injection.** Source text is arbitrary public PDF content. The prompt
   treats anything inside `<source_text>` tags as data, which raises the bar but
   is not bulletproof. Treat tags as assistive.
-- **No quality scoring.** The client validates JSON shape and taxonomy
-  membership, not whether the tag is *correct*. Spot-check with `pulse:preview`
+- **No quality scoring.** The client validates JSON shape and the service
+  enforces taxonomy membership, but neither judges whether the tag is *correct*.
+  Spot-check with `pulse:preview` (per jurisdiction via `JURISDICTION=<slug>`)
   after any change.
