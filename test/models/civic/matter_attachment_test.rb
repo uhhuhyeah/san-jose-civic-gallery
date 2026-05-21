@@ -17,6 +17,18 @@ module Civic
       assert_includes attachment.errors[:name], "can't be blank"
     end
 
+    test "awaiting_file returns attachments with no stored file and no manual upload" do
+      without_file = @matter.all_attachments.create!(legistar_matter_attachment_id: 4001, name: "No file")
+      with_file = @matter.all_attachments.create!(legistar_matter_attachment_id: 4002, name: "Has file")
+      with_file.source_file.attach(io: StringIO.new("%PDF-1.4 x"), filename: "a.pdf", content_type: "application/pdf")
+      manually = @matter.all_attachments.create!(legistar_matter_attachment_id: 4003, name: "Manual", manually_imported_at: Time.current)
+
+      awaiting = Civic::MatterAttachment.awaiting_file
+      assert_includes awaiting, without_file
+      assert_not_includes awaiting, with_file
+      assert_not_includes awaiting, manually
+    end
+
     test "imported scope returns attachments with a recorded import timestamp" do
       not_yet = @matter.all_attachments.create!(legistar_matter_attachment_id: 7001, name: "Pending")
       imported = @matter.all_attachments.create!(

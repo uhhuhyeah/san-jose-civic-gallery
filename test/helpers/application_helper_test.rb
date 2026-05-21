@@ -1,6 +1,11 @@
 require "test_helper"
 
 class ApplicationHelperTest < ActionView::TestCase
+  test "returns the URL for an https://simbli.eboardsolutions.com link" do
+    url = "https://simbli.eboardsolutions.com/Meetings/Attachment.aspx?S=36030421&AID=1488512&MID=57394"
+    assert_equal url, official_source_url(url)
+  end
+
   test "returns the URL for an https://sanjose.legistar.com link" do
     assert_equal "https://sanjose.legistar.com/MeetingDetail.aspx?ID=7621",
       official_source_url("https://sanjose.legistar.com/MeetingDetail.aspx?ID=7621")

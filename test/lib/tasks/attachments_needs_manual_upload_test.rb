@@ -5,7 +5,7 @@ require "rake"
 class AttachmentsNeedsManualUploadTest < ActiveSupport::TestCase
   BEGIN_SENTINEL = "===NEEDS_MANUAL_UPLOAD_CSV_BEGIN===".freeze
   END_SENTINEL = "===NEEDS_MANUAL_UPLOAD_CSV_END===".freeze
-  EXPECTED_HEADER = "attachment_id,matter_file,attachment_name,error_status,error_message,hyperlink,pdf_path,reason".freeze
+  EXPECTED_HEADER = "attachment_id,jurisdiction,source_system,matter_file,attachment_name,error_status,error_message,hyperlink,pdf_path,reason".freeze
 
   setup do
     Rails.application.load_tasks if Rake::Task.tasks.empty?

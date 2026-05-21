@@ -24,6 +24,11 @@ module Civic
     # has stepped in with a manual upload yet. Use this to drive
     # attachments:needs_manual_upload and any human-intervention dashboards.
     scope :needs_manual_upload, -> { where.not(source_file_import_error: nil).where(manually_imported_at: nil) }
+    # Attachments with no stored file and no manual upload yet. Broader than
+    # needs_manual_upload (which requires a recorded import failure): used for
+    # sources whose files are never auto-downloaded (e.g. Simbli, blocked from
+    # the server), so the operator can selectively recover documents.
+    scope :awaiting_file, -> { where(manually_imported_at: nil).where.missing(:source_file_attachment) }
 
     def imported?
       source_file.attached?
