@@ -8,11 +8,19 @@ Start with [CONTEXT.md](./CONTEXT.md) for the app-focused orientation and [docs/
 
 ## Status
 
+### San Jose City Hall
+
 Live at [sanjose.civicgallery.org](https://sanjose.civicgallery.org).
 
 The app is importing San Jose matters from 2019 through today, including linked meetings, attachments, imported source files, extracted text, and generated summaries where available. Ongoing ingestion continues to import new matters and related records as they appear in the public source system.
 
-See the [Data Health dashboard](https://sanjose.civicgallery.org/data) on sanjose.civicgallery.org for details
+See the [Data Health dashboard](https://sanjose.civicgallery.org/data) on sanjose.civicgallery.org for details.
+
+### San Jose Unified School District
+
+Live at [sjusd.civicgallery.org](https://sjusd.civicgallery.org).
+
+A second version of the app ingests San Jose Unified School District records from Simbli (eBoardSolutions). Source files and attachments are available but require manual upload to Active Storage since the SJUSD Simbli (eBoardSolutions) portal does not support automated attachment downloads.
 
 ## Stack
 
