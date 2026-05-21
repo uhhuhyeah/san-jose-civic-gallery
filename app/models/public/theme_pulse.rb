@@ -57,7 +57,7 @@ module Public
       current_meetings = meetings_in(current_range)
       prior_meetings = meetings_in(prior_range)
 
-      Civic::ThemeTaxonomy::THEMES.map do |theme|
+      Civic::ThemeTaxonomy.themes_for(jurisdiction).map do |theme|
         slug = theme[:slug]
         current_appearances = current[slug] || 0
         prior_appearances = prior[slug] || 0

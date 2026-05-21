@@ -27,7 +27,7 @@ module Generated
       api_base: ENV.fetch("GENERATED_SUMMARY_API_BASE", DEFAULT_API_BASE),
       model_name: ENV.fetch("GENERATED_THEMES_MODEL", DEFAULT_MODEL),
       timeout_seconds: ENV.fetch("GENERATED_THEMES_TIMEOUT_SECONDS", DEFAULT_TIMEOUT_SECONDS).to_i,
-      max_input_chars: ENV.fetch("GENERATED_THEMES_MAX_INPUT_CHARS", Generated::Prompts::MatterThemesV1::DEFAULT_MAX_INPUT_CHARS).to_i
+      max_input_chars: ENV.fetch("GENERATED_THEMES_MAX_INPUT_CHARS", Generated::Prompts::MatterThemesBase::DEFAULT_MAX_INPUT_CHARS).to_i
     )
       @api_key = api_key
       @api_base = api_base
@@ -53,21 +53,16 @@ module Generated
 
     attr_reader :api_key, :api_base, :timeout_seconds
 
-    # Keep only known taxonomy slugs. Unknown or near-miss slugs are dropped
-    # rather than failing the whole matter; a missing "themes" key is malformed
-    # and does raise.
+    # Validate only the response shape. The taxonomy is per-jurisdiction and the
+    # client does not know the matter, so filtering returned slugs against the
+    # vocabulary is the caller's job (Generated::ClassifyMatterThemes#valid_slugs).
+    # A missing "themes" key is malformed and does raise.
     def normalize_content_shape(parsed_content)
       unless parsed_content.is_a?(Hash) && parsed_content.key?("themes")
         raise RequestError, "Themes model response must be an object with a \"themes\" array"
       end
 
-      slugs = Array(parsed_content["themes"])
-        .flatten
-        .map { |slug| slug.to_s.strip.downcase }
-        .select { |slug| Civic::ThemeTaxonomy.valid_slug?(slug) }
-        .uniq
-
-      { "themes" => slugs }
+      { "themes" => Array(parsed_content["themes"]).flatten.map(&:to_s) }
     end
 
     def post_chat_completion(system_prompt:, user_prompt:)

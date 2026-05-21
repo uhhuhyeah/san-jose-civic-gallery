@@ -4,15 +4,16 @@ module Generated
 
     Result = Data.define(:dry_run, :candidates, :generated, :failed, :skipped)
 
-    def self.call(limit: DEFAULT_LIMIT, dry_run: true, client: ThemesClient.new, force: false)
-      new(limit:, dry_run:, client:, force:).call
+    def self.call(limit: DEFAULT_LIMIT, dry_run: true, client: ThemesClient.new, force: false, jurisdiction: nil)
+      new(limit:, dry_run:, client:, force:, jurisdiction:).call
     end
 
-    def initialize(limit:, dry_run:, client:, force:)
+    def initialize(limit:, dry_run:, client:, force:, jurisdiction: nil)
       @limit = limit.to_i
       @dry_run = dry_run
       @client = client
       @force = force
+      @jurisdiction = jurisdiction
     end
 
     def call
@@ -37,7 +38,7 @@ module Generated
 
     private
 
-    attr_reader :limit, :dry_run, :client, :force
+    attr_reader :limit, :dry_run, :client, :force, :jurisdiction
 
     def candidate_matters
       return [] unless limit.positive?
@@ -56,10 +57,13 @@ module Generated
     # Newest-agendized matters first so re-tags (after a prompt change) and
     # validation converge on the matters the pulse actually measures, instead
     # of finishing with them. Never-agendized matters (null agenda_date) are
-    # least pulse-relevant, so they sort last.
+    # least pulse-relevant, so they sort last. `id DESC` is a stable final
+    # tiebreaker (e.g. for SJUSD synthetic matters whose date/legistar columns
+    # are all null). Scoped to a single jurisdiction when one is given.
     def recency_first
-      Civic::Matter.order(
-        Arel.sql("agenda_date DESC NULLS LAST, intro_date DESC NULLS LAST, legistar_matter_id DESC")
+      scope = jurisdiction ? Civic::Matter.for_jurisdiction(jurisdiction) : Civic::Matter.all
+      scope.order(
+        Arel.sql("agenda_date DESC NULLS LAST, intro_date DESC NULLS LAST, legistar_matter_id DESC NULLS LAST, id DESC")
       )
     end
 
@@ -68,7 +72,7 @@ module Generated
         target: matter,
         kind: ClassifyMatterThemes::KIND,
         model_identifier: client_model_name,
-        prompt_version: ClassifyMatterThemes::PROMPT::VERSION,
+        prompt_version: ClassifyMatterThemes.prompt_for(matter)::VERSION,
         input_sha256: ClassifyMatterThemes.current_input_sha256(matter:, client:),
         status: "succeeded"
       )

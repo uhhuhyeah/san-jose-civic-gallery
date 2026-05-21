@@ -33,6 +33,31 @@ module Civic
       assert_equal "Land Use & Zoning", theme.label
     end
 
+    test "validates the slug against the matter's jurisdiction vocabulary" do
+      sjusd_matter = Matter.create!(
+        source_system: "simbli.sjusd",
+        source_matter_id: "sjusd:1:1",
+        matter_file: "SJUSD-1-1"
+      )
+
+      assert sjusd_matter.themes.build(theme_slug: "special_education").valid?
+
+      city_only = sjusd_matter.themes.build(theme_slug: "housing")
+      assert_not city_only.valid?
+      assert_includes city_only.errors[:theme_slug], "is not included in the list"
+    end
+
+    test "label resolves through the matter's jurisdiction" do
+      sjusd_matter = Matter.create!(
+        source_system: "simbli.sjusd",
+        source_matter_id: "sjusd:1:2",
+        matter_file: "SJUSD-1-2"
+      )
+      theme = sjusd_matter.themes.create!(theme_slug: "special_education")
+
+      assert_equal "Special Education", theme.label
+    end
+
     test "destroying a matter deletes its themes" do
       @matter.themes.create!(theme_slug: "housing")
 

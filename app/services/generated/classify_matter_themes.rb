@@ -12,8 +12,21 @@ module Generated
   # no attachment text exists the model classifies from the identifiers alone.
   class ClassifyMatterThemes
     KIND = "matter_themes"
-    PROMPT = Generated::Prompts::MatterThemesV1
     SUMMARY_KIND = "attachment_summary"
+
+    # The prompt (and its VERSION, part of the artifact idempotency key) is
+    # resolved by the matter's jurisdiction so each jurisdiction classifies
+    # against its own vocabulary without colliding with another's artifacts.
+    PROMPTS_BY_JURISDICTION = {
+      "sanjose" => Generated::Prompts::MatterThemesV1,
+      "sjusd" => Generated::Prompts::SjusdMatterThemesV1
+    }.freeze
+    DEFAULT_PROMPT = Generated::Prompts::MatterThemesV1
+
+    def self.prompt_for(matter)
+      slug = matter.civic_jurisdiction&.slug
+      PROMPTS_BY_JURISDICTION.fetch(slug, DEFAULT_PROMPT)
+    end
 
     # Procedural/administrative matter types carry no substantive subject. We
     # force them to an empty theme set without calling the model, because the
@@ -62,7 +75,7 @@ module Generated
     def call
       return classify_procedural if procedural?
 
-      prompt = PROMPT.build(matter:, source_text:, max_input_chars: client_max_input_chars)
+      prompt = prompt_class.build(matter:, source_text:, max_input_chars: client_max_input_chars)
       artifact = find_or_initialize_artifact(input_sha256: prompt[:sent_content_sha256])
 
       if artifact.persisted? && !force && artifact.status == "succeeded"
@@ -70,7 +83,7 @@ module Generated
       end
 
       response = client.call(system_prompt: prompt[:system_prompt], user_prompt: prompt[:user_prompt])
-      slugs = Array(response.content["themes"])
+      slugs = valid_slugs(response.content["themes"])
 
       artifact.assign_attributes(
         status: "succeeded",
@@ -91,12 +104,26 @@ module Generated
     def current_input_sha256
       return PROCEDURAL_INPUT_SHA256 if procedural?
 
-      PROMPT.build(matter:, source_text:, max_input_chars: client_max_input_chars)[:sent_content_sha256]
+      prompt_class.build(matter:, source_text:, max_input_chars: client_max_input_chars)[:sent_content_sha256]
     end
 
     private
 
     attr_reader :matter, :client, :force
+
+    def prompt_class
+      self.class.prompt_for(matter)
+    end
+
+    # Drop any slug the model returned that is not in this matter's jurisdiction
+    # vocabulary (the client is taxonomy-agnostic), normalizing case and
+    # de-duplicating. Order is preserved so rank 1 stays the model's first pick.
+    def valid_slugs(raw)
+      Array(raw)
+        .map { |slug| slug.to_s.strip.downcase }
+        .select { |slug| Civic::ThemeTaxonomy.valid_slug?(slug, matter.civic_jurisdiction) }
+        .uniq
+    end
 
     def procedural?
       PROCEDURAL_MATTER_TYPES.include?(matter.matter_type_name) ||
@@ -209,7 +236,7 @@ module Generated
         target: matter,
         kind: KIND,
         model_identifier: client_model_name,
-        prompt_version: PROMPT::VERSION,
+        prompt_version: prompt_class::VERSION,
         input_sha256:
       )
     end
@@ -229,7 +256,7 @@ module Generated
     def client_max_input_chars
       return client.max_input_chars if client.respond_to?(:max_input_chars)
 
-      Generated::Prompts::MatterThemesV1::DEFAULT_MAX_INPUT_CHARS
+      Generated::Prompts::MatterThemesBase::DEFAULT_MAX_INPUT_CHARS
     end
   end
 end

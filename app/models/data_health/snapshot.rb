@@ -218,10 +218,17 @@ module DataHealth
         .where(
           target_type: "Civic::Matter",
           kind: Generated::ClassifyMatterThemes::KIND,
-          prompt_version: Generated::ClassifyMatterThemes::PROMPT::VERSION,
+          prompt_version: theme_prompt_version,
           status: "succeeded"
         )
         .select(:target_id)
+    end
+
+    # The theme prompt (and version) is resolved per jurisdiction, so this
+    # jurisdiction's coverage counts only artifacts written by its own prompt.
+    def theme_prompt_version
+      Generated::ClassifyMatterThemes::PROMPTS_BY_JURISDICTION
+        .fetch(@jurisdiction.slug, Generated::ClassifyMatterThemes::DEFAULT_PROMPT)::VERSION
     end
 
     def cache_component_for(relation)

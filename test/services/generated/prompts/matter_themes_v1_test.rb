@@ -14,7 +14,7 @@ module Generated
       test "embeds the full taxonomy in the system prompt" do
         prompt = MatterThemesV1.build(matter: @matter, source_text: "Body text.")
 
-        Civic::ThemeTaxonomy.slugs.each do |slug|
+        Civic::ThemeTaxonomy.slugs_for(@matter.civic_jurisdiction).each do |slug|
           assert_includes prompt[:system_prompt], slug
         end
       end

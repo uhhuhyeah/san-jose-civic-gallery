@@ -1,40 +1,17 @@
-require "digest"
-
 module Generated
   module Prompts
-    class MatterThemesV1
-      # Bump this whenever the taxonomy (Civic::ThemeTaxonomy) or the
-      # instructions change, so the backfill re-tags every matter against the
-      # new vocabulary. The version is part of the artifact idempotency key.
+    # San Jose city-government theme classification prompt. Tuned across v1..v5
+    # against real Legistar data (see docs/pulse.md). Bump VERSION whenever this
+    # prompt or the Civic::ThemeTaxonomy::SANJOSE vocabulary changes, so the
+    # backfill re-tags every San Jose matter against the new vocabulary.
+    class MatterThemesV1 < MatterThemesBase
       VERSION = "matter_themes_v5"
-      DEFAULT_MAX_INPUT_CHARS = 12_000
-      TRUNCATION_MARKER = "\n\n…[truncated]".freeze
-      NO_BODY_TEXT = "(No attachment text available; classify from the title and name only.)".freeze
-
-      def self.build(matter:, source_text:, max_input_chars: DEFAULT_MAX_INPUT_CHARS)
-        new(matter:, source_text:, max_input_chars:).build
-      end
-
-      def initialize(matter:, source_text:, max_input_chars:)
-        @matter = matter
-        @source_text = source_text.to_s
-        @max_input_chars = max_input_chars.to_i
-      end
-
-      def build
-        {
-          system_prompt: system_prompt,
-          user_prompt: user_prompt,
-          sent_content: sent_content,
-          sent_character_count: sent_content.length,
-          sent_content_sha256: Digest::SHA256.hexdigest(sent_content),
-          truncated: truncated?
-        }
-      end
 
       private
 
-      attr_reader :matter, :source_text, :max_input_chars
+      def taxonomy
+        Civic::ThemeTaxonomy::SANJOSE
+      end
 
       def system_prompt
         <<~PROMPT
@@ -94,47 +71,6 @@ module Generated
           value is an array of zero to two theme slug strings drawn from the
           allowed list, most relevant first.
         PROMPT
-      end
-
-      def user_prompt
-        <<~PROMPT
-          Matter file: #{matter.matter_file}
-          Matter title: #{matter.descriptive_title}
-
-          <source_text>
-          #{body_text}
-          </source_text>
-        PROMPT
-      end
-
-      def taxonomy_lines
-        Civic::ThemeTaxonomy::THEMES
-          .map { |theme| "- #{theme[:slug]} — #{theme[:label]}" }
-          .join("\n")
-      end
-
-      # Hash the full classification-relevant input (identity + body) so the
-      # idempotency key changes when either the matter identity or the source
-      # text changes.
-      def sent_content
-        @sent_content ||= [
-          matter.matter_file,
-          matter.descriptive_title,
-          body_text
-        ].map(&:to_s).join("\n")
-      end
-
-      def body_text
-        @body_text ||= begin
-          trimmed = source_text.strip
-          return NO_BODY_TEXT if trimmed.blank?
-
-          trimmed.length > max_input_chars ? trimmed[0, max_input_chars] + TRUNCATION_MARKER : trimmed
-        end
-      end
-
-      def truncated?
-        source_text.strip.length > max_input_chars
       end
     end
   end
