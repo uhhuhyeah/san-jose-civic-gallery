@@ -84,6 +84,32 @@ module Public
       assert_includes response.body, "26-575"
     end
 
+    test "filters by the SJUSD vocabulary on the SJUSD host" do
+      host! "sjusd.civicgallery.org"
+      matter = Civic::Matter.create!(
+        source_system: "simbli.sjusd",
+        source_matter_id: "sjusd:1:1",
+        matter_file: "SJUSD-1-1",
+        title: "Special education services agreement"
+      )
+      matter.themes.create!(theme_slug: "special_education", rank: 1)
+
+      get public_matters_url(theme: "special_education")
+
+      assert_response :success
+      assert_includes response.body, "Special Education"
+      assert_includes response.body, "SJUSD-1-1"
+    end
+
+    test "treats a city-only theme slug as unknown on the SJUSD host" do
+      host! "sjusd.civicgallery.org"
+
+      get public_matters_url(theme: "housing")
+
+      assert_response :success
+      assert_not_includes response.body, "Showing matters tagged"
+    end
+
     test "shows the primary theme as a pill linking to the theme filter" do
       @matter.themes.create!(theme_slug: "housing", rank: 1)
 

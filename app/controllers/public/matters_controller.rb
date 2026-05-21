@@ -3,7 +3,7 @@ module Public
     def index
       @query = params[:q].to_s.strip
       @theme = normalized_theme
-      @theme_label = Civic::ThemeTaxonomy.label_for(@theme) if @theme
+      @theme_label = Civic::ThemeTaxonomy.label_for(@theme, current_jurisdiction) if @theme
       return unless stale?(etag: matters_index_cache_version, public: true)
 
       @document_matches = document_matches_for(@query)
@@ -36,7 +36,7 @@ module Public
 
     def normalized_theme
       slug = params[:theme].to_s.strip
-      slug if Civic::ThemeTaxonomy.valid_slug?(slug)
+      slug if Civic::ThemeTaxonomy.valid_slug?(slug, current_jurisdiction)
     end
 
     def matters_index_cache_version

@@ -1,15 +1,24 @@
 module Civic
-  # Closed vocabulary of civic themes used to tag matters for the Pulse
-  # discovery feature. The list is intentionally broad so appearance counts
-  # aggregate into real signal instead of fragmenting across near-synonyms.
+  # Per-jurisdiction closed vocabularies of civic themes used to tag matters for
+  # the Pulse discovery feature. Each list is intentionally broad so appearance
+  # counts aggregate into real signal instead of fragmenting across near-synonyms.
   #
-  # Editing this list is a breaking change for generated theme tags: bump
-  # Generated::Prompts::MatterThemesV1::VERSION so the backfill re-tags every
-  # matter against the new vocabulary. Slugs are the stable identifier stored
-  # in civic_matter_themes; labels are display-only and safe to reword without
-  # a re-tag.
+  # Vocabularies are per-jurisdiction by design: a city government and a school
+  # district frame their work around different topics. Slugs are scoped to a
+  # jurisdiction (validated by Civic::MatterTheme against the matter's
+  # jurisdiction), so the same slug may appear in more than one list without
+  # collision.
+  #
+  # Editing a list is a breaking change for that jurisdiction's generated theme
+  # tags: bump the corresponding prompt VERSION (see
+  # Generated::ClassifyMatterThemes::PROMPTS_BY_JURISDICTION) so the backfill
+  # re-tags that jurisdiction's matters against the new vocabulary. Because the
+  # prompt version is part of the artifact idempotency key and is resolved per
+  # jurisdiction, editing one jurisdiction's taxonomy never re-tags another's.
+  # Slugs are the stable identifier stored in civic_matter_themes; labels are
+  # display-only and safe to reword without a re-tag.
   module ThemeTaxonomy
-    THEMES = [
+    SANJOSE = [
       { slug: "housing", label: "Housing" },
       { slug: "land_use_zoning", label: "Land Use & Zoning" },
       { slug: "transportation", label: "Transportation" },
@@ -29,21 +38,53 @@ module Civic
       { slug: "labor_employment", label: "Labor & Employment" }
     ].freeze
 
-    SLUGS = THEMES.map { |theme| theme[:slug] }.freeze
-    LABELS_BY_SLUG = THEMES.to_h { |theme| [ theme[:slug], theme[:label] ] }.freeze
+    SJUSD = [
+      { slug: "curriculum_instruction", label: "Curriculum & Instruction" },
+      { slug: "academic_outcomes", label: "Academic Outcomes & Assessment" },
+      { slug: "special_education", label: "Special Education" },
+      { slug: "student_wellness", label: "Student Health & Wellness" },
+      { slug: "school_safety", label: "School Safety & Climate" },
+      { slug: "enrollment_boundaries", label: "Enrollment & Boundaries" },
+      { slug: "facilities_bonds", label: "Facilities & Bonds" },
+      { slug: "budget_finance", label: "Budget & Finance" },
+      { slug: "labor_personnel", label: "Labor & Personnel" },
+      { slug: "governance_policy", label: "Governance & Board Policy" },
+      { slug: "equity_inclusion", label: "Equity & Inclusion" },
+      { slug: "technology", label: "Technology" },
+      { slug: "transportation", label: "Transportation" },
+      { slug: "family_community", label: "Family & Community Engagement" },
+      { slug: "legal_litigation", label: "Legal & Litigation" },
+      { slug: "contracts_procurement", label: "Contracts & Procurement" }
+    ].freeze
+
+    BY_JURISDICTION_SLUG = {
+      "sanjose" => SANJOSE,
+      "sjusd" => SJUSD
+    }.freeze
+
+    # Unknown or nil jurisdictions fall back to the city vocabulary, matching the
+    # default jurisdiction used elsewhere for unresolved hosts.
+    DEFAULT = SANJOSE
 
     module_function
 
-    def slugs
-      SLUGS
+    # Accepts a Civic::Jurisdiction (or its slug string, or nil) and returns the
+    # theme list for it.
+    def themes_for(jurisdiction)
+      slug = jurisdiction.respond_to?(:slug) ? jurisdiction.slug : jurisdiction
+      BY_JURISDICTION_SLUG.fetch(slug, DEFAULT)
     end
 
-    def valid_slug?(slug)
-      LABELS_BY_SLUG.key?(slug)
+    def slugs_for(jurisdiction)
+      themes_for(jurisdiction).map { |theme| theme[:slug] }
     end
 
-    def label_for(slug)
-      LABELS_BY_SLUG[slug]
+    def valid_slug?(slug, jurisdiction)
+      themes_for(jurisdiction).any? { |theme| theme[:slug] == slug }
+    end
+
+    def label_for(slug, jurisdiction)
+      themes_for(jurisdiction).find { |theme| theme[:slug] == slug }&.dig(:label)
     end
   end
 end

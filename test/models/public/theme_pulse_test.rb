@@ -90,6 +90,34 @@ module Public
       assert_equal 0, pulse.stats.find { |s| s.slug == "land_use_zoning" }.current_appearances
     end
 
+    test "uses the jurisdiction's own theme vocabulary" do
+      matter = Civic::Matter.create!(
+        source_system: "simbli.sjusd",
+        source_matter_id: "sjusd:57394:item-1",
+        matter_file: "SJUSD-57394-1"
+      )
+      matter.themes.create!(theme_slug: "special_education", rank: 1)
+      event = Civic::Event.create!(
+        source_system: "simbli.sjusd",
+        source_event_id: "sjusd:evt-1",
+        event_date: CURRENT_DATE,
+        body_name: "Board of Education"
+      )
+      Civic::EventItem.create!(
+        source_system: "simbli.sjusd",
+        source_event_item_id: "sjusd:evt-1:item-1",
+        civic_event_id: event.id,
+        civic_matter_id: matter.id
+      )
+
+      pulse = ThemePulse.new(jurisdiction: civic_jurisdictions(:sjusd), as_of: AS_OF, min_appearances: 1)
+      slugs = pulse.stats.map(&:slug)
+
+      assert_includes slugs, "special_education"
+      assert_not_includes slugs, "housing"
+      assert_equal 1, pulse.stats.find { |stat| stat.slug == "special_education" }.current_appearances
+    end
+
     private
 
     def matter_with_primary(slug, legistar)

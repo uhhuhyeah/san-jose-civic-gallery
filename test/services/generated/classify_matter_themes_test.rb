@@ -167,6 +167,31 @@ module Generated
       assert_equal 0, @client.calls
     end
 
+    test "a San Jose matter records the city prompt version" do
+      result = ClassifyMatterThemes.call(matter: @matter, client: @client)
+
+      assert_equal "matter_themes_v5", result.artifact.prompt_version
+    end
+
+    test "an SJUSD matter classifies against the SJUSD vocabulary and prompt version" do
+      sjusd_matter = Civic::Matter.create!(
+        source_system: "simbli.sjusd",
+        source_matter_id: "sjusd:99:1",
+        matter_file: "SJUSD-99-1",
+        title: "Special education services agreement"
+      )
+      # The model returns one SJUSD slug and one city-only slug; the city slug
+      # must be dropped because it is not in the SJUSD vocabulary.
+      client = FakeThemesClient.new(themes: [ "special_education", "housing" ])
+
+      result = ClassifyMatterThemes.call(matter: sjusd_matter, client:)
+
+      assert_equal "succeeded", result.artifact.status
+      assert_equal "sjusd_matter_themes_v1", result.artifact.prompt_version
+      assert_equal [ "special_education" ], result.artifact.content["themes"]
+      assert_equal [ "special_education" ], sjusd_matter.themes.pluck(:theme_slug)
+    end
+
     test "client errors are captured on a failed artifact" do
       add_summary(summary: "Housing.", key_points: [])
       failing = FakeThemesClient.new(error: RuntimeError.new("budget exceeded"))

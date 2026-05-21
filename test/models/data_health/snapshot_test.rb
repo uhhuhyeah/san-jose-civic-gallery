@@ -145,7 +145,7 @@ module DataHealth
         kind: Generated::ClassifyMatterThemes::KIND,
         status: "succeeded",
         model_identifier: "test-model",
-        prompt_version: Generated::ClassifyMatterThemes::PROMPT::VERSION,
+        prompt_version: Generated::Prompts::MatterThemesV1::VERSION,
         input_sha256: "theme-1",
         content: { "themes" => [ "housing" ] }
       )
