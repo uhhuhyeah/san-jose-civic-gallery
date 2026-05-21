@@ -15,7 +15,7 @@ module Documents
     def self.call(matter_attachment:, downloader: SafeDownloader)
       raise ArgumentError, "Matter attachment hyperlink is missing" if matter_attachment.hyperlink.blank?
 
-      tempfile = Tempfile.new([ "matter-attachment-#{matter_attachment.legistar_matter_attachment_id}", ".bin" ])
+      tempfile = Tempfile.new([ "matter-attachment-#{matter_attachment.id}", ".bin" ])
       tempfile.binmode
 
       begin
@@ -59,7 +59,7 @@ module Documents
       return matter_attachment.file_name if matter_attachment.file_name.present?
 
       extension = extension_for(content_type)
-      "#{matter_attachment.legistar_matter_attachment_id}-attachment#{extension}"
+      "#{matter_attachment.source_attachment_id}-attachment#{extension}"
     end
     private_class_method :filename_for
 
