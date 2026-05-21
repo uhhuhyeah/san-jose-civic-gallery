@@ -46,7 +46,7 @@ module Public
     def document_matches_for(query)
       return [] if query.blank?
 
-      records_in_cached_order(cached_document_match_ids(query), document_match_scope(query))
+      records_in_cached_order(cached_document_match_ids(query), document_match_record_scope(query))
     end
 
     def matching_matter_ids(query, document_matter_ids)
@@ -58,13 +58,21 @@ module Public
 
     def cached_document_match_ids(query)
       Rails.cache.fetch([ matters_index_cache_version, "document-match-ids" ], expires_in: INDEX_CACHE_TTL) do
-        document_match_scope(query).limit(20).map(&:id)
+        document_match_candidate_scope(query).limit(20).pluck(:id)
       end
     end
 
-    def document_match_scope(query)
+    def document_match_candidate_scope(query)
       Documents::ExtractedText
-        .search(query)
+        .matching_latest(query)
+        .joins(matter_attachment: :matter)
+        .merge(Civic::MatterAttachment.current_from_source.for_jurisdiction(current_jurisdiction))
+        .recent_first
+    end
+
+    def document_match_record_scope(query)
+      Documents::ExtractedText
+        .with_search_snippet(query)
         .joins(matter_attachment: :matter)
         .merge(Civic::MatterAttachment.current_from_source.for_jurisdiction(current_jurisdiction))
         .includes(matter_attachment: :matter)

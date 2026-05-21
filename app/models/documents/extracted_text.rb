@@ -11,28 +11,48 @@ module Documents
     validates :matter_attachment, presence: true
     validates :extractor_name, presence: true
 
+    SEARCH_VECTOR_SQL = "to_tsvector('english', coalesce(document_extracted_texts.content, ''))"
+    SEARCH_MATCH_SQL = "#{SEARCH_VECTOR_SQL} @@ plainto_tsquery('english', ?)"
+
     def self.search(query)
+      matching_latest(query)
+        .with_search_snippet(query)
+        .order(created_at: :desc, id: :desc)
+    end
+
+    def self.matching_latest(query)
       normalized = query.to_s.strip
       return none if normalized.blank?
-
-      quoted_query = connection.quote(normalized)
-      tsquery = "plainto_tsquery('english', #{quoted_query})"
-      vector = "to_tsvector('english', coalesce(#{table_name}.content, ''))"
-      headline_options = "StartSel=<mark>, StopSel=</mark>, MaxWords=24, MinWords=8, ShortWord=3"
 
       latest_ok_per_attachment = successful
         .with_content
         .select("DISTINCT ON (civic_matter_attachment_id) id")
         .order(:civic_matter_attachment_id, created_at: :desc, id: :desc)
 
-      where(id: latest_ok_per_attachment)
-        .where("#{vector} @@ #{tsquery}")
-        .select(
-          "#{table_name}.*",
-          "ts_rank_cd(#{vector}, #{tsquery}) AS search_rank",
-          "ts_headline('english', #{table_name}.content, #{tsquery}, #{connection.quote(headline_options)}) AS search_snippet"
-        )
-        .order(Arel.sql("search_rank DESC, #{table_name}.created_at DESC, #{table_name}.id DESC"))
+      successful
+        .with_content
+        .where(id: latest_ok_per_attachment)
+        # Keep this expression aligned with idx_document_extracted_texts_content_search.
+        .where(SEARCH_MATCH_SQL, normalized)
     end
+
+    def self.with_search_snippet(query)
+      normalized = query.to_s.strip
+      return none if normalized.blank?
+
+      tsquery = tsquery_sql(normalized)
+      headline_options = "StartSel=<mark>, StopSel=</mark>, MaxWords=24, MinWords=8, ShortWord=3"
+
+      select(
+        "#{table_name}.*",
+        "ts_headline('english', #{table_name}.content, #{tsquery}, #{connection.quote(headline_options)}) AS search_snippet"
+      )
+    end
+
+    def self.tsquery_sql(normalized)
+      "plainto_tsquery('english', #{connection.quote(normalized)})"
+    end
+
+    private_class_method :tsquery_sql
   end
 end
