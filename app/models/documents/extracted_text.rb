@@ -29,7 +29,10 @@ module Documents
       successful
         .with_content
         .where(id: latest_ok_per_attachment)
-        .where("#{search_vector_sql} @@ #{tsquery_sql(normalized)}")
+        .where(
+          "to_tsvector('english', coalesce(document_extracted_texts.content, '')) @@ plainto_tsquery('english', ?)",
+          normalized
+        )
     end
 
     def self.with_search_snippet(query)
