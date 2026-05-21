@@ -39,9 +39,9 @@ ENV RAILS_ENV="production" \
 # (inside /rails, so it is copied into the final image); here we install Node
 # and the matching system libraries that must exist at runtime.
 ENV PLAYWRIGHT_BROWSERS_PATH="/rails/.playwright-browsers"
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
     apt-get install --no-install-recommends -y nodejs && \
-    npm install -g playwright@1.52.0 && \
+    npm install -g playwright@1.60.0 && \
     playwright install-deps chromium && \
     npm cache clean --force && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
