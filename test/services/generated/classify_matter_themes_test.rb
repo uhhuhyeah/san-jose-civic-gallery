@@ -218,6 +218,21 @@ module Generated
       assert_equal 1, Artifact.where(target: @matter, kind: "matter_themes").count
     end
 
+    test "a projection failure rolls back the artifact and records a failure, not a success" do
+      add_summary(summary: "Housing project.", key_points: [])
+      service = ClassifyMatterThemes.new(matter: @matter, client: FakeThemesClient.new(themes: [ "housing" ]), force: false)
+      # Force the projection write (same transaction as the artifact save) to fail.
+      service.define_singleton_method(:sync_projection) { |*| raise ActiveRecord::StatementInvalid, "projection boom" }
+
+      result = service.call
+
+      assert_equal "failed", result.artifact.status
+      assert_equal 0, @matter.themes.count
+      # The artifact must not be left succeeded with a missing projection.
+      stored = Artifact.find_by!(target: @matter, kind: "matter_themes")
+      assert_equal "failed", stored.status
+    end
+
     test "a failing run does not downgrade an existing succeeded artifact" do
       ClassifyMatterThemes.call(matter: @matter, client: FakeThemesClient.new(themes: [ "housing" ]))
       assert_equal "succeeded", Artifact.find_by!(target: @matter, kind: "matter_themes").status

@@ -93,18 +93,15 @@ module Generated
         generated_at: Time.current,
         error_message: nil
       )
-      begin
-        artifact.save!
-      rescue ActiveRecord::RecordNotUnique
-        # A concurrent run inserted this matter's artifact between our
-        # find_or_initialize and save (e.g. the recurring backfill overlapping a
-        # manual run). Adopt it rather than failing; the idempotency key
-        # guarantees the other run is equivalent.
-        return adopt_raced_artifact(input_sha256: prompt[:sent_content_sha256])
-      end
-      sync_projection(artifact, slugs)
+      persist_classification(artifact, slugs)
 
       Result.new(artifact:, created: artifact.previously_new_record?, skipped: false, reason: nil, theme_slugs: slugs)
+    rescue ActiveRecord::RecordNotUnique
+      # A concurrent run inserted this matter's artifact between our
+      # find_or_initialize and save (e.g. the recurring backfill overlapping a
+      # manual run). Adopt it rather than failing; the idempotency key guarantees
+      # the other run is equivalent.
+      adopt_raced_artifact(input_sha256: prompt[:sent_content_sha256])
     rescue StandardError => error
       record_failure(prompt:, error:)
     end
@@ -155,14 +152,11 @@ module Generated
         generated_at: Time.current,
         error_message: nil
       )
-      begin
-        artifact.save!
-      rescue ActiveRecord::RecordNotUnique
-        return adopt_raced_artifact(input_sha256: PROCEDURAL_INPUT_SHA256)
-      end
-      sync_projection(artifact, [])
+      persist_classification(artifact, [])
 
       Result.new(artifact:, created: artifact.previously_new_record?, skipped: false, reason: "procedural", theme_slugs: [])
+    rescue ActiveRecord::RecordNotUnique
+      adopt_raced_artifact(input_sha256: PROCEDURAL_INPUT_SHA256)
     end
 
     def record_failure(prompt:, error:)
@@ -209,6 +203,20 @@ module Generated
         reason: "raced",
         theme_slugs: Array(artifact.content&.dig("themes"))
       )
+    end
+
+    # Persist the artifact and its civic_matter_themes projection atomically, so
+    # a "succeeded" artifact can never exist without its matching projection. If
+    # the projection write fails, the artifact save rolls back too and the error
+    # propagates to record_failure (which then writes a failed artifact rather
+    # than leaving a half-applied success). This is also what makes the
+    # record_failure no-downgrade guard unambiguous: a succeeded artifact found
+    # there can only belong to another process, never a half-done current run.
+    def persist_classification(artifact, slugs)
+      ActiveRecord::Base.transaction do
+        artifact.save!
+        sync_projection(artifact, slugs)
+      end
     end
 
     # Replace the matter's projected themes with exactly the returned slugs,
