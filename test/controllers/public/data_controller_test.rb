@@ -73,17 +73,27 @@ module Public
       assert_includes response.body, "26-001"
     end
 
-    test "About section cites the Simbli portal on the SJUSD host" do
+    test "names Simbli, not Legistar, as the source on the SJUSD host" do
       host! "sjusd.civicgallery.org"
+      # A synced record so the freshness banner (with the Source label) renders.
+      Civic::Event.create!(
+        source_system: "simbli.sjusd",
+        source_event_id: "sjusd:evt-1",
+        body_name: "Board of Education",
+        event_date: Date.current,
+        last_synced_at: 2.hours.ago
+      )
+
       get data_url
 
       assert_response :success
-      assert_includes response.body, "About this page"
+      # Lead paragraph, freshness banner, and About block all name Simbli.
       assert_includes response.body, "ingested from Simbli (eBoardSolutions)"
+      assert_includes response.body, "Source: Simbli (eBoardSolutions)"
       assert_includes response.body, "simbli.eboardsolutions.com"
-      # Legistar source hosts must not appear on the district host.
+      # Nothing on the district host should read as Legistar.
+      assert_not_includes response.body, "Legistar"
       assert_not_includes response.body, "webapi.legistar.com/v1/sanjose"
-      assert_not_includes response.body, "legistar.granicus.com"
     end
 
     test "returns 304 when client ETag matches" do
