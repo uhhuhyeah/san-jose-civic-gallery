@@ -1,0 +1,39 @@
+{
+  "Items": [
+    {
+      "AgendaID": 100,
+      "Title": "A. Call to Order",
+      "HasAttachment": false,
+      "ParentID": 0,
+      "Level": 0,
+      "Children": [
+        {
+          "AgendaID": 101,
+          "Title": "1. Roll Call",
+          "HasAttachment": false,
+          "ParentID": 100,
+          "Level": 1,
+          "Children": []
+        }
+      ]
+    },
+    {
+      "AgendaID": 200,
+      "Title": "K. Action, Information, and Discussion Items",
+      "HasAttachment": false,
+      "ParentID": 0,
+      "Level": 0,
+      "Children": [
+        {
+          "AgendaID": 201,
+          "Title": "1. Acceptance of Gifts (ACTION)",
+          "HasAttachment": true,
+          "ParentID": 200,
+          "Level": 1,
+          "Children": []
+        }
+      ]
+    }
+  ],
+  "DeletedItems": []
+}

@@ -1,0 +1,22 @@
+{
+  "meetings": [
+    {
+      "mid": "57394",
+      "text": "Regular Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"57394\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "65707",
+      "text": "Special Session Board Meeting",
+      "href": "javascript:void(0);",
+      "onclick": "javascript:return ViewMeeting(\"36030421\",\"65707\",\"1\",\"0\",\"P\",event);"
+    },
+    {
+      "mid": "",
+      "text": "Not a meeting link",
+      "href": "/SB_Meetings/Help.aspx",
+      "onclick": ""
+    }
+  ]
+}
