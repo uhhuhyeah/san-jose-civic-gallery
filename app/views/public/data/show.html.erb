@@ -7,7 +7,7 @@
   <header class="page-header inset-header">
     <p class="eyebrow">Transparency</p>
     <h1>Data Health</h1>
-    <p>What we've ingested from Legistar and how reliable the processing pipeline has been.</p>
+    <p>What we've ingested from <%= current_jurisdiction.ingestion_source_label %> and how reliable the processing pipeline has been.</p>
   </header>
 
   <% if @snapshot.empty? %>
@@ -37,7 +37,7 @@
           <span class="data-freshness-dot unknown" aria-hidden="true"></span>
           Last sync unknown
         <% end %>
-        <span class="data-source">Source: Legistar</span>
+        <span class="data-source">Source: <%= current_jurisdiction.ingestion_source_label %></span>
       </p>
     </section>
 
