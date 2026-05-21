@@ -42,7 +42,22 @@
 
 ## Discovery
 
-- Verify both production hosts in Google Search Console and submit each
-  host-scoped sitemap:
-  - `https://sanjose.civicgallery.org/sitemap.xml`
-  - `https://sjusd.civicgallery.org/sitemap.xml`
+- Google Search Console is set up under a single **Domain property for
+  the apex `civicgallery.org`**, which covers both the `sanjose.` and
+  `sjusd.` subdomains. Verified via the **Domain name provider (DNS TXT)**
+  method (`google-site-verification=` record on the apex).
+  - Do **not** delete that TXT record in Cloudflare DNS, or verification
+    is lost.
+  - Both host-scoped sitemaps are submitted under this apex property (a
+    Domain property accepts sitemaps from any subdomain under it):
+    - `https://sanjose.civicgallery.org/sitemap.xml`
+    - `https://sjusd.civicgallery.org/sitemap.xml`
+  - Reporting is combined across both subdomains under the apex property.
+    If per-jurisdiction reporting is wanted later, add URL-prefix
+    properties for each subdomain (`https://sanjose.civicgallery.org/`
+    and `https://sjusd.civicgallery.org/`); they auto-verify under the
+    verified apex domain with no further DNS work.
+  - Cleanup: any stray `sanjose.civicgallery.org` Domain property or
+    standalone `https://sanjose.civicgallery.org/` URL-prefix property
+    created during setup are redundant with the apex property and can be
+    removed to avoid "which property?" confusion.
