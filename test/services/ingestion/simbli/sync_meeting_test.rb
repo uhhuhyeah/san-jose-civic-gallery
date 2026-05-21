@@ -16,7 +16,10 @@ module Ingestion
         assert_equal "sjusd", event.civic_jurisdiction.slug
         assert_equal "36030421:57394", event.source_event_id
         assert_equal "Board of Education", event.body_name
-        assert_equal "Regular Session Board Meeting", event.source_meeting_type
+        # Title and Type are preserved separately (special row: specific title,
+        # generic type).
+        assert_equal "Financing Corporation Annual Meeting", event.title
+        assert_equal "Special Session Board Meeting", event.source_meeting_type
         assert_equal Date.new(2026, 4, 23), event.event_date
       end
 
@@ -101,7 +104,8 @@ module Ingestion
         SyncMeeting.call(
           school_id: "36030421",
           mid: "57394",
-          meeting_type: "Regular Session Board Meeting",
+          meeting_title: "Financing Corporation Annual Meeting",
+          meeting_type: "Special Session Board Meeting",
           event_date: Date.new(2026, 4, 23),
           client: client
         )
@@ -111,7 +115,8 @@ module Ingestion
         SyncMeeting.call(
           school_id: "36030421",
           mid: "57394",
-          meeting_type: "Regular Session Board Meeting",
+          meeting_title: "Financing Corporation Annual Meeting",
+          meeting_type: "Special Session Board Meeting",
           event_date: Date.new(2026, 4, 23),
           client: @client
         )

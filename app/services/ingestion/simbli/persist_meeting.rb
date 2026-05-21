@@ -7,7 +7,7 @@ module Ingestion
     class PersistMeeting
       Ids = ::Simbli::Identifiers
 
-      def self.call(school_id:, mid:, meeting_type:, event_date:, request_url:, fetched_at:, http_status:, response_sha256:, payload:)
+      def self.call(school_id:, mid:, meeting_title:, meeting_type:, event_date:, request_url:, fetched_at:, http_status:, response_sha256:, payload:)
         source_id = Ids.event_source_id(school_id:, mid:)
 
         snapshot = RecordSourceSnapshot.call(
@@ -27,7 +27,7 @@ module Ingestion
         )
         event.assign_attributes(
           body_name: Ids::DEFAULT_BODY_NAME,
-          title: meeting_type,
+          title: meeting_title,
           source_meeting_type: meeting_type,
           event_date: event_date,
           in_site_url: Ids.meeting_url(school_id:, mid:),

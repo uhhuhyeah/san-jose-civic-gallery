@@ -1,12 +1,17 @@
 module Simbli
   # Parses the SB_MeetingListing page's meeting links into meeting descriptors.
   #
-  # NOTE: the listing table also carries the meeting date/time, but the
-  # feasibility spike only captured the anchors (mid + type), not the row date.
-  # The live listing client (browser slice) must extract event_date from the
-  # table row; it is supplied to persistence separately, not produced here.
+  # The anchor text is the meeting's Title (the clickable meeting name).
+  #
+  # NOTE: the listing table also carries a separate Meeting Type column and the
+  # meeting date/time, but the feasibility spike only captured the anchors
+  # (title + ids), not those columns. The live listing client (browser slice)
+  # must extract meeting_type and event_date from the table row; they are
+  # supplied to persistence separately, not produced here. Title and Type are
+  # kept distinct because special rows (e.g. a financing corporation meeting)
+  # have a specific Title but a generic Type.
   class MeetingListing
-    Meeting = Data.define(:school_id, :mid, :meeting_type)
+    Meeting = Data.define(:school_id, :mid, :meeting_title)
 
     VIEW_MEETING = /ViewMeeting\(\s*["'](?<school_id>\d+)["']\s*,\s*["'](?<mid>\d+)["']/
 
@@ -19,7 +24,7 @@ module Simbli
         Meeting.new(
           school_id: match[:school_id],
           mid: match[:mid],
-          meeting_type: entry["text"].to_s.strip
+          meeting_title: entry["text"].to_s.strip
         )
       end
     end

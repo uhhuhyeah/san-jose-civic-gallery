@@ -18,13 +18,14 @@ module Ingestion
     # reconciled by the listing-driven sync (not yet built). Synthetic matters
     # are not tombstoned, matching the Legistar matter behavior.
     class SyncMeeting
-      def self.call(school_id:, mid:, meeting_type:, event_date:, client:)
+      def self.call(school_id:, mid:, meeting_title:, meeting_type:, event_date:, client:)
         agenda = client.agenda_tree(mid: mid)
         fetched_at = agenda[:fetched_at]
 
         event, snapshot = PersistMeeting.call(
           school_id: school_id,
           mid: mid,
+          meeting_title: meeting_title,
           meeting_type: meeting_type,
           event_date: event_date,
           request_url: agenda[:request_url],
