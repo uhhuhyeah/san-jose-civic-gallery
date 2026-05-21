@@ -39,3 +39,14 @@ production:
     class: Generated::BackfillMatterThemesJob
     args: [ { limit: 150, dry_run: false } ]
     schedule: every 2 hours at minute 30
+
+  # Discover and re-sync recent SJUSD (Simbli) board meetings. Low cadence and a
+  # small limit keep us a polite guest on the vendor platform and avoid
+  # re-fetching static older meetings; new and amended meetings sit at the top
+  # of the listing. Runs browser-backed on the isolated simbli_ingestion queue,
+  # so it never runs parallel browsers or competes with city ingestion. The
+  # initial historical backfill is a one-off manual `simbli:sync_meetings` run.
+  sync_recent_sjusd_meetings:
+    class: Ingestion::Simbli::SyncMeetingsJob
+    args: [ { limit: 5 } ]
+    schedule: every day at 5:30am
