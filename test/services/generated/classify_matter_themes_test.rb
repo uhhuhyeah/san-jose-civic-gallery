@@ -203,6 +203,50 @@ module Generated
       assert_equal 0, @matter.themes.count
     end
 
+    test "adopts a concurrently-written artifact instead of inserting a duplicate" do
+      # The fake client simulates another process winning the race: it inserts
+      # the artifact for this exact input before returning, so the service's own
+      # save hits the idempotency unique index.
+      racing = RacingThemesClient.new(matter: @matter, winner_themes: [ "transportation" ])
+
+      result = ClassifyMatterThemes.call(matter: @matter, client: racing)
+
+      assert result.skipped
+      assert_equal "raced", result.reason
+      assert_equal "succeeded", result.artifact.status
+      assert_equal [ "transportation" ], result.artifact.content["themes"]
+      assert_equal 1, Artifact.where(target: @matter, kind: "matter_themes").count
+    end
+
+    test "a projection failure rolls back the artifact and records a failure, not a success" do
+      add_summary(summary: "Housing project.", key_points: [])
+      service = ClassifyMatterThemes.new(matter: @matter, client: FakeThemesClient.new(themes: [ "housing" ]), force: false)
+      # Force the projection write (same transaction as the artifact save) to fail.
+      service.define_singleton_method(:sync_projection) { |*| raise ActiveRecord::StatementInvalid, "projection boom" }
+
+      result = service.call
+
+      assert_equal "failed", result.artifact.status
+      assert_equal 0, @matter.themes.count
+      # The artifact must not be left succeeded with a missing projection.
+      stored = Artifact.find_by!(target: @matter, kind: "matter_themes")
+      assert_equal "failed", stored.status
+    end
+
+    test "a failing run does not downgrade an existing succeeded artifact" do
+      ClassifyMatterThemes.call(matter: @matter, client: FakeThemesClient.new(themes: [ "housing" ]))
+      assert_equal "succeeded", Artifact.find_by!(target: @matter, kind: "matter_themes").status
+
+      # force bypasses the skip, then the model fails; record_failure must not
+      # clobber the good artifact.
+      failing = FakeThemesClient.new(error: RuntimeError.new("boom"))
+      result = ClassifyMatterThemes.call(matter: @matter, client: failing, force: true)
+
+      assert result.skipped
+      assert_equal "raced", result.reason
+      assert_equal "succeeded", Artifact.find_by!(target: @matter, kind: "matter_themes").status
+    end
+
     private
 
     def add_summary(summary:, key_points:)
@@ -237,6 +281,34 @@ module Generated
           content: { "themes" => @themes },
           usage_metadata: { "total_tokens" => 42 }
         )
+      end
+    end
+
+    # Simulates a concurrent winner: when called, it inserts the matter's
+    # artifact (with the same idempotency key the service is about to use) before
+    # returning, so the service's own save raises ActiveRecord::RecordNotUnique.
+    class RacingThemesClient
+      attr_reader :model_name, :max_input_chars
+
+      def initialize(matter:, winner_themes:)
+        @matter = matter
+        @winner_themes = winner_themes
+        @model_name = "test-themes-model"
+        @max_input_chars = 12_000
+      end
+
+      def call(system_prompt:, user_prompt:)
+        sha = ClassifyMatterThemes.current_input_sha256(matter: @matter, client: self)
+        Generated::Artifact.create!(
+          target: @matter,
+          kind: ClassifyMatterThemes::KIND,
+          model_identifier: @model_name,
+          prompt_version: ClassifyMatterThemes.prompt_for(@matter)::VERSION,
+          input_sha256: sha,
+          status: "succeeded",
+          content: { "themes" => @winner_themes }
+        )
+        ThemesClient::Response.new(model_name: @model_name, content: { "themes" => [ "housing" ] }, usage_metadata: {})
       end
     end
   end
