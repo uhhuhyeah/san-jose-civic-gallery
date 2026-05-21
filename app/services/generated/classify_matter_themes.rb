@@ -93,7 +93,15 @@ module Generated
         generated_at: Time.current,
         error_message: nil
       )
-      artifact.save!
+      begin
+        artifact.save!
+      rescue ActiveRecord::RecordNotUnique
+        # A concurrent run inserted this matter's artifact between our
+        # find_or_initialize and save (e.g. the recurring backfill overlapping a
+        # manual run). Adopt it rather than failing; the idempotency key
+        # guarantees the other run is equivalent.
+        return adopt_raced_artifact(input_sha256: prompt[:sent_content_sha256])
+      end
       sync_projection(artifact, slugs)
 
       Result.new(artifact:, created: artifact.previously_new_record?, skipped: false, reason: nil, theme_slugs: slugs)
@@ -147,7 +155,11 @@ module Generated
         generated_at: Time.current,
         error_message: nil
       )
-      artifact.save!
+      begin
+        artifact.save!
+      rescue ActiveRecord::RecordNotUnique
+        return adopt_raced_artifact(input_sha256: PROCEDURAL_INPUT_SHA256)
+      end
       sync_projection(artifact, [])
 
       Result.new(artifact:, created: artifact.previously_new_record?, skipped: false, reason: "procedural", theme_slugs: [])
@@ -155,6 +167,13 @@ module Generated
 
     def record_failure(prompt:, error:)
       artifact = find_or_initialize_artifact(input_sha256: prompt[:sent_content_sha256])
+
+      # A concurrent run may have succeeded between our model call and now.
+      # Never downgrade a succeeded artifact to failed; adopt it instead.
+      if artifact.persisted? && artifact.status == "succeeded"
+        return adopt_raced_artifact(input_sha256: prompt[:sent_content_sha256])
+      end
+
       artifact.assign_attributes(
         status: "failed",
         content: {},
@@ -166,6 +185,8 @@ module Generated
       artifact.save!
 
       Result.new(artifact:, created: artifact.previously_new_record?, skipped: false, reason: "failed", theme_slugs: [])
+    rescue ActiveRecord::RecordNotUnique
+      adopt_raced_artifact(input_sha256: prompt[:sent_content_sha256])
     rescue StandardError => bookkeeping_error
       Rails.logger.error(
         "Generated::ClassifyMatterThemes failed to record failure for " \
@@ -173,6 +194,21 @@ module Generated
         "original error: #{error.class}: #{error.message}"
       )
       raise error
+    end
+
+    # A concurrent run already wrote the artifact for this exact (target, kind,
+    # model, prompt_version, input) key. Adopt the persisted row rather than
+    # clobbering it; the idempotency key guarantees the other run is equivalent
+    # to this one, so its themes (or empty set) stand.
+    def adopt_raced_artifact(input_sha256:)
+      artifact = find_or_initialize_artifact(input_sha256:)
+      Result.new(
+        artifact:,
+        created: false,
+        skipped: true,
+        reason: "raced",
+        theme_slugs: Array(artifact.content&.dig("themes"))
+      )
     end
 
     # Replace the matter's projected themes with exactly the returned slugs,
