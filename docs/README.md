@@ -7,6 +7,8 @@ This repository is intentionally documented in a compact way so contributors and
 - `README.md`: project overview and local setup
 - `CONTEXT.md`: compact implementation context
 - `architecture.md`: current architecture direction and domain boundaries
+- `multi-jurisdiction.md`: how a second jurisdiction (SJUSD via Simbli) was
+  added, the architectural changes, and the tradeoffs and tech debt taken on
 - `schema-guide.md`: source-system and app-schema contributor guide
 - `document-backfill.md`: operator workflow for importing and extracting
   historical matter attachments

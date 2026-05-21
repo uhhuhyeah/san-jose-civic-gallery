@@ -40,10 +40,16 @@ Every civic row carries a `source_system` identifier (currently
 `Ingestion::SourceSnapshot` is keyed the same way. Background jobs carry
 `source_system` forward instead of falling back to a global default, so
 deferred child syncs remain in the same source namespace as their parent
-records. The schema is multi-source-capable today, but only
-`legistar.sanjose` is wired in; adding another tenant or a non-Legistar
-source still needs explicit client/source configuration, not a core
-civic schema redesign.
+records.
+
+Two source systems are now wired in: `legistar.sanjose` (San Jose city
+government) and `simbli.sjusd` (San José Unified School District). Identity
+generalized from the Legistar-named columns to generic `source_*_id` columns,
+and a first-class `Civic::Jurisdiction` expresses the public product boundary
+(one host per jurisdiction). See `multi-jurisdiction.md` for the full set of
+changes, tradeoffs, and tech debt. Adding a further source still needs an
+explicit ingestion adapter and source configuration, not a core civic schema
+redesign.
 
 ## Source Payload Versions
 
