@@ -1,0 +1,25 @@
+# <%= current_jurisdiction.site_title %>
+
+> <%= current_jurisdiction.site_title %> is a source-first civic information site for browsing <%= current_jurisdiction.name %> public meetings, matters, attachments, extracted document text, generated summaries, source links, and theme trends.
+
+Official public records are authoritative. Generated summaries, extracted text, and theme labels are assistive metadata for discovery and should be checked against official source materials before making factual claims.
+
+## Key Pages
+
+- [Homepage and Pulse](<%= root_url %>): Recent agenda activity and theme trends.
+- [Meetings](<%= public_meetings_url %>): Public meetings, bodies, agenda items, and source links.
+- [Matters](<%= public_matters_url %>): Public matters, files, attachments, extracted text, generated summaries, and related meetings.
+- [Data Health](<%= data_url %>): Ingestion freshness, record counts, import coverage, extraction coverage, and known source-data limits.
+- [Glossary](<%= glossary_url %>): Civic Gallery terminology and source-system language.
+- [Sitemap](<%= sitemap_url %>): Crawlable page inventory for this host.
+
+## Source Boundaries
+
+- Primary source system: <%= current_jurisdiction.ingestion_source_label %> (<%= current_jurisdiction.source_host %>).
+- Official source links on matter and meeting pages should be treated as the source of truth.
+- Generated summaries and theme classifications are model-derived and may be incomplete or wrong.
+- Search snippets and extracted text come from public documents and can contain OCR or extraction errors.
+
+## Suggested Use
+
+Use this site to find relevant official records quickly, then cite the linked official source document or meeting record when accuracy matters.

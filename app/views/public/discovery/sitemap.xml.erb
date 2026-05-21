@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <% @static_urls.each do |url, timestamp| %>
+    <url>
+      <loc><%= url %></loc>
+      <% if timestamp.present? %>
+        <lastmod><%= timestamp.to_date.iso8601 %></lastmod>
+      <% end %>
+    </url>
+  <% end %>
+  <% @events.each do |event| %>
+    <url>
+      <loc><%= public_event_url(event) %></loc>
+      <lastmod><%= (event.updated_at || event.event_date || Date.current).to_date.iso8601 %></lastmod>
+    </url>
+  <% end %>
+  <% @matters.each do |matter| %>
+    <url>
+      <loc><%= public_matter_url(matter) %></loc>
+      <lastmod><%= (matter.updated_at || matter.agenda_date || matter.intro_date || Date.current).to_date.iso8601 %></lastmod>
+    </url>
+  <% end %>
+</urlset>
