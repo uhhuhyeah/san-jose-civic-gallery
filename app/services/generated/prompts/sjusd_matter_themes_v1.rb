@@ -6,7 +6,7 @@ module Generated
     # artifact idempotency key and is resolved per jurisdiction, re-tagging here
     # affects only SJUSD matters, never the city.
     class SjusdMatterThemesV1 < MatterThemesBase
-      VERSION = "sjusd_matter_themes_v1"
+      VERSION = "sjusd_matter_themes_v2"
 
       private
 
@@ -51,6 +51,18 @@ module Generated
               materials, or programs is Curriculum & Instruction.
             - When a matter funds or budgets another program, tag that program
               area, not Budget & Finance.
+            - A contract, agreement, or purchase made to deliver a substantive
+              service or program is tagged by that subject, not Contracts &
+              Procurement: mental-health or counseling services are Student
+              Health & Wellness; student transportation is Transportation;
+              construction, modernization, or facilities work is Facilities &
+              Bonds; legal services are Legal & Litigation; instructional
+              programs or materials are Curriculum & Instruction; special
+              education services or non-public-agency placements are Special
+              Education. Reserve Contracts & Procurement for routine purchasing
+              of goods and equipment, generic limited-services agreements with
+              no clear program subject, purchase-order authorizations, and bid
+              awards not tied to one of the above.
           - Return an empty array for procedural or administrative items that
             have no substantive subject of their own, for example: approval of
             minutes, approval or adoption of an agenda, closed session agendas,

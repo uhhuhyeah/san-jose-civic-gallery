@@ -187,7 +187,7 @@ module Generated
       result = ClassifyMatterThemes.call(matter: sjusd_matter, client:)
 
       assert_equal "succeeded", result.artifact.status
-      assert_equal "sjusd_matter_themes_v1", result.artifact.prompt_version
+      assert_equal "sjusd_matter_themes_v2", result.artifact.prompt_version
       assert_equal [ "special_education" ], result.artifact.content["themes"]
       assert_equal [ "special_education" ], sjusd_matter.themes.pluck(:theme_slug)
     end
