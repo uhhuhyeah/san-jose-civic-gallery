@@ -37,7 +37,7 @@ module Simbli
 
     test "fetches each meeting only once and serves both methods from cache" do
       calls = 0
-      capture = lambda do |_mid|
+      capture = lambda do |_args|
         calls += 1
         [ meeting_json, "", FakeStatus.new(true, 0) ]
       end
@@ -47,6 +47,15 @@ module Simbli
       instance.supporting_documents(mid: "57394", agenda_id: 201)
 
       assert_equal 1, calls
+    end
+
+    test "meeting_listing returns the listing rows in the contract shape" do
+      rows = [ { "onclick" => "ViewMeeting(\"36030421\",\"57394\")", "cells" => {} } ]
+      listing = Client.new(capture: ->(_args) { [ { "ok" => true, "rows" => rows }.to_json, "", FakeStatus.new(true, 0) ] })
+
+      result = listing.meeting_listing
+      assert_equal rows, result[:payload]
+      assert_includes result[:request_url], "SB_MeetingListing.aspx"
     end
 
     private
@@ -62,7 +71,7 @@ module Simbli
     end
 
     def client(stdout, stderr: "", success: true)
-      Client.new(capture: ->(_mid) { [ stdout, stderr, FakeStatus.new(success, success ? 0 : 1) ] })
+      Client.new(capture: ->(_args) { [ stdout, stderr, FakeStatus.new(success, success ? 0 : 1) ] })
     end
   end
 end

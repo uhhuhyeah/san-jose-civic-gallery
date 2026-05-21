@@ -17,10 +17,37 @@ namespace :simbli do
       client: Simbli::Client.new(school_id: school_id)
     )
 
-    warn "Synced SJUSD meeting MID=#{mid} -> Civic::Event ##{event.id}"
-    warn "  jurisdiction: #{event.civic_jurisdiction.slug}"
-    warn "  agenda items: #{Civic::EventItem.where(civic_event_id: event.id).count}"
-    warn "  matters:      #{Civic::Matter.where(source_system: Simbli::Identifiers::SOURCE_SYSTEM).count}"
-    warn "  attachments:  #{Civic::MatterAttachment.where(source_system: Simbli::Identifiers::SOURCE_SYSTEM).count}"
+    puts "Synced SJUSD meeting MID=#{mid} -> Civic::Event ##{event.id}"
+    puts "  jurisdiction: #{event.civic_jurisdiction.slug}"
+    puts "  agenda items: #{Civic::EventItem.where(civic_event_id: event.id).count}"
+    puts "  matters:      #{Civic::Matter.where(source_system: Simbli::Identifiers::SOURCE_SYSTEM).count}"
+    puts "  attachments:  #{Civic::MatterAttachment.where(source_system: Simbli::Identifiers::SOURCE_SYSTEM).count}"
+  end
+
+  desc "Discover SJUSD meetings from the listing and enqueue per-meeting syncs " \
+       "on the simbli_ingestion queue. Optional: LIMIT, SCHOOL_ID."
+  task sync_meetings: :environment do
+    limit = ENV["LIMIT"].presence&.to_i
+    school_id = ENV.fetch("SCHOOL_ID", Simbli::Client::DEFAULT_SCHOOL_ID)
+
+    enqueued = Ingestion::Simbli::SyncMeetings.call(
+      client: Simbli::Client.new(school_id: school_id),
+      limit: limit
+    )
+
+    puts "Enqueued #{enqueued.size} SJUSD meeting sync(s) on simbli_ingestion: #{enqueued.join(', ')}"
+  end
+
+  desc "Dump the parsed Simbli listing without persisting (inspect discovery). " \
+       "Optional: SCHOOL_ID."
+  task dump_listing: :environment do
+    school_id = ENV.fetch("SCHOOL_ID", Simbli::Client::DEFAULT_SCHOOL_ID)
+    meetings = Simbli::MeetingListing.parse(Simbli::Client.new(school_id: school_id).meeting_listing[:payload])
+
+    puts "Parsed #{meetings.size} meeting(s):"
+    meetings.each do |meeting|
+      puts "  MID=#{meeting.mid} date=#{meeting.event_date || 'UNPARSED'} " \
+           "title=#{meeting.meeting_title.inspect} type=#{meeting.meeting_type.inspect}"
+    end
   end
 end
