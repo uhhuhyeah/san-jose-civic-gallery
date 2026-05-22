@@ -20,10 +20,17 @@ module Generated
       end
 
       test "system prompt forbids stating outcomes" do
-        prompt = EventSummaryV1.build(event: @event, source_text: "Item 1", theme_summary: "")
+        prompt = normalized_system_prompt
 
-        assert_includes prompt[:system_prompt], "Never state an outcome"
-        assert_includes prompt[:system_prompt], "vote counts or tallies"
+        assert_includes prompt, "Never state an outcome"
+        assert_includes prompt, "vote counts or tallies"
+      end
+
+      test "system prompt forbids restating requested-action titles as accomplished" do
+        prompt = normalized_system_prompt
+
+        assert_includes prompt, "Never restate them as accomplished"
+        assert_includes prompt, "ratified"
       end
 
       test "theme summary appears in the user prompt but is excluded from the hash" do
@@ -74,6 +81,14 @@ module Generated
         held = EventSummaryV1.build(event: @event, source_text: "Item 1", theme_summary: "", now: Date.new(2026, 5, 20))
 
         assert_not_equal upcoming[:sent_content_sha256], held[:sent_content_sha256]
+      end
+
+      private
+
+      # The system prompt is line-wrapped, so collapse whitespace before
+      # asserting on phrases that may span a wrap.
+      def normalized_system_prompt
+        EventSummaryV1.build(event: @event, source_text: "Item 1", theme_summary: "")[:system_prompt].gsub(/\s+/, " ")
       end
     end
   end

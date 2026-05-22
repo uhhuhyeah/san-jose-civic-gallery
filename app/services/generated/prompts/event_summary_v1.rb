@@ -19,7 +19,7 @@ module Generated
     # so a meeting summarized while upcoming regenerates once, into the past
     # tense, after its date passes; nothing else retriggers generation.
     class EventSummaryV1
-      VERSION = "event_summary_v2"
+      VERSION = "event_summary_v3"
       DEFAULT_MAX_INPUT_CHARS = 18_000
       TRUNCATION_MARKER = "\n\n…[truncated]".freeze
       NO_RECORD_TEXT = "(No agenda items are available for this meeting.)".freeze
@@ -62,11 +62,13 @@ module Generated
 
           Tense:
           - The user prompt states whether the meeting has already been held or
-            is still upcoming. If it has been held, write in the past tense (the
-            board considered, took up, heard, reviewed). If it is upcoming,
-            write in the present or future tense (the board is set to take up,
-            will consider). Match that status; do not say a past meeting "will"
-            do something.
+            is still upcoming. If it has been held, write in the past tense
+            using verbs of consideration only (the board considered, took up,
+            heard, reviewed, discussed). If it is upcoming, write in the present
+            or future tense (the board is set to take up, will consider). Match
+            that status; do not say a past meeting "will" do something. Past
+            tense applies to the act of considering an item, never to its
+            disposition.
 
           What to write about:
           - Describe the subjects on the agenda: the substantive matters the
@@ -80,11 +82,21 @@ module Generated
 
           What you must never do:
           - Never state an outcome. Do not say whether anything was approved,
-            adopted, passed, failed, rejected, denied, continued, or carried,
-            and never report vote counts or tallies. An agenda lists what a
-            meeting takes up, not what was decided, so even for a meeting that
-            has been held, describe only the topics considered, never the
-            result.
+            adopted, ratified, authorized, awarded, accepted, passed, failed,
+            rejected, denied, continued, or carried, and never report vote
+            counts or tallies. An agenda lists what a meeting takes up, not what
+            was decided, so even for a meeting that has been held, describe only
+            the topics considered, never the result.
+          - Agenda items are usually titled as the action being requested, for
+            example "Approval of ...", "Ratification of ...", "Adoption of ...",
+            "Authorization to ...", or "Award of ...". These name what the
+            meeting is asked to act on, not a completed action. Never restate
+            them as accomplished. Write that the meeting considered or took up
+            the proposed approval, ratification, or adoption of the item, never
+            that it approved, ratified, or adopted it. For example, an item
+            titled "Approval of permanent PE exemptions" becomes "considered
+            permanent PE exemptions" or "took up the proposed approval of
+            permanent PE exemptions", never "approved permanent PE exemptions".
           - Do not add facts, figures, dates, names, or dollar amounts that are
             not in the supplied agenda. If the agenda is thin, say so in
             limitations.
