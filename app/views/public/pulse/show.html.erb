@@ -8,7 +8,17 @@
     <h1><%= current_jurisdiction.site_title %></h1>
   </section>
 
-  <%# Band 1: Pulse selector (left) aligned with the source-record cards (right). %>
+  <nav class="topic-bar" aria-label="Browse matters by topic">
+    <span class="topic-bar-label">Browse by topic</span>
+    <div class="topic-bar-chips">
+      <% Civic::ThemeTaxonomy.themes_for(current_jurisdiction).sort_by { |theme| theme[:label] }.each do |theme| %>
+        <%= link_to theme[:label], public_matters_path(theme: theme[:slug]), class: "pill" %>
+      <% end %>
+    </div>
+  </nav>
+
+  <%# Main content: Pulse selector, changes, decisions and meetings (left);
+      source-record counts and about (right). Two independent columns. %>
   <section class="newspaper-body">
     <div>
       <%= form_with url: root_path, method: :get, local: true, class: "search-form" do |form| %>
@@ -38,30 +48,7 @@
           <% end %>
         </div>
       <% end %>
-    </div>
 
-    <aside class="mini-stack" aria-label="Source record counts">
-      <div class="mini-card">
-        <span class="subtle">Current source records</span>
-        <strong><%= pluralize(@stats.fetch(:meetings), "meeting") %>, <%= pluralize(@stats.fetch(:agenda_items), "agenda item") %></strong>
-        <%= link_to "View meeting calendar", public_meetings_path, class: "source-link" %>
-      </div>
-      <div class="mini-card">
-        <span class="subtle">Linked matters</span>
-        <strong><%= pluralize(@stats.fetch(:matters), "matter") %>, <%= pluralize(@stats.fetch(:attachments), "attachment") %></strong>
-        <%= link_to "Browse official matters", public_matters_path, class: "source-link" %>
-      </div>
-      <div class="mini-card">
-        <span class="subtle">Document processing</span>
-        <strong><%= pluralize(@stats.fetch(:imported_files), "file") %> imported, <%= pluralize(@stats.fetch(:extracted_texts), "text extraction") %></strong>
-        <span class="source-link">Source files stay separate from extracted text</span>
-      </div>
-    </aside>
-  </section>
-
-  <%# Band 2: Heating up / Most active / Recent meetings (left) aligned with Record Pulse (right). %>
-  <section class="newspaper-body">
-    <div>
       <% scope_label = @body_name.presence || current_jurisdiction.all_scope_label %>
       <% if @heating_up.empty? %>
         <div class="section-title">
@@ -162,7 +149,22 @@
       </div>
     </div>
 
-    <aside>
+    <aside class="mini-stack" aria-label="Site overview">
+      <div class="mini-card">
+        <span class="subtle">Current source records</span>
+        <strong><%= pluralize(@stats.fetch(:meetings), "meeting") %>, <%= pluralize(@stats.fetch(:agenda_items), "agenda item") %></strong>
+        <%= link_to "View meeting calendar", public_meetings_path, class: "source-link" %>
+      </div>
+      <div class="mini-card">
+        <span class="subtle">Linked matters</span>
+        <strong><%= pluralize(@stats.fetch(:matters), "matter") %>, <%= pluralize(@stats.fetch(:attachments), "attachment") %></strong>
+        <%= link_to "Browse official matters", public_matters_path, class: "source-link" %>
+      </div>
+      <div class="mini-card">
+        <span class="subtle">Document processing</span>
+        <strong><%= pluralize(@stats.fetch(:imported_files), "file") %> imported, <%= pluralize(@stats.fetch(:extracted_texts), "text extraction") %></strong>
+        <span class="source-link">Source files stay separate from extracted text</span>
+      </div>
       <div class="mini-card">
         <span class="subtle">About <%= current_jurisdiction.site_title %></span>
         <p>

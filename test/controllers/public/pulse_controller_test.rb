@@ -50,6 +50,14 @@ module Public
       assert_redirected_to "/"
     end
 
+    test "renders the browse-by-topic bar linking to theme filters" do
+      get root_path
+
+      assert_response :success
+      assert_select "nav.topic-bar a.pill[href=?]", public_matters_path(theme: "housing"), text: "Housing"
+      assert_select "nav.topic-bar a.pill[href=?]", public_matters_path(theme: "transportation"), text: "Transportation"
+    end
+
     test "surfaces recent decisions with their generated summary" do
       matter = Civic::Matter.create!(
         legistar_matter_id: 42_001,
