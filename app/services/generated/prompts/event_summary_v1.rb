@@ -4,30 +4,37 @@ module Generated
   module Prompts
     # Builds the prompt that summarizes a single meeting (Civic::Event) from its
     # published agenda. The summary orients a reader to the topics the meeting
-    # is set to take up. It deliberately never states outcomes (see the system
-    # prompt): an agenda lists what will be considered, not what was decided.
+    # takes up. It deliberately never states outcomes (see the system prompt):
+    # an agenda lists what is considered, not what was decided.
     #
-    # Idempotency: #sent_content covers the event identity and the assembled
-    # item digest only. The theme summary is an advisory relevance hint passed
-    # to the model but excluded from the hash, so a matter theme reclassification
-    # does not retrigger generation. Only a change to the event's item set (or
-    # the prompt VERSION) changes the artifact key.
+    # Tense follows whether the meeting has been held: an agenda is published
+    # before the meeting, so an upcoming meeting reads in the future tense and a
+    # past meeting in the past tense. The held flag is derived from the event
+    # date relative to `now`.
+    #
+    # Idempotency: #sent_content covers the event identity, the assembled item
+    # digest, and the held flag. The theme summary is an advisory relevance hint
+    # passed to the model but excluded from the hash, so a matter theme
+    # reclassification does not retrigger generation. The held flag is included
+    # so a meeting summarized while upcoming regenerates once, into the past
+    # tense, after its date passes; nothing else retriggers generation.
     class EventSummaryV1
-      VERSION = "event_summary_v1"
+      VERSION = "event_summary_v2"
       DEFAULT_MAX_INPUT_CHARS = 18_000
       TRUNCATION_MARKER = "\n\n…[truncated]".freeze
       NO_RECORD_TEXT = "(No agenda items are available for this meeting.)".freeze
       NO_THEME_HINT = "(No classified themes are available for this meeting.)".freeze
 
-      def self.build(event:, source_text:, theme_summary: "", max_input_chars: DEFAULT_MAX_INPUT_CHARS)
-        new(event:, source_text:, theme_summary:, max_input_chars:).build
+      def self.build(event:, source_text:, theme_summary: "", max_input_chars: DEFAULT_MAX_INPUT_CHARS, now: Date.current)
+        new(event:, source_text:, theme_summary:, max_input_chars:, now:).build
       end
 
-      def initialize(event:, source_text:, theme_summary:, max_input_chars:)
+      def initialize(event:, source_text:, theme_summary:, max_input_chars:, now: Date.current)
         @event = event
         @source_text = source_text.to_s
         @theme_summary = theme_summary.to_s
         @max_input_chars = max_input_chars.to_i
+        @now = now
       end
 
       def build
@@ -43,20 +50,27 @@ module Generated
 
       private
 
-      attr_reader :event, :source_text, :theme_summary, :max_input_chars
+      attr_reader :event, :source_text, :theme_summary, :max_input_chars, :now
 
       def system_prompt
         <<~PROMPT
           You write short, neutral overviews of public government meetings for a
           civic transparency website. You are given the published agenda for a
-          single meeting: the list of items the meeting is set to take up, each
-          with any linked matter and its subject themes. Write a factual summary
-          of what the meeting covers.
+          single meeting: the list of items on the agenda, each with any linked
+          matter and its subject themes. Write a factual summary of what the
+          meeting covers.
+
+          Tense:
+          - The user prompt states whether the meeting has already been held or
+            is still upcoming. If it has been held, write in the past tense (the
+            board considered, took up, heard, reviewed). If it is upcoming,
+            write in the present or future tense (the board is set to take up,
+            will consider). Match that status; do not say a past meeting "will"
+            do something.
 
           What to write about:
           - Describe the subjects on the agenda: the substantive matters the
-            meeting will take up. Name them in plain language a resident can
-            follow.
+            meeting takes up. Name them in plain language a resident can follow.
           - Lead with the items most likely to matter to residents. Prefer
             items that carry a subject theme. Treat purely procedural and
             ceremonial items as background: approval of minutes or the agenda,
@@ -67,9 +81,10 @@ module Generated
           What you must never do:
           - Never state an outcome. Do not say whether anything was approved,
             adopted, passed, failed, rejected, denied, continued, or carried,
-            and never report vote counts or tallies. This is an agenda: it
-            lists what the meeting will consider, not what was decided. Describe
-            only the topics the meeting takes up.
+            and never report vote counts or tallies. An agenda lists what a
+            meeting takes up, not what was decided, so even for a meeting that
+            has been held, describe only the topics considered, never the
+            result.
           - Do not add facts, figures, dates, names, or dollar amounts that are
             not in the supplied agenda. If the agenda is thin, say so in
             limitations.
@@ -92,6 +107,7 @@ module Generated
         <<~PROMPT
           Meeting: #{meeting_label}
           Date: #{event.event_date}
+          Meeting status: #{meeting_status}
 
           Classified themes per item (advisory, to help you judge relevance;
           do not treat as the meeting's content):
@@ -109,19 +125,30 @@ module Generated
         jurisdiction.present? ? "#{body} (#{jurisdiction})" : body
       end
 
+      def meeting_held?
+        event.event_date.present? && event.event_date < now
+      end
+
+      def meeting_status
+        meeting_held? ? "already held (write in the past tense)" : "upcoming, not yet held (write in the present or future tense)"
+      end
+
       def theme_hint
         trimmed = theme_summary.strip
         trimmed.presence || NO_THEME_HINT
       end
 
-      # The hashed input: event identity plus the agenda item digest. Theme
-      # hints are excluded so theme churn does not change the artifact key.
+      # The hashed input: event identity, the agenda item digest, and the held
+      # flag. Theme hints are excluded so theme churn does not change the
+      # artifact key. The held flag is included so a meeting summarized while
+      # upcoming regenerates once, into the past tense, after its date passes.
       def sent_content
         @sent_content ||= [
           event.source_event_id,
           event.event_date,
           event.body_name,
           event.title,
+          "held:#{meeting_held?}",
           record_text
         ].map(&:to_s).join("\n")
       end
