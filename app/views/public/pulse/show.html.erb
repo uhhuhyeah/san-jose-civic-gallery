@@ -8,7 +8,17 @@
     <h1><%= current_jurisdiction.site_title %></h1>
   </section>
 
-  <%# Band 1: Pulse selector (left) aligned with the source-record cards (right). %>
+  <nav class="topic-bar" aria-label="Browse matters by topic">
+    <span class="topic-bar-label">Browse by topic</span>
+    <div class="topic-bar-chips">
+      <% Civic::ThemeTaxonomy.themes_for(current_jurisdiction).sort_by { |theme| theme[:label] }.each do |theme| %>
+        <%= link_to theme[:label], public_matters_path(theme: theme[:slug]), class: "pill" %>
+      <% end %>
+    </div>
+  </nav>
+
+  <%# Main content: Pulse selector, changes, decisions and meetings (left);
+      source-record counts and about (right). Two independent columns. %>
   <section class="newspaper-body">
     <div>
       <%= form_with url: root_path, method: :get, local: true, class: "search-form" do |form| %>
@@ -38,34 +48,11 @@
           <% end %>
         </div>
       <% end %>
-    </div>
 
-    <aside class="mini-stack" aria-label="Source record counts">
-      <div class="mini-card">
-        <span class="subtle">Current source records</span>
-        <strong><%= pluralize(@stats.fetch(:meetings), "meeting") %>, <%= pluralize(@stats.fetch(:agenda_items), "agenda item") %></strong>
-        <%= link_to "View meeting calendar", public_meetings_path, class: "source-link" %>
-      </div>
-      <div class="mini-card">
-        <span class="subtle">Linked matters</span>
-        <strong><%= pluralize(@stats.fetch(:matters), "matter") %>, <%= pluralize(@stats.fetch(:attachments), "attachment") %></strong>
-        <%= link_to "Browse official matters", public_matters_path, class: "source-link" %>
-      </div>
-      <div class="mini-card">
-        <span class="subtle">Document processing</span>
-        <strong><%= pluralize(@stats.fetch(:imported_files), "file") %> imported, <%= pluralize(@stats.fetch(:extracted_texts), "text extraction") %></strong>
-        <span class="source-link">Source files stay separate from extracted text</span>
-      </div>
-    </aside>
-  </section>
-
-  <%# Band 2: Heating up / Most active / Recent meetings (left) aligned with Record Pulse (right). %>
-  <section class="newspaper-body">
-    <div>
       <% scope_label = @body_name.presence || current_jurisdiction.all_scope_label %>
-      <% if @heating_up.empty? && @top_themes.empty? %>
+      <% if @heating_up.empty? %>
         <div class="section-title">
-          <h2>Heating up <span class="subtle">&middot; <%= scope_label %></span></h2>
+          <h2>Pulse Changes <span class="subtle">&middot; <%= scope_label %></span></h2>
           <span>More than last quarter, per meeting</span>
         </div>
         <div class="card">
@@ -81,42 +68,55 @@
         </div>
       <% else %>
         <div class="section-title">
-          <h2>Heating up <span class="subtle">&middot; <%= scope_label %></span></h2>
+          <h2>Pulse Changes <span class="subtle">&middot; <%= scope_label %></span></h2>
           <span>More than last quarter, per meeting</span>
         </div>
         <div class="card">
-          <% if @heating_up.any? %>
-            <% @heating_up.each do |stat| %>
-              <article class="item">
-                <h3 class="item-title"><%= link_to stat.label, public_matters_path(theme: stat.slug) %></h3>
-                <div class="tags">
-                  <% if stat.surging %>
-                    <span class="pill gold">New this quarter</span>
-                  <% else %>
-                    <span class="pill green">&#9650; <%= ((stat.lift - 1) * 100).round %>% vs last quarter</span>
-                  <% end %>
-                  <span class="pill"><%= pluralize(stat.current_appearances, "appearance") %> this quarter</span>
-                </div>
-              </article>
-            <% end %>
-          <% else %>
+          <% @heating_up.each do |stat| %>
             <article class="item">
-              <p>No themes are clearly trending up in this window.</p>
+              <h3 class="item-title"><%= link_to stat.label, public_matters_path(theme: stat.slug) %></h3>
+              <div class="tags">
+                <% if stat.surging %>
+                  <span class="pill gold">New this quarter</span>
+                <% else %>
+                  <span class="pill green">&#9650; <%= ((stat.lift - 1) * 100).round %>% vs last quarter</span>
+                <% end %>
+                <span class="pill"><%= pluralize(stat.current_appearances, "appearance") %> this quarter</span>
+              </div>
             </article>
           <% end %>
         </div>
+      <% end %>
 
+      <% if @recent_decisions.any? %>
         <div class="section-title">
-          <h2>Most active themes</h2>
-          <span>By agenda appearances, on each matter's primary theme</span>
+          <h2>What's being decided</h2>
+          <span>Recent matters, with generated summaries</span>
         </div>
-        <div class="topic-grid">
-          <% @top_themes.each do |stat| %>
-            <div class="topic-tile">
-              <strong><%= link_to stat.label, public_matters_path(theme: stat.slug) %></strong>
-              <span><%= pluralize(stat.current_appearances, "appearance") %></span>
-            </div>
+        <div class="card">
+          <% @recent_decisions.each do |matter| %>
+            <% preview = matter_summary_preview(matter) %>
+            <% next unless preview %>
+            <% _attachment, summary = preview %>
+            <% primary_theme = matter.themes.detect { |theme| theme.rank == 1 } %>
+            <article class="item">
+              <h3 class="item-title">
+                <%= link_to public_matter_path(matter) do %>
+                  <%= matter.display_name %><% if matter.descriptive_title && matter.descriptive_title != matter.display_name %> &middot; <%= matter.descriptive_title %><% end %>
+                <% end %>
+              </h3>
+              <div class="tags">
+                <% if primary_theme %>
+                  <span class="pill green"><%= primary_theme.label %></span>
+                <% end %>
+                <% if matter.body_name.present? %>
+                  <span class="pill"><%= matter.body_name %></span>
+                <% end %>
+              </div>
+              <p><%= truncate(summary.squish, length: 220, separator: " ") %></p>
+            </article>
           <% end %>
+          <p class="card-note">Generated summaries are assistive, not official.</p>
         </div>
       <% end %>
 
@@ -149,26 +149,38 @@
       </div>
     </div>
 
-    <aside>
-      <div class="section-title">
-        <h2>Record Pulse</h2>
-        <span>Current source data</span>
+    <aside class="mini-stack" aria-label="Site overview">
+      <div class="mini-card">
+        <span class="subtle">Current source records</span>
+        <strong><%= pluralize(@stats.fetch(:meetings), "meeting") %>, <%= pluralize(@stats.fetch(:agenda_items), "agenda item") %></strong>
+        <%= link_to "View meeting calendar", public_meetings_path, class: "source-link" %>
       </div>
-      <div class="topic-grid">
-        <% @matter_type_counts.each do |matter_type, count| %>
-          <div class="topic-tile">
-            <strong><%= matter_type.presence || "Unclassified" %></strong>
-            <span><%= pluralize(count, "matter") %></span>
-          </div>
-        <% end %>
-        <div class="topic-tile">
-          <strong>Attachments</strong>
-          <span><%= pluralize(@stats.fetch(:attachments), "current source file") %></span>
-        </div>
-        <div class="topic-tile">
-          <strong>Extracted Text</strong>
-          <span><%= pluralize(@stats.fetch(:extracted_texts), "successful extraction") %></span>
-        </div>
+      <div class="mini-card">
+        <span class="subtle">Linked matters</span>
+        <strong><%= pluralize(@stats.fetch(:matters), "matter") %>, <%= pluralize(@stats.fetch(:attachments), "attachment") %></strong>
+        <%= link_to "Browse official matters", public_matters_path, class: "source-link" %>
+      </div>
+      <div class="mini-card">
+        <span class="subtle">Document processing</span>
+        <strong><%= pluralize(@stats.fetch(:imported_files), "file") %> imported, <%= pluralize(@stats.fetch(:extracted_texts), "text extraction") %></strong>
+        <span class="source-link">Source files stay separate from extracted text</span>
+      </div>
+      <div class="mini-card">
+        <span class="subtle">About <%= current_jurisdiction.site_title %></span>
+        <p>
+          <strong><%= current_jurisdiction.site_title %></strong> is a free, open-source intelligence
+          layer over <%= current_jurisdiction.civic_subject %>'s public records.
+        </p>
+        <p>
+          Every meeting agenda and matter is ingested, tagged, and summarized so residents
+          can cut through the noise and follow the topics they care about.
+        </p>
+        <p>The official records remain the source of truth: this site is a tool to help you research,
+          understand, and ask better questions of your elected officials.
+        </p>
+        <p>
+          Browse by <%= link_to 'meeting', public_meetings_path %>, browse by <%= link_to 'topic', public_matters_path %>, or search across both.
+        </p>
       </div>
     </aside>
   </section>

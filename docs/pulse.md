@@ -111,13 +111,53 @@ quarter, `13.weeks`):
   quarter are flagged `surging` and sort first.
 
 It accepts `body_name` (nil = citywide rollup) and only counts
-`current_from_source` events and event items. `Public::CacheVersion.pulse`
-provides a conditional-GET key derived from theme/event source maxima.
+`current_from_source` events and event items.
 
-The Pulse page is the homepage (`root` -> `Public::PulseController#show`). It
-renders `heating_up` and `top_themes` with a per-body filter, and theme labels
-link to the Matters index filtered by theme (`/public/matters?theme=<slug>`).
 The data is also inspectable from the CLI via the rake task below.
+
+## The homepage
+
+The Pulse page is the site homepage (`root` -> `Public::PulseController#show`).
+It has grown past a single trend view into the front door of the site, composed
+to serve two audiences at once: the resident who is *just curious* and wants to
+follow something interesting, and the *power user* who already knows what they
+want. So it offers several browse axes instead of a lone search box:
+
+- **Browse by topic** (the chip bar at the top): every theme in the
+  jurisdiction's vocabulary, each linking to the Matters index filtered by theme
+  (`/public/matters?theme=<slug>`). It is pure wayfinding, built straight from
+  the static `Civic::ThemeTaxonomy`, so it costs no database query and always
+  shows the complete menu. It is distinct from Pulse Changes *by design*: the
+  topic bar answers "take me to the subject I care about," Pulse Changes answers
+  "what is City Hall focused on right now." Navigation vs. editorial, not two
+  rankings of the same data.
+- **Pulse Changes** (`heating_up`): the momentum view, with a per-body filter.
+  Theme labels link to the same theme-filtered Matters index.
+- **What's being decided**: the few most recent matters that already carry a
+  non-empty generated summary, newest agendas first. This surfaces the product's
+  actual output (an AI summary of a real matter) on the front page rather than
+  only describing the capability. Summaries are read from existing
+  `attachment_summary` artifacts; the module never triggers a new generation.
+  The representative summary per matter comes from `matter_summary_preview`,
+  which filters preloaded artifacts in Ruby to avoid an N+1.
+- **Recent meetings** and **source-record counts**: time-based browsing and the
+  raw scale of what has been ingested.
+
+`top_themes` (ranked by absolute volume) is no longer surfaced anywhere: topic
+wayfinding is the static bar, trend is Pulse Changes.
+
+Two technical invariants worth preserving:
+
+- **Conditional GET stays cheap.** Every per-module query runs in
+  `load_homepage_context`, after the `stale?(etag:)` check. A matching
+  `If-None-Match` returns 304 before any of them fire, so a conditional request
+  never probes `generated_artifacts`, `document_extracted_texts`, or
+  `civic_matter_themes`. A controller test pins this; keep new modules behind the
+  same gate.
+- **The cache key is inline.** Conditional GET and per-module fragment caching
+  use a key built in the controller (`public/pulse-homepage/v2`, keyed on
+  jurisdiction, date, body filter, window, and a 10-minute TTL bucket), not
+  `Public::CacheVersion.pulse` (removed).
 
 ## Operating it
 

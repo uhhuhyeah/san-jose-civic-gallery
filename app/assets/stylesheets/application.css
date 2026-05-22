@@ -361,6 +361,45 @@ a:hover {
   color: var(--gold);
 }
 
+/* Full-width topic navigation between the Pulse intro and Pulse Changes.
+   Aligns with the bands' content edges (24px inset, shell has no padding). */
+.topic-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+  margin: 0 24px 24px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.topic-bar-label {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.topic-bar-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+}
+
+.topic-bar .pill {
+  margin: 0;
+  text-decoration: none;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.topic-bar .pill:hover,
+.topic-bar .pill:focus-visible {
+  border-color: #bfddd3;
+  background: #effaf5;
+  color: var(--green);
+}
+
 .source-link {
   color: var(--civic-dark);
   font-size: 12px;
@@ -415,6 +454,17 @@ a:hover {
   margin: 0;
   color: #46505c;
   font-size: 13px;
+}
+
+/* Footer note inside a .card (e.g. the homepage decisions module). The last
+   .item keeps its bottom border as the single divider, so this note carries no
+   border of its own, just the same horizontal padding as the items. */
+.card-note {
+  margin: 0;
+  padding: 12px 16px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 600;
 }
 
 .meetings-title {

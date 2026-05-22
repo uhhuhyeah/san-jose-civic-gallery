@@ -50,6 +50,59 @@ module Public
       assert_redirected_to "/"
     end
 
+    test "renders the browse-by-topic bar linking to theme filters" do
+      get root_path
+
+      assert_response :success
+      assert_select "nav.topic-bar a.pill[href=?]", public_matters_path(theme: "housing"), text: "Housing"
+      assert_select "nav.topic-bar a.pill[href=?]", public_matters_path(theme: "transportation"), text: "Transportation"
+    end
+
+    test "surfaces recent decisions with their generated summary" do
+      matter = Civic::Matter.create!(
+        legistar_matter_id: 42_001,
+        matter_file: "26-700",
+        title: "Affordable housing agreement",
+        body_name: "City Council",
+        agenda_date: Date.current
+      )
+      matter.themes.create!(theme_slug: "housing", rank: 1)
+      attachment = matter.all_attachments.create!(legistar_matter_attachment_id: 42_100, name: "Staff report")
+      extracted = attachment.extracted_texts.create!(
+        extractor_name: "pdftotext",
+        status: "ok",
+        content: "Body text",
+        character_count: 9
+      )
+      attachment.generated_artifacts.create!(
+        source_artifact: extracted,
+        kind: Generated::SummarizeMatterAttachment::KIND,
+        status: "succeeded",
+        model_identifier: "test-model",
+        prompt_version: Generated::SummarizeMatterAttachment::PROMPT::VERSION,
+        input_sha256: "decision-1",
+        content: { "summary" => "Authorizes a $2.4M affordable-housing services contract.", "document_status" => "final" }
+      )
+
+      get root_path
+
+      assert_response :success
+      assert_includes response.body, "What's being decided"
+      assert_includes response.body, "26-700"
+      assert_includes response.body, "Authorizes a $2.4M affordable-housing services contract."
+      assert_select "a[href=?]", public_matter_path(matter)
+    end
+
+    test "omits the recent-decisions module when no matter has a summary" do
+      matter = Civic::Matter.create!(legistar_matter_id: 42_002, matter_file: "26-701", agenda_date: Date.current)
+      matter.all_attachments.create!(legistar_matter_attachment_id: 42_101, name: "Unsummarized report")
+
+      get root_path
+
+      assert_response :success
+      assert_not_includes response.body, "What's being decided"
+    end
+
     test "shows a heating-up theme and offers the body filter" do
       matter = Civic::Matter.create!(legistar_matter_id: 99_001, matter_file: "26-991")
       matter.themes.create!(theme_slug: "housing", rank: 1)

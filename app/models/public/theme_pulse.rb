@@ -4,10 +4,9 @@ module Public
   # counted on a matter's PRIMARY (rank 1) theme only, so secondary-tag noise
   # does not inflate the signal.
   #
-  # Two views:
-  #   - top_themes: by raw current-window appearances (steady-state volume).
-  #   - heating_up: by momentum (current rate vs prior-quarter rate), gated by a
-  #     minimum-appearances floor so a single agenda item can't spike a theme.
+  # The `heating_up` view ranks themes by momentum (current rate vs prior-quarter
+  # rate), gated by a minimum-appearances floor so a single agenda item can't
+  # spike a theme. `stats` exposes the full per-theme breakdown.
   #
   # Rates are appearances per meeting in the window, which keeps the comparison
   # fair when the two windows hold different numbers of meetings (recess, etc.)
@@ -28,11 +27,6 @@ module Public
       @body_name = body_name.presence
       @window = window
       @min_appearances = min_appearances
-    end
-
-    def top_themes(limit: nil)
-      sorted = stats.sort_by { |stat| -stat.current_appearances }
-      limit ? sorted.first(limit) : sorted
     end
 
     # Surging themes (real activity now, none last quarter) first, then by lift.

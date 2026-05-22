@@ -26,17 +26,6 @@ module Public
       assert_equal 1, stat.prior_appearances
     end
 
-    test "top_themes ranks by current appearances" do
-      housing = matter_with_primary("housing", 1)
-      transit = matter_with_primary("transportation", 2)
-      2.times { appearance(housing, CURRENT_DATE) }
-      appearance(transit, CURRENT_DATE)
-
-      top = ThemePulse.new(jurisdiction: civic_jurisdictions(:sanjose), as_of: AS_OF, min_appearances: 1).top_themes(limit: 2).map(&:slug)
-
-      assert_equal [ "housing", "transportation" ], top
-    end
-
     test "heating_up excludes themes below the minimum-appearances floor" do
       housing = matter_with_primary("housing", 1)
       2.times { appearance(housing, CURRENT_DATE) } # only 2 appearances

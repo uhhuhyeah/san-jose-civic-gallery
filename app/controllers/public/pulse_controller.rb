@@ -1,12 +1,10 @@
 module Public
   # The homepage (root). Composes the theme Pulse with the homepage furniture
-  # (recent meetings, source-record and record-type counts). The former events
-  # index still lives at /public/events; its data loading could be consolidated
-  # here later. See docs/pulse.md.
+  # See docs/pulse.md.
   class PulseController < ApplicationController
     WINDOW = Public::ThemePulse::DEFAULT_WINDOW
     HEATING_UP_LIMIT = 6
-    TOP_THEMES_LIMIT = 8
+    RECENT_DECISIONS_LIMIT = 3
     CACHE_TTL = 10.minutes
 
     def show
@@ -26,13 +24,15 @@ module Public
       @heating_up = stats.select(&:eligible).sort_by { |stat| [ stat.surging ? 0 : 1, -(stat.lift || 0) ] }
         .select { |stat| stat.surging || (stat.lift && stat.lift > 1) }
         .first(HEATING_UP_LIMIT)
-      @top_themes = stats.sort_by { |stat| -stat.current_appearances }.first(TOP_THEMES_LIMIT).select { |stat| stat.current_appearances.positive? }
     end
 
     def load_homepage_context
       @events = records_in_cached_order(cached_recent_event_ids, Civic::Event.for_jurisdiction(current_jurisdiction).includes(:event_items))
       @stats = cached_stats
-      @matter_type_counts = cached_matter_type_counts
+      @recent_decisions = records_in_cached_order(
+        cached_recent_decision_ids,
+        Civic::Matter.for_jurisdiction(current_jurisdiction).includes(:themes, attachments: :generated_artifacts)
+      )
     end
 
     def cache_version
@@ -64,6 +64,34 @@ module Public
       end
     end
 
+    # Recent matters that already have a non-empty generated summary on a current
+    # attachment, newest agendas first. The summary text itself is read in the
+    # view from the preloaded artifacts (see matter_summary_preview).
+    def cached_recent_decision_ids
+      Rails.cache.fetch([ cache_version, "recent-decision-ids" ], expires_in: CACHE_TTL) do
+        summarized_attachment_ids = Generated::Artifact
+          .succeeded
+          .for_kind(Generated::SummarizeMatterAttachment::KIND)
+          .where(prompt_version: Generated::SummarizeMatterAttachment::PROMPT::VERSION)
+          .where(target_type: "Civic::MatterAttachment")
+          .where("content->>'summary' <> ''")
+          .select(:target_id)
+
+        matter_ids = Civic::MatterAttachment
+          .current_from_source
+          .for_jurisdiction(current_jurisdiction)
+          .where(id: summarized_attachment_ids)
+          .select(:civic_matter_id)
+
+        Civic::Matter
+          .for_jurisdiction(current_jurisdiction)
+          .where(id: matter_ids)
+          .recent_first
+          .limit(RECENT_DECISIONS_LIMIT)
+          .pluck(:id)
+      end
+    end
+
     def cached_stats
       Rails.cache.fetch([ cache_version, "stats" ], expires_in: CACHE_TTL) do
         {
@@ -74,12 +102,6 @@ module Public
           imported_files: Civic::MatterAttachment.imported.for_jurisdiction(current_jurisdiction).count,
           extracted_texts: Documents::ExtractedText.where(status: "ok").joins(:matter_attachment).merge(Civic::MatterAttachment.for_jurisdiction(current_jurisdiction)).count
         }
-      end
-    end
-
-    def cached_matter_type_counts
-      Rails.cache.fetch([ cache_version, "matter-type-counts" ], expires_in: CACHE_TTL) do
-        Civic::Matter.for_jurisdiction(current_jurisdiction).group(:matter_type_name).order(Arel.sql("COUNT(*) DESC")).limit(6).count
       end
     end
 
