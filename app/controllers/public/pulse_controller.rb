@@ -6,7 +6,6 @@ module Public
   class PulseController < ApplicationController
     WINDOW = Public::ThemePulse::DEFAULT_WINDOW
     HEATING_UP_LIMIT = 6
-    TOP_THEMES_LIMIT = 8
     CACHE_TTL = 10.minutes
 
     def show
@@ -31,7 +30,6 @@ module Public
     def load_homepage_context
       @events = records_in_cached_order(cached_recent_event_ids, Civic::Event.for_jurisdiction(current_jurisdiction).includes(:event_items))
       @stats = cached_stats
-      @matter_type_counts = cached_matter_type_counts
     end
 
     def cache_version
