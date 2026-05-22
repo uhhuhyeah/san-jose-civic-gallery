@@ -290,6 +290,11 @@ a:hover {
 .mini-stack {
   display: grid;
   gap: 12px;
+  /* Size to content and top-align. Without this the aside stretches to the
+     (taller) left column's height and align-content: stretch balloons the
+     cards. */
+  align-self: start;
+  align-content: start;
 }
 
 .mini-card {
