@@ -42,7 +42,8 @@ module Public
           timestamp_component(event.updated_at),
           cache_component_for(Civic::EventItem.where(civic_event_id: event.id)),
           cache_component_for(Civic::Matter.where(id: matter_ids)),
-          cache_component_for(Civic::MatterAttachment.where(civic_matter_id: matter_ids))
+          cache_component_for(Civic::MatterAttachment.where(civic_matter_id: matter_ids)),
+          cache_component_for(Generated::Artifact.where(target_type: "Civic::Event", target_id: event.id))
         )
       end
 

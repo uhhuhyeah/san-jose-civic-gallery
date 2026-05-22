@@ -40,6 +40,16 @@ production:
     args: [ { limit: 150, dry_run: false } ]
     schedule: every 2 hours at minute 30
 
+  # Summarize meetings once their minutes are published. BackfillEventSummaries
+  # only considers events with published minutes and skips events already
+  # summarized for the current model + prompt version + input hash, re-running
+  # only when an event's item set changes, so this is safe on a recurring
+  # basis. Offset from the matter jobs so the agenda items it reads are settled.
+  summarize_events:
+    class: Generated::BackfillEventSummariesJob
+    args: [ { limit: 100, dry_run: false } ]
+    schedule: every 2 hours at minute 45
+
   # Discover and re-sync recent SJUSD (Simbli) board meetings. Low cadence and a
   # small limit keep us a polite guest on the vendor platform and avoid
   # re-fetching static older meetings; new and amended meetings sit at the top

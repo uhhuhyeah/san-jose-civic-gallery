@@ -75,8 +75,8 @@ module Public
       queries = count_app_queries { get public_event_url(@event) }
 
       assert_response :success
-      assert_operator queries.size, :<=, 12,
-        "Expected events#show to issue at most 12 SQL queries (4 eager-load + 6 cache-version + 2 jurisdiction resolution); got #{queries.size}:\n#{queries.join("\n")}"
+      assert_operator queries.size, :<=, 15,
+        "Expected events#show to issue at most 15 SQL queries (4 eager-load + 8 cache-version + 1 event-summary load + 2 jurisdiction resolution); got #{queries.size}:\n#{queries.join("\n")}"
     end
 
     private

@@ -964,6 +964,57 @@ dd {
   border-top: 1px solid var(--line);
 }
 
+/* AI meeting summary: a tinted callout card nested inside its section band so
+   it shares the 24px content rhythm with the rest of the page while reading as
+   clearly distinct from the white agenda cards below it. */
+.event-summary {
+  padding: 20px 24px;
+  background: #ebf3f2;
+  border: 1px solid #c6dcdb;
+  border-left: 4px solid var(--civic);
+  border-radius: 10px;
+}
+
+.event-summary-header {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.event-summary-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--civic);
+}
+
+.event-summary h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.event-summary h3 {
+  margin: 18px 0 8px;
+  font-size: 0.92rem;
+}
+
+.event-summary p {
+  margin: 10px 0 0;
+}
+
+.event-summary ul {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.event-summary .generated-summary-note {
+  margin-top: 16px;
+  border-top-color: #c6dcdb;
+}
+
 .empty-state {
   padding: 18px;
   border: 1px solid var(--line);

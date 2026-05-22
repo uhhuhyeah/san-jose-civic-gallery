@@ -121,7 +121,8 @@
         The attachment rates are out of <%= number_with_delimiter(@snapshot.import_eligible_count) %>
         current attachments with a source link, so they reflect end-to-end
         pipeline coverage rather than per-stage success. Theme classification is
-        measured across all matters.
+        measured across all matters, and meeting summaries across meetings with
+        published minutes.
       </p>
       <%= render "rate",
         label: "Attachments with imported source files",
@@ -139,6 +140,10 @@
         label: "Matters classified into themes",
         numerator: @snapshot.theme_classified_count,
         denominator: @snapshot.matter_count %>
+      <%= render "rate",
+        label: "Meetings with AI summaries",
+        numerator: @snapshot.event_summarized_count,
+        denominator: @snapshot.event_summary_eligible_count %>
     </section>
 
     <section class="inset-panel data-section">
