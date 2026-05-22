@@ -9,7 +9,7 @@
   </section>
 
   <nav class="topic-bar" aria-label="Browse matters by topic">
-    <span class="topic-bar-label">Browse by topic</span>
+    <span class="topic-bar-label">Browse by theme</span>
     <div class="topic-bar-chips">
       <% Civic::ThemeTaxonomy.themes_for(current_jurisdiction).sort_by { |theme| theme[:label] }.each do |theme| %>
         <%= link_to theme[:label], public_matters_path(theme: theme[:slug]), class: "pill" %>
