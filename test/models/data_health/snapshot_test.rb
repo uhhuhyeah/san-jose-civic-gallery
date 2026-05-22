@@ -168,6 +168,50 @@ module DataHealth
       assert_equal 3, snapshot.matter_count
     end
 
+    test "event summary counts measure meetings with published minutes" do
+      summarized = Civic::Event.create!(legistar_event_id: 200, body_name: "City Council", event_date: Date.new(2026, 5, 1), minutes_status_name: "Final")
+      Generated::Artifact.create!(
+        target: summarized,
+        kind: Generated::SummarizeEvent::KIND,
+        status: "succeeded",
+        model_identifier: "test-model",
+        prompt_version: Generated::SummarizeEvent::PROMPT::VERSION,
+        input_sha256: "event-1",
+        content: { "summary" => "ok", "key_topics" => [], "limitations" => [] }
+      )
+
+      # Eligible (minutes file present) but not yet summarized.
+      Civic::Event.create!(legistar_event_id: 201, body_name: "City Council", event_date: Date.new(2026, 5, 8), minutes_file_uri: "https://example.test/m.pdf")
+
+      # Summarized but minutes still in draft: not eligible, so not counted.
+      draft = Civic::Event.create!(legistar_event_id: 202, body_name: "City Council", event_date: Date.new(2026, 5, 15), minutes_status_name: "Draft")
+      Generated::Artifact.create!(
+        target: draft,
+        kind: Generated::SummarizeEvent::KIND,
+        status: "succeeded",
+        model_identifier: "test-model",
+        prompt_version: Generated::SummarizeEvent::PROMPT::VERSION,
+        input_sha256: "event-2",
+        content: { "summary" => "ok", "key_topics" => [], "limitations" => [] }
+      )
+
+      # Eligible, but the summary is from an older prompt version: not current.
+      stale = Civic::Event.create!(legistar_event_id: 203, body_name: "City Council", event_date: Date.new(2026, 5, 22), minutes_status_name: "Final")
+      Generated::Artifact.create!(
+        target: stale,
+        kind: Generated::SummarizeEvent::KIND,
+        status: "succeeded",
+        model_identifier: "test-model",
+        prompt_version: "older_event_prompt",
+        input_sha256: "event-3",
+        content: {}
+      )
+
+      snapshot = build_snapshot
+      assert_equal 3, snapshot.event_summary_eligible_count
+      assert_equal 1, snapshot.event_summarized_count
+    end
+
     test "reliability numerators exclude attachments without source links" do
       matter = Civic::Matter.create!(legistar_matter_id: 1, matter_file: "26-001")
       with_link = matter.all_attachments.create!(

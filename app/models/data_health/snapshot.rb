@@ -139,6 +139,21 @@ module DataHealth
       @theme_classified_count ||= matters.where(id: current_theme_target_ids).count
     end
 
+    # Meetings eligible for an AI summary: those whose minutes are published.
+    # The summarizer waits for minutes, so this is the natural denominator for
+    # event-summary coverage.
+    def event_summary_eligible_count
+      @event_summary_eligible_count ||= summarizable_events.count
+    end
+
+    # Eligible meetings that have a succeeded event summary for the current
+    # prompt version.
+    def event_summarized_count
+      @event_summarized_count ||= summarizable_events
+        .where(id: current_event_summary_target_ids)
+        .count
+    end
+
     # --- Reconciliation -----------------------------------------------
 
     def events_removed_since(cutoff)
@@ -219,6 +234,23 @@ module DataHealth
           target_type: "Civic::Matter",
           kind: Generated::ClassifyMatterThemes::KIND,
           prompt_version: theme_prompt_version,
+          status: "succeeded"
+        )
+        .select(:target_id)
+    end
+
+    def summarizable_events
+      events.current_from_source.with_published_minutes
+    end
+
+    # The event summary prompt is jurisdiction-agnostic, so a single prompt
+    # version covers every jurisdiction's coverage count.
+    def current_event_summary_target_ids
+      Generated::Artifact
+        .where(
+          target_type: "Civic::Event",
+          kind: Generated::SummarizeEvent::KIND,
+          prompt_version: Generated::SummarizeEvent::PROMPT::VERSION,
           status: "succeeded"
         )
         .select(:target_id)
