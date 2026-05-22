@@ -55,6 +55,26 @@ module Generated
         assert_includes prompt[:user_prompt], EventSummaryV1::NO_RECORD_TEXT
         assert_not prompt[:truncated]
       end
+
+      test "marks a past meeting as already held and instructs past tense" do
+        prompt = EventSummaryV1.build(event: @event, source_text: "Item 1", theme_summary: "", now: Date.new(2026, 5, 20))
+
+        assert_includes prompt[:user_prompt], "Meeting status: already held"
+        assert_includes prompt[:system_prompt], "If it has been held, write in the past tense"
+      end
+
+      test "marks an upcoming meeting as not yet held" do
+        prompt = EventSummaryV1.build(event: @event, source_text: "Item 1", theme_summary: "", now: Date.new(2026, 5, 1))
+
+        assert_includes prompt[:user_prompt], "upcoming, not yet held"
+      end
+
+      test "the held flag changes the hash so a meeting regenerates once after it occurs" do
+        upcoming = EventSummaryV1.build(event: @event, source_text: "Item 1", theme_summary: "", now: Date.new(2026, 5, 1))
+        held = EventSummaryV1.build(event: @event, source_text: "Item 1", theme_summary: "", now: Date.new(2026, 5, 20))
+
+        assert_not_equal upcoming[:sent_content_sha256], held[:sent_content_sha256]
+      end
     end
   end
 end
