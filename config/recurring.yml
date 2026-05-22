@@ -40,11 +40,11 @@ production:
     args: [ { limit: 150, dry_run: false } ]
     schedule: every 2 hours at minute 30
 
-  # Summarize meetings once their minutes are published. BackfillEventSummaries
-  # only considers events with published minutes and skips events already
-  # summarized for the current model + prompt version + input hash, re-running
-  # only when an event's item set changes, so this is safe on a recurring
-  # basis. Offset from the matter jobs so the agenda items it reads are settled.
+  # Summarize meetings from their published agenda. BackfillEventSummaries only
+  # considers events that have agenda items and skips events already summarized
+  # for the current model + prompt version + input hash, re-running only when an
+  # event's item set changes, so this is safe on a recurring basis. Offset from
+  # the matter jobs so the agenda items it reads are settled.
   summarize_events:
     class: Generated::BackfillEventSummariesJob
     args: [ { limit: 100, dry_run: false } ]

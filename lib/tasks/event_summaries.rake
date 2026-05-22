@@ -1,5 +1,5 @@
 namespace :generated do
-  desc "Summarize meetings (events) once minutes are published. Set RUN=true to " \
+  desc "Summarize meetings (events) from their published agenda. Set RUN=true to " \
     "call the configured model. Options: LIMIT (integer, default 10), FORCE=true " \
     "to re-summarize events already done, JURISDICTION=<slug> (e.g. sjusd) to " \
     "scope to one jurisdiction (default: all)."

@@ -168,8 +168,8 @@ module DataHealth
       assert_equal 3, snapshot.matter_count
     end
 
-    test "event summary counts measure meetings with published minutes" do
-      summarized = Civic::Event.create!(legistar_event_id: 200, body_name: "City Council", event_date: Date.new(2026, 5, 1), minutes_status_name: "Final")
+    test "event summary counts measure meetings with a published agenda" do
+      summarized = event_with_item(200)
       Generated::Artifact.create!(
         target: summarized,
         kind: Generated::SummarizeEvent::KIND,
@@ -180,13 +180,14 @@ module DataHealth
         content: { "summary" => "ok", "key_topics" => [], "limitations" => [] }
       )
 
-      # Eligible (minutes file present) but not yet summarized.
-      Civic::Event.create!(legistar_event_id: 201, body_name: "City Council", event_date: Date.new(2026, 5, 8), minutes_file_uri: "https://example.test/m.pdf")
+      # Eligible (has an agenda item) but not yet summarized.
+      event_with_item(201)
 
-      # Summarized but minutes still in draft: not eligible, so not counted.
-      draft = Civic::Event.create!(legistar_event_id: 202, body_name: "City Council", event_date: Date.new(2026, 5, 15), minutes_status_name: "Draft")
+      # No agenda items: not eligible, so not counted even though a (stray)
+      # summary artifact exists.
+      empty = Civic::Event.create!(legistar_event_id: 202, body_name: "City Council", event_date: Date.new(2026, 5, 15))
       Generated::Artifact.create!(
-        target: draft,
+        target: empty,
         kind: Generated::SummarizeEvent::KIND,
         status: "succeeded",
         model_identifier: "test-model",
@@ -196,7 +197,7 @@ module DataHealth
       )
 
       # Eligible, but the summary is from an older prompt version: not current.
-      stale = Civic::Event.create!(legistar_event_id: 203, body_name: "City Council", event_date: Date.new(2026, 5, 22), minutes_status_name: "Final")
+      stale = event_with_item(203)
       Generated::Artifact.create!(
         target: stale,
         kind: Generated::SummarizeEvent::KIND,
@@ -319,6 +320,21 @@ module DataHealth
 
     def build_snapshot(**options)
       Snapshot.new(jurisdiction: civic_jurisdictions(:sanjose), **options)
+    end
+
+    def event_with_item(legistar_event_id)
+      event = Civic::Event.create!(
+        legistar_event_id:,
+        body_name: "City Council",
+        event_date: Date.new(2026, 5, 1)
+      )
+      event.all_event_items.create!(
+        legistar_event_item_id: legistar_event_id + 500_000,
+        agenda_number: "3.1",
+        title: "Approve affordable housing agreement",
+        agenda_sequence: 1
+      )
+      event
     end
   end
 end

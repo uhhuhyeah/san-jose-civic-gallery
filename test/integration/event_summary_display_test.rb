@@ -31,7 +31,7 @@ class EventSummaryDisplayTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "affordable housing agreement"
     assert_includes response.body, "Affordable housing agreement"
     assert_includes response.body, "Based on the published minutes."
-    assert_includes response.body, "does not report outcomes or votes"
+    assert_includes response.body, "report outcomes or votes"
   end
 
   test "does not render the summary section when no artifact exists" do

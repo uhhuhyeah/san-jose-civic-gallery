@@ -139,9 +139,9 @@ module DataHealth
       @theme_classified_count ||= matters.where(id: current_theme_target_ids).count
     end
 
-    # Meetings eligible for an AI summary: those whose minutes are published.
-    # The summarizer waits for minutes, so this is the natural denominator for
-    # event-summary coverage.
+    # Meetings eligible for an AI summary: those with a published agenda (at
+    # least one current item). This feed has no minutes, so the agenda is the
+    # source, and this is the natural denominator for event-summary coverage.
     def event_summary_eligible_count
       @event_summary_eligible_count ||= summarizable_events.count
     end
@@ -240,7 +240,7 @@ module DataHealth
     end
 
     def summarizable_events
-      events.current_from_source.with_published_minutes
+      events.current_from_source.with_agenda_items
     end
 
     # The event summary prompt is jurisdiction-agnostic, so a single prompt

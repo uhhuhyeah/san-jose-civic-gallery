@@ -18,16 +18,16 @@ module Civic
     scope :current_from_source, -> { where(source_present: true) }
     scope :recent_first, -> { order(event_date: :desc, legistar_event_id: :desc) }
 
-    # Events whose minutes have been published. A meeting summary waits for
-    # minutes so it reflects what was actually taken up, not a draft agenda.
-    # The predicate matches a present minutes file URI or a final-looking
-    # minutes status (e.g. "Final", "Final Revised").
-    scope :with_published_minutes, -> {
-      where("(minutes_file_uri IS NOT NULL AND minutes_file_uri <> '') OR (minutes_status_name IS NOT NULL AND lower(minutes_status_name) LIKE 'final%')")
+    # Events that have at least one current agenda item, so there is something
+    # to summarize. This source (Legistar) publishes finalized agendas but not
+    # minutes, so the agenda item set is what a meeting summary draws from. The
+    # summary regenerates when that item set changes.
+    scope :with_agenda_items, -> {
+      where(id: Civic::EventItem.current_from_source.select(:civic_event_id))
     }
 
-    def minutes_published?
-      minutes_file_uri.present? || minutes_status_name.to_s.strip.downcase.start_with?("final")
+    def agenda_items?
+      event_items.exists?
     end
 
     def display_name

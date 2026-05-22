@@ -1,10 +1,10 @@
 module Generated
-  # Batch orchestrator for event summaries. Candidates are events with
-  # published minutes (the meeting has happened and its record is available),
-  # newest first, that do not already have a successful event_summary artifact
-  # for the current model + prompt version + input hash. Safe to run on a
-  # recurring basis: unchanged events are skipped, and an event whose item set
-  # changed is re-summarized because its input hash changes.
+  # Batch orchestrator for event summaries. Candidates are events that have a
+  # published agenda (at least one current item), newest first, that do not
+  # already have a successful event_summary artifact for the current model +
+  # prompt version + input hash. Safe to run on a recurring basis: unchanged
+  # events are skipped, and an event whose item set changed is re-summarized
+  # because its input hash changes.
   class BackfillEventSummaries
     DEFAULT_LIMIT = 10
 
@@ -64,7 +64,7 @@ module Generated
     # likely to open. Scoped to a single jurisdiction when one is given.
     def recency_first
       scope = jurisdiction ? Civic::Event.for_jurisdiction(jurisdiction) : Civic::Event.all
-      scope.current_from_source.with_published_minutes.recent_first
+      scope.current_from_source.with_agenda_items.recent_first
     end
 
     def already_succeeded_for_current_input?(event)

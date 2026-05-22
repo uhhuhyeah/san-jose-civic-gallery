@@ -6,21 +6,19 @@ module Generated
       @client = FakeClient.new
     end
 
-    test "only events with published minutes are candidates" do
-      with_minutes = create_event(legistar_event_id: 82_001, minutes_status_name: "Final")
-      with_file = create_event(legistar_event_id: 82_002, minutes_file_uri: "https://example.test/minutes.pdf")
-      draft = create_event(legistar_event_id: 82_003, minutes_status_name: "Draft")
+    test "only events with agenda items are candidates" do
+      with_items = create_event(legistar_event_id: 82_001)
+      empty = create_event(legistar_event_id: 82_003, with_item: false)
 
       result = BackfillEventSummaries.call(limit: 10, dry_run: true, client: @client)
       ids = result.candidates.map(&:id)
 
-      assert_includes ids, with_minutes.id
-      assert_includes ids, with_file.id
-      assert_not_includes ids, draft.id
+      assert_includes ids, with_items.id
+      assert_not_includes ids, empty.id
     end
 
     test "dry run does not call the model" do
-      create_event(legistar_event_id: 82_010, minutes_status_name: "Final")
+      create_event(legistar_event_id: 82_010)
 
       result = BackfillEventSummaries.call(limit: 10, dry_run: true, client: @client)
 
@@ -30,7 +28,7 @@ module Generated
     end
 
     test "running generates summaries and then skips already-summarized events" do
-      create_event(legistar_event_id: 82_020, minutes_status_name: "Final")
+      create_event(legistar_event_id: 82_020)
 
       first = BackfillEventSummaries.call(limit: 10, dry_run: false, client: @client)
       assert_equal 1, first.generated
@@ -41,7 +39,7 @@ module Generated
     end
 
     test "scopes to a single jurisdiction when given" do
-      sanjose = create_event(legistar_event_id: 82_030, minutes_status_name: "Final")
+      sanjose = create_event(legistar_event_id: 82_030)
       Civic::Event.create!(
         source_system: "simbli.sjusd",
         source_event_id: "sjusd-evt-82031",
@@ -57,22 +55,22 @@ module Generated
 
     private
 
-    def create_event(legistar_event_id:, minutes_status_name: nil, minutes_file_uri: nil)
+    def create_event(legistar_event_id:, with_item: true)
       event = Civic::Event.create!(
         legistar_event_id:,
         body_name: "City Council",
         title: "Regular Meeting",
         event_date: Date.new(2026, 5, 12),
-        minutes_status_name:,
-        minutes_file_uri:
+        agenda_status_name: "Final"
       )
-      event.all_event_items.create!(
-        legistar_event_item_id: legistar_event_id + 500_000,
-        agenda_number: "3.1",
-        title: "Housing item",
-        minutes_note: "Council discussed the housing item.",
-        agenda_sequence: 1
-      )
+      if with_item
+        event.all_event_items.create!(
+          legistar_event_item_id: legistar_event_id + 500_000,
+          agenda_number: "3.1",
+          title: "Approve affordable housing agreement",
+          agenda_sequence: 1
+        )
+      end
       event
     end
 
