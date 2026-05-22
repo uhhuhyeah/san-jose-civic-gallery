@@ -29,7 +29,7 @@ module Generated
       assert_equal "event_summary", result.artifact.kind
       assert_equal @event, result.artifact.target
       assert_equal "test-event-model", result.artifact.model_identifier
-      assert_equal "event_summary_v2", result.artifact.prompt_version
+      assert_equal "event_summary_v3", result.artifact.prompt_version
       assert_equal "The council took up housing and transportation items.", result.artifact.content["summary"]
       assert_equal 1, result.artifact.input_metadata["item_count"]
       assert_equal({ "total_tokens" => 55 }, result.artifact.usage_metadata)
