@@ -23,6 +23,26 @@ module Public
       assert_nil response.headers["Set-Cookie"]
     end
 
+    test "conditional homepage request avoids aggregate table probes" do
+      get root_path
+      etag = response.headers.fetch("ETag")
+      sql_queries = []
+      subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |_name, _started, _finished, _unique_id, payload|
+        sql_queries << payload[:sql]
+      end
+
+      begin
+        get root_path, headers: { "If-None-Match" => etag }
+      ensure
+        ActiveSupport::Notifications.unsubscribe(subscriber)
+      end
+
+      assert_response :not_modified
+      assert_not sql_queries.any? { |sql| sql.include?("generated_artifacts") }
+      assert_not sql_queries.any? { |sql| sql.include?("document_extracted_texts") }
+      assert_not sql_queries.any? { |sql| sql.include?("civic_matter_themes") }
+    end
+
     test "the legacy /pulse-v2 path permanently redirects to root" do
       get "/pulse-v2"
 

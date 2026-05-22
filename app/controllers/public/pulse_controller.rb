@@ -22,9 +22,11 @@ module Public
 
     def load_theme_pulse
       @body_options = cached_body_options
-      pulse = Public::ThemePulse.new(jurisdiction: current_jurisdiction, as_of: @as_of, body_name: @body_name.presence)
-      @heating_up = pulse.heating_up.select { |stat| stat.surging || (stat.lift && stat.lift > 1) }.first(HEATING_UP_LIMIT)
-      @top_themes = pulse.top_themes(limit: TOP_THEMES_LIMIT).select { |stat| stat.current_appearances.positive? }
+      stats = cached_theme_stats
+      @heating_up = stats.select(&:eligible).sort_by { |stat| [ stat.surging ? 0 : 1, -(stat.lift || 0) ] }
+        .select { |stat| stat.surging || (stat.lift && stat.lift > 1) }
+        .first(HEATING_UP_LIMIT)
+      @top_themes = stats.sort_by { |stat| -stat.current_appearances }.first(TOP_THEMES_LIMIT).select { |stat| stat.current_appearances.positive? }
     end
 
     def load_homepage_context
@@ -35,29 +37,35 @@ module Public
 
     def cache_version
       @cache_version ||= [
-        events_index_version,
-        Public::CacheVersion.pulse(as_of: @as_of, body_name: @body_name, window: WINDOW, jurisdiction: current_jurisdiction)
-      ]
+        "public/pulse-homepage/v2",
+        current_jurisdiction.slug,
+        @as_of.iso8601,
+        Public::CacheVersion.query_digest(@body_name),
+        WINDOW.to_i,
+        Time.current.to_i / CACHE_TTL.to_i
+      ].join("/")
     end
 
-    def events_index_version
-      @events_index_version ||= Public::CacheVersion.events_index(jurisdiction: current_jurisdiction)
+    def cached_theme_stats
+      Rails.cache.fetch([ cache_version, "theme-stats" ], expires_in: CACHE_TTL) do
+        Public::ThemePulse.new(jurisdiction: current_jurisdiction, as_of: @as_of, body_name: @body_name.presence).stats
+      end
     end
 
     def cached_body_options
-      Rails.cache.fetch([ events_index_version, "pulse-body-options" ], expires_in: CACHE_TTL) do
+      Rails.cache.fetch([ cache_version, "pulse-body-options" ], expires_in: CACHE_TTL) do
         Civic::Event.current_from_source.for_jurisdiction(current_jurisdiction).where.not(body_name: [ nil, "" ]).distinct.order(:body_name).pluck(:body_name)
       end
     end
 
     def cached_recent_event_ids
-      Rails.cache.fetch([ events_index_version, "recent-event-ids" ], expires_in: CACHE_TTL) do
+      Rails.cache.fetch([ cache_version, "recent-event-ids" ], expires_in: CACHE_TTL) do
         Civic::Event.for_jurisdiction(current_jurisdiction).recent_first.limit(8).pluck(:id)
       end
     end
 
     def cached_stats
-      Rails.cache.fetch([ events_index_version, "stats" ], expires_in: CACHE_TTL) do
+      Rails.cache.fetch([ cache_version, "stats" ], expires_in: CACHE_TTL) do
         {
           meetings: Civic::Event.current_from_source.for_jurisdiction(current_jurisdiction).count,
           agenda_items: Civic::EventItem.current_from_source.for_jurisdiction(current_jurisdiction).count,
@@ -70,7 +78,7 @@ module Public
     end
 
     def cached_matter_type_counts
-      Rails.cache.fetch([ events_index_version, "matter-type-counts" ], expires_in: CACHE_TTL) do
+      Rails.cache.fetch([ cache_version, "matter-type-counts" ], expires_in: CACHE_TTL) do
         Civic::Matter.for_jurisdiction(current_jurisdiction).group(:matter_type_name).order(Arel.sql("COUNT(*) DESC")).limit(6).count
       end
     end
