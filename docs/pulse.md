@@ -111,13 +111,17 @@ quarter, `13.weeks`):
   quarter are flagged `surging` and sort first.
 
 It accepts `body_name` (nil = citywide rollup) and only counts
-`current_from_source` events and event items. `Public::CacheVersion.pulse`
-provides a conditional-GET key derived from theme/event source maxima.
+`current_from_source` events and event items.
 
 The Pulse page is the homepage (`root` -> `Public::PulseController#show`). It
-renders `heating_up` and `top_themes` with a per-body filter, and theme labels
-link to the Matters index filtered by theme (`/public/matters?theme=<slug>`).
-The data is also inspectable from the CLI via the rake task below.
+renders `heating_up` (the "Pulse Changes" panel) with a per-body filter,
+alongside recent meetings, source-record counts, and an about panel; theme
+labels link to the Matters index filtered by theme
+(`/public/matters?theme=<slug>`). Conditional GET uses an inline key built in
+the controller (`public/pulse-homepage/v2`, keyed on jurisdiction, date, body
+filter, window, and a 10-minute TTL bucket), not `Public::CacheVersion.pulse`.
+`top_themes` remains a `Public::ThemePulse` method but is no longer surfaced in
+the UI. The data is also inspectable from the CLI via the rake task below.
 
 ## Operating it
 
