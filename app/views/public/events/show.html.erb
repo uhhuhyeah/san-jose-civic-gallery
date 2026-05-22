@@ -49,6 +49,56 @@
     </section>
   <% end %>
 
+  <% if @event_summary&.content&.fetch("summary", nil).present? %>
+    <% cache [@event_cache_version, "ai-summary"] do %>
+      <section class="section-band">
+        <div class="event-summary" aria-label="AI meeting summary">
+          <header class="event-summary-header">
+            <span class="event-summary-eyebrow">AI Summary</span>
+            <h2>Meeting Summary</h2>
+          </header>
+
+          <%# AI-generated content originates from arbitrary public documents. Always render these fields escaped. %>
+          <% content = @event_summary.content %>
+          <p><%= content["summary"] %></p>
+
+          <% if content["key_topics"].present? %>
+            <h3>Key topics</h3>
+            <ul>
+              <% content["key_topics"].each do |topic| %>
+                <li><%= topic %></li>
+              <% end %>
+            </ul>
+          <% end %>
+
+          <% if content["limitations"].present? %>
+            <h3>Limitations</h3>
+            <ul>
+              <% content["limitations"].each do |limitation| %>
+                <li><%= limitation %></li>
+              <% end %>
+            </ul>
+          <% end %>
+
+          <p class="generated-summary-note">
+            <span class="generated-summary-note-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="16" height="16" focusable="false">
+                <path d="M12 3 2 21h20L12 3Z" fill="none" stroke="currentColor" stroke-width="2" />
+                <path d="M12 9v5" stroke="currentColor" stroke-width="2" />
+                <circle cx="12" cy="17" r="1" fill="currentColor" />
+              </svg>
+            </span>
+            <em>
+              Generated for convenience from the meeting record using AI. It
+              describes the topics taken up and does not report outcomes or votes.
+              Review the official agenda and minutes before relying on this summary.
+            </em>
+          </p>
+        </div>
+      </section>
+    <% end %>
+  <% end %>
+
   <% cache [@event_cache_version, "agenda-items"] do %>
     <section class="section-band">
       <h2>Agenda Items</h2>
