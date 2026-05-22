@@ -26,7 +26,6 @@ module Public
       @heating_up = stats.select(&:eligible).sort_by { |stat| [ stat.surging ? 0 : 1, -(stat.lift || 0) ] }
         .select { |stat| stat.surging || (stat.lift && stat.lift > 1) }
         .first(HEATING_UP_LIMIT)
-      @top_themes = stats.sort_by { |stat| -stat.current_appearances }.first(TOP_THEMES_LIMIT).select { |stat| stat.current_appearances.positive? }
     end
 
     def load_homepage_context

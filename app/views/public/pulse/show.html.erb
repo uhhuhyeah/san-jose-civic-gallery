@@ -63,9 +63,9 @@
   <section class="newspaper-body">
     <div>
       <% scope_label = @body_name.presence || current_jurisdiction.all_scope_label %>
-      <% if @heating_up.empty? && @top_themes.empty? %>
+      <% if @heating_up.empty? %>
         <div class="section-title">
-          <h2>Heating up <span class="subtle">&middot; <%= scope_label %></span></h2>
+          <h2>Pulse Changes <span class="subtle">&middot; <%= scope_label %></span></h2>
           <span>More than last quarter, per meeting</span>
         </div>
         <div class="card">
@@ -81,7 +81,7 @@
         </div>
       <% else %>
         <div class="section-title">
-          <h2>Heating up <span class="subtle">&middot; <%= scope_label %></span></h2>
+          <h2>Pulse Changes <span class="subtle">&middot; <%= scope_label %></span></h2>
           <span>More than last quarter, per meeting</span>
         </div>
         <div class="card">
@@ -109,14 +109,6 @@
         <div class="section-title">
           <h2>Most active themes</h2>
           <span>By agenda appearances, on each matter's primary theme</span>
-        </div>
-        <div class="topic-grid">
-          <% @top_themes.each do |stat| %>
-            <div class="topic-tile">
-              <strong><%= link_to stat.label, public_matters_path(theme: stat.slug) %></strong>
-              <span><%= pluralize(stat.current_appearances, "appearance") %></span>
-            </div>
-          <% end %>
         </div>
       <% end %>
 
@@ -150,25 +142,24 @@
     </div>
 
     <aside>
-      <div class="section-title">
-        <h2>Record Pulse</h2>
-        <span>Current source data</span>
+      <div class="mini-card">
+        <span class="subtle">About <%= current_jurisdiction.site_title %></span>
+        <p>
+          <strong><%= current_jurisdiction.site_title %></strong> is a free, open-source intelligence
+          layer over <%= current_jurisdiction.civic_subject %>'s public records.
+        </p>
+        <p>
+          Every meeting agenda and matter is ingested, tagged, and summarized so residents
+          can cut through the noise and follow the topics they care about.
+        </p>
+        <p>The official ecords remain the source of truth: this site is a tool to help you research,
+          understand, and ask better questions of your elected officials.
+        </p>
+        <p>
+          Browse by <%= link_to 'meeting', public_meetings_path %>, browse by <%= link_to 'topic', public_matters_path %>, or search across both.
+        </p>
       </div>
       <div class="topic-grid">
-        <% @matter_type_counts.each do |matter_type, count| %>
-          <div class="topic-tile">
-            <strong><%= matter_type.presence || "Unclassified" %></strong>
-            <span><%= pluralize(count, "matter") %></span>
-          </div>
-        <% end %>
-        <div class="topic-tile">
-          <strong>Attachments</strong>
-          <span><%= pluralize(@stats.fetch(:attachments), "current source file") %></span>
-        </div>
-        <div class="topic-tile">
-          <strong>Extracted Text</strong>
-          <span><%= pluralize(@stats.fetch(:extracted_texts), "successful extraction") %></span>
-        </div>
       </div>
     </aside>
   </section>
