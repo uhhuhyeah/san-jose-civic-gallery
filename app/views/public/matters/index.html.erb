@@ -19,13 +19,17 @@
   <% end %>
 
   <%= form_with url: public_matters_path, method: :get, local: true, class: "search-form inset-panel" do |form| %>
-    <%= form.hidden_field :theme, value: @theme if @theme %>
     <%= form.label :q, "Search matters and extracted document text", for: "matter-filter-q" %>
     <div class="search-row">
       <%= form.search_field :q, id: "matter-filter-q", value: @query, placeholder: "Matter file, title, name, or document text" %>
+      <%= form.label :theme, "Theme", for: "matter-filter-theme", class: "sr-only" %>
+      <%= form.select :theme,
+            options_for_select(Civic::ThemeTaxonomy.themes_for(current_jurisdiction).map { |theme| [ theme[:label], theme[:slug] ] }.sort_by(&:first), @theme),
+            { include_blank: "Any theme" },
+            id: "matter-filter-theme" %>
       <%= form.submit "Search" %>
-      <% if @query.present? %>
-        <%= link_to "Clear", public_matters_path(theme: @theme), class: "button-secondary" %>
+      <% if @query.present? || @theme %>
+        <%= link_to "Clear", public_matters_path, class: "button-secondary" %>
       <% end %>
     </div>
   <% end %>
