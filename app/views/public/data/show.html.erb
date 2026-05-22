@@ -101,14 +101,14 @@
         <div>
           <dt>Synced in the last 24 hours</dt>
           <dd>
-            <strong><%= pluralize(@snapshot.matters_synced_since(1.day.ago), "matter") %></strong>,
+            <strong><%= pluralize(@snapshot.matters_synced_since(1.day.ago), "matter") %></strong>|
             <strong><%= pluralize(@snapshot.events_synced_since(1.day.ago), "event") %></strong>
           </dd>
         </div>
         <div>
           <dt>Synced in the last 7 days</dt>
           <dd>
-            <strong><%= pluralize(@snapshot.matters_synced_since(7.days.ago), "matter") %></strong>,
+            <strong><%= pluralize(@snapshot.matters_synced_since(7.days.ago), "matter") %></strong>|
             <strong><%= pluralize(@snapshot.events_synced_since(7.days.ago), "event") %></strong>
           </dd>
         </div>
