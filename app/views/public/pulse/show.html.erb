@@ -85,23 +85,17 @@
           <span>More than last quarter, per meeting</span>
         </div>
         <div class="card">
-          <% if @heating_up.any? %>
-            <% @heating_up.each do |stat| %>
-              <article class="item">
-                <h3 class="item-title"><%= link_to stat.label, public_matters_path(theme: stat.slug) %></h3>
-                <div class="tags">
-                  <% if stat.surging %>
-                    <span class="pill gold">New this quarter</span>
-                  <% else %>
-                    <span class="pill green">&#9650; <%= ((stat.lift - 1) * 100).round %>% vs last quarter</span>
-                  <% end %>
-                  <span class="pill"><%= pluralize(stat.current_appearances, "appearance") %> this quarter</span>
-                </div>
-              </article>
-            <% end %>
-          <% else %>
+          <% @heating_up.each do |stat| %>
             <article class="item">
-              <p>No themes are clearly trending up in this window.</p>
+              <h3 class="item-title"><%= link_to stat.label, public_matters_path(theme: stat.slug) %></h3>
+              <div class="tags">
+                <% if stat.surging %>
+                  <span class="pill gold">New this quarter</span>
+                <% else %>
+                  <span class="pill green">&#9650; <%= ((stat.lift - 1) * 100).round %>% vs last quarter</span>
+                <% end %>
+                <span class="pill"><%= pluralize(stat.current_appearances, "appearance") %> this quarter</span>
+              </div>
             </article>
           <% end %>
         </div>
