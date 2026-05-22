@@ -19,7 +19,7 @@ module Generated
     # so a meeting summarized while upcoming regenerates once, into the past
     # tense, after its date passes; nothing else retriggers generation.
     class EventSummaryV1
-      VERSION = "event_summary_v3"
+      VERSION = "event_summary_v4"
       DEFAULT_MAX_INPUT_CHARS = 18_000
       TRUNCATION_MARKER = "\n\n…[truncated]".freeze
       NO_RECORD_TEXT = "(No agenda items are available for this meeting.)".freeze
@@ -109,9 +109,13 @@ module Generated
 
           Return only valid JSON with keys: summary, key_topics, limitations.
           summary must be a 2 to 4 sentence string. key_topics must be an array
-          of short strings naming the most relevant items on the agenda (at
-          most 6, fewer when the agenda is light). limitations must be an array
-          of strings.
+          of short strings naming the subject of the most relevant items on the
+          agenda (at most 6, fewer when the agenda is light). Name the subject,
+          not the requested action: strip leading action phrases such as
+          "Approval of", "Ratification of", "Adoption of", "Authorization to",
+          "Award of", and "Acceptance of", so "Approval of Permanent PE
+          Exemptions for High School Students" becomes "Permanent PE exemptions
+          for high school students". limitations must be an array of strings.
         PROMPT
       end
 
