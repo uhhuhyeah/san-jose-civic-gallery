@@ -1,8 +1,6 @@
 module Public
   # The homepage (root). Composes the theme Pulse with the homepage furniture
-  # (recent meetings, source-record and record-type counts). The former events
-  # index still lives at /public/events; its data loading could be consolidated
-  # here later. See docs/pulse.md.
+  # See docs/pulse.md.
   class PulseController < ApplicationController
     WINDOW = Public::ThemePulse::DEFAULT_WINDOW
     HEATING_UP_LIMIT = 6
@@ -71,12 +69,6 @@ module Public
           imported_files: Civic::MatterAttachment.imported.for_jurisdiction(current_jurisdiction).count,
           extracted_texts: Documents::ExtractedText.where(status: "ok").joins(:matter_attachment).merge(Civic::MatterAttachment.for_jurisdiction(current_jurisdiction)).count
         }
-      end
-    end
-
-    def cached_matter_type_counts
-      Rails.cache.fetch([ cache_version, "matter-type-counts" ], expires_in: CACHE_TTL) do
-        Civic::Matter.for_jurisdiction(current_jurisdiction).group(:matter_type_name).order(Arel.sql("COUNT(*) DESC")).limit(6).count
       end
     end
 
