@@ -110,6 +110,69 @@ module Public
       assert_not_includes response.body, "Showing matters tagged"
     end
 
+    test "renders a theme filter dropdown with the jurisdiction vocabulary" do
+      get public_matters_url
+
+      assert_response :success
+      assert_select "select#matter-filter-theme" do
+        assert_select "option[value='']", text: "Any theme"
+        assert_select "option[value='housing']", text: "Housing"
+        assert_select "option[value='transportation']", text: "Transportation"
+      end
+    end
+
+    test "lists theme options in alphabetical order" do
+      get public_matters_url
+
+      assert_response :success
+      labels = css_select("select#matter-filter-theme option[value!='']").map(&:text)
+      assert_equal labels.sort, labels
+    end
+
+    test "preselects the active theme in the filter dropdown" do
+      @matter.themes.create!(theme_slug: "housing", rank: 1)
+
+      get public_matters_url(theme: "housing")
+
+      assert_response :success
+      assert_select "select#matter-filter-theme option[selected][value='housing']", text: "Housing"
+    end
+
+    test "renders the SJUSD theme vocabulary in the dropdown on the SJUSD host" do
+      host! "sjusd.civicgallery.org"
+
+      get public_matters_url
+
+      assert_response :success
+      assert_select "select#matter-filter-theme option[value='special_education']", text: "Special Education"
+      assert_select "select#matter-filter-theme option[value='housing']", count: 0
+    end
+
+    test "clear resets both the query and the theme filter" do
+      @matter.themes.create!(theme_slug: "housing", rank: 1)
+
+      get public_matters_url(q: "agreement", theme: "housing")
+
+      assert_response :success
+      assert_select ".search-form a.button-secondary[href=?]", public_matters_path, text: "Clear"
+    end
+
+    test "shows clear for a theme-only filter" do
+      @matter.themes.create!(theme_slug: "housing", rank: 1)
+
+      get public_matters_url(theme: "housing")
+
+      assert_response :success
+      assert_select ".search-form a.button-secondary[href=?]", public_matters_path, text: "Clear"
+    end
+
+    test "omits clear when no query or theme filter is active" do
+      get public_matters_url
+
+      assert_response :success
+      assert_select ".search-form a.button-secondary", text: "Clear", count: 0
+    end
+
     test "shows the primary theme as a pill linking to the theme filter" do
       @matter.themes.create!(theme_slug: "housing", rank: 1)
 
