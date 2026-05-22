@@ -101,6 +101,38 @@
         </div>
       <% end %>
 
+      <% if @recent_decisions.any? %>
+        <div class="section-title">
+          <h2>What's being decided</h2>
+          <span>Recent matters, with generated summaries</span>
+        </div>
+        <div class="card">
+          <% @recent_decisions.each do |matter| %>
+            <% preview = matter_summary_preview(matter) %>
+            <% next unless preview %>
+            <% _attachment, summary = preview %>
+            <% primary_theme = matter.themes.detect { |theme| theme.rank == 1 } %>
+            <article class="item">
+              <h3 class="item-title">
+                <%= link_to public_matter_path(matter) do %>
+                  <%= matter.display_name %><% if matter.descriptive_title && matter.descriptive_title != matter.display_name %> &middot; <%= matter.descriptive_title %><% end %>
+                <% end %>
+              </h3>
+              <div class="tags">
+                <% if primary_theme %>
+                  <span class="pill green"><%= primary_theme.label %></span>
+                <% end %>
+                <% if matter.body_name.present? %>
+                  <span class="pill"><%= matter.body_name %></span>
+                <% end %>
+              </div>
+              <p><%= truncate(summary.squish, length: 220, separator: " ") %></p>
+            </article>
+          <% end %>
+          <p class="card-note">Generated summaries are assistive, not official.</p>
+        </div>
+      <% end %>
+
       <div class="section-title meetings-title" id="meetings">
         <h2>Recent Meetings</h2>
         <span>Official source events</span>

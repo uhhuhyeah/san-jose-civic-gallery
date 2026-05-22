@@ -104,6 +104,21 @@ module ApplicationHelper
       .max_by { |artifact| [ artifact.generated_at || artifact.created_at, artifact.id ] }
   end
 
+  # The first current attachment on the matter that carries a usable generated
+  # summary, paired with its summary text. Filters preloaded artifacts in Ruby
+  # (via attachment_summary_artifact) so a preloaded matter does not trigger a
+  # query per attachment.
+  def matter_summary_preview(matter)
+    matter.attachments.each do |attachment|
+      artifact = attachment_summary_artifact(attachment)
+      next unless artifact
+
+      summary = artifact.content["summary"].to_s.strip
+      return [ attachment, summary ] if summary.present?
+    end
+    nil
+  end
+
   def attachment_summary_state(attachment, summary_artifact = attachment_summary_artifact(attachment))
     return :available if summary_artifact
 

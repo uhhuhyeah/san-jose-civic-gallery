@@ -4,6 +4,7 @@ module Public
   class PulseController < ApplicationController
     WINDOW = Public::ThemePulse::DEFAULT_WINDOW
     HEATING_UP_LIMIT = 6
+    RECENT_DECISIONS_LIMIT = 3
     CACHE_TTL = 10.minutes
 
     def show
@@ -28,6 +29,10 @@ module Public
     def load_homepage_context
       @events = records_in_cached_order(cached_recent_event_ids, Civic::Event.for_jurisdiction(current_jurisdiction).includes(:event_items))
       @stats = cached_stats
+      @recent_decisions = records_in_cached_order(
+        cached_recent_decision_ids,
+        Civic::Matter.for_jurisdiction(current_jurisdiction).includes(:themes, attachments: :generated_artifacts)
+      )
     end
 
     def cache_version
@@ -56,6 +61,34 @@ module Public
     def cached_recent_event_ids
       Rails.cache.fetch([ cache_version, "recent-event-ids" ], expires_in: CACHE_TTL) do
         Civic::Event.for_jurisdiction(current_jurisdiction).recent_first.limit(8).pluck(:id)
+      end
+    end
+
+    # Recent matters that already have a non-empty generated summary on a current
+    # attachment, newest agendas first. The summary text itself is read in the
+    # view from the preloaded artifacts (see matter_summary_preview).
+    def cached_recent_decision_ids
+      Rails.cache.fetch([ cache_version, "recent-decision-ids" ], expires_in: CACHE_TTL) do
+        summarized_attachment_ids = Generated::Artifact
+          .succeeded
+          .for_kind(Generated::SummarizeMatterAttachment::KIND)
+          .where(prompt_version: Generated::SummarizeMatterAttachment::PROMPT::VERSION)
+          .where(target_type: "Civic::MatterAttachment")
+          .where("content->>'summary' <> ''")
+          .select(:target_id)
+
+        matter_ids = Civic::MatterAttachment
+          .current_from_source
+          .for_jurisdiction(current_jurisdiction)
+          .where(id: summarized_attachment_ids)
+          .select(:civic_matter_id)
+
+        Civic::Matter
+          .for_jurisdiction(current_jurisdiction)
+          .where(id: matter_ids)
+          .recent_first
+          .limit(RECENT_DECISIONS_LIMIT)
+          .pluck(:id)
       end
     end
 
