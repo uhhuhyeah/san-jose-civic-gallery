@@ -33,6 +33,13 @@ module Generated
         assert_includes prompt, "ratified"
       end
 
+      test "system prompt tells key_topics to name the subject, not the requested action" do
+        prompt = normalized_system_prompt
+
+        assert_includes prompt, "Name the subject, not the requested action"
+        assert_includes prompt, "becomes \"Permanent PE exemptions for high school students\""
+      end
+
       test "theme summary appears in the user prompt but is excluded from the hash" do
         without_themes = EventSummaryV1.build(event: @event, source_text: "Item 1", theme_summary: "")
         with_themes = EventSummaryV1.build(event: @event, source_text: "Item 1", theme_summary: "- 1: Housing")
