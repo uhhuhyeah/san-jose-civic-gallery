@@ -122,7 +122,8 @@
         current attachments with a source link, so they reflect end-to-end
         pipeline coverage rather than per-stage success. Theme classification is
         measured across all matters, and meeting summaries across meetings with
-        a published agenda.
+        an itemized agenda on file (some meetings, such as many advisory-body
+        sessions, have no itemized agenda in our data and are not summarized).
       </p>
       <%= render "rate",
         label: "Attachments with imported source files",
@@ -141,7 +142,7 @@
         numerator: @snapshot.theme_classified_count,
         denominator: @snapshot.matter_count %>
       <%= render "rate",
-        label: "Meetings with AI summaries",
+        label: "Meetings with AI summaries (of those with an itemized agenda)",
         numerator: @snapshot.event_summarized_count,
         denominator: @snapshot.event_summary_eligible_count %>
     </section>
