@@ -26,8 +26,6 @@ module Public
         CacheVersion.events_index(jurisdiction: sjusd)
       assert_not_equal CacheVersion.matters_index(query: "", jurisdiction: sanjose),
         CacheVersion.matters_index(query: "", jurisdiction: sjusd)
-      assert_not_equal CacheVersion.pulse(as_of: Date.current, body_name: "", window: 13.weeks, jurisdiction: sanjose),
-        CacheVersion.pulse(as_of: Date.current, body_name: "", window: 13.weeks, jurisdiction: sjusd)
     end
 
     test "event index version changes when source records change" do

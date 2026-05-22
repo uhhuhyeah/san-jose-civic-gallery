@@ -81,19 +81,6 @@ module Public
         compose("public/data/v1", snapshot.cache_key)
       end
 
-      def pulse(as_of:, body_name:, window:, jurisdiction:)
-        compose(
-          "public/pulse/v1",
-          jurisdiction.slug,
-          as_of.to_s,
-          window.to_i,
-          value_digest(body_name),
-          cache_component_for(Civic::MatterTheme.all),
-          cache_component_for(Civic::EventItem.current_from_source.for_jurisdiction(jurisdiction)),
-          cache_component_for(Civic::Event.current_from_source.for_jurisdiction(jurisdiction))
-        )
-      end
-
       def matter_attachment_fragment(attachment, latest_text:, summary_artifact:)
         [
           "public/matter-attachment/v1",
