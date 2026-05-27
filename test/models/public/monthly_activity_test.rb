@@ -174,6 +174,96 @@ module Public
       assert_empty build_activity.decisions
     end
 
+    # --- meetings -----------------------------------------------------------
+
+    test "meetings includes event with succeeded summary" do
+      event = create_event(legistar_event_id: 81_100, event_date: Date.new(2026, 5, 12))
+      create_summary_artifact(event)
+
+      result = build_activity.meetings
+
+      assert_equal 1, result.size
+      assert_equal event, result.first.event
+      assert_equal "Council discussed housing.", result.first.summary
+      assert_equal ["Housing"], result.first.key_topics
+    end
+
+    test "meetings excludes event with no artifact" do
+      create_event(legistar_event_id: 81_101, event_date: Date.new(2026, 5, 14))
+
+      assert_empty build_activity.meetings
+    end
+
+    test "meetings excludes event whose only artifact failed" do
+      event = create_event(legistar_event_id: 81_102, event_date: Date.new(2026, 5, 16))
+      create_summary_artifact(event, status: "failed")
+
+      assert_empty build_activity.meetings
+    end
+
+    test "meetings excludes event outside the window" do
+      event = create_event(legistar_event_id: 81_103, event_date: Date.new(2026, 6, 5))
+      create_summary_artifact(event)
+
+      assert_empty build_activity.meetings
+    end
+
+    # --- quiet_month? -------------------------------------------------------
+
+    test "quiet_month is true when no decisions and no introductions" do
+      assert build_activity.quiet_month?
+    end
+
+    test "quiet_month is false when decisions meet threshold" do
+      3.times do |i|
+        Civic::Matter.create!(
+          legistar_matter_id: 70_800 + i,
+          matter_file: "26-8#{i}",
+          passed_date: Date.new(2026, 5, 1 + i),
+          source_system: "legistar.sanjose",
+        )
+      end
+
+      refute build_activity.quiet_month?
+    end
+
+    test "quiet_month is true when both lists below threshold" do
+      2.times do |i|
+        Civic::Matter.create!(
+          legistar_matter_id: 70_900 + i,
+          matter_file: "26-9#{i}",
+          passed_date: Date.new(2026, 5, 1 + i),
+          source_system: "legistar.sanjose",
+        )
+      end
+      2.times do |i|
+        Civic::Matter.create!(
+          legistar_matter_id: 70_910 + i,
+          matter_file: "26-9#{i}i",
+          intro_date: Date.new(2026, 5, 10 + i),
+          source_system: "legistar.sanjose",
+        )
+      end
+
+      assert build_activity.quiet_month?
+    end
+
+    # --- theme_momentum -----------------------------------------------------
+
+    test "theme_momentum returns an array" do
+      result = build_activity.theme_momentum
+      assert result.is_a?(Array)
+    end
+
+    test "theme_momentum respects THEME_MOMENTUM_LIMIT" do
+      result = build_activity.theme_momentum
+      assert result.size <= Public::MonthlyActivity::THEME_MOMENTUM_LIMIT
+    end
+
+    test "theme_momentum is empty with no civic activity" do
+      assert_empty build_activity.theme_momentum
+    end
+
     private
 
     def build_activity
@@ -181,6 +271,30 @@ module Public
         jurisdiction: @jurisdiction,
         period_start: @period_start,
         period_end: @period_end,
+      )
+    end
+
+    def create_event(legistar_event_id:, event_date:)
+      Civic::Event.create!(
+        legistar_event_id: legistar_event_id,
+        body_name: "City Council",
+        title: "Regular Meeting",
+        event_date: event_date,
+        source_system: "legistar.sanjose",
+        source_present: true,
+      )
+    end
+
+    def create_summary_artifact(event, status: "succeeded")
+      Generated::Artifact.create!(
+        target: event,
+        kind: Generated::SummarizeEvent::KIND,
+        model_identifier: "test-event-model",
+        prompt_version: Generated::SummarizeEvent::PROMPT::VERSION,
+        input_sha256: "test-#{event.id}",
+        status: status,
+        content: { "summary" => "Council discussed housing.", "key_topics" => ["Housing"], "limitations" => [] },
+        generated_at: Time.current,
       )
     end
   end
