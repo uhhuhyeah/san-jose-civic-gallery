@@ -172,6 +172,16 @@ module Generated
         refute result[:truncated]
       end
 
+      # --- no em dashes anywhere in output ----------------------------------
+
+      test "built output contains no em-dash character" do
+        result = build_prompt
+        em_dash = "\u2014"
+        assert_not_includes result[:system_prompt], em_dash
+        assert_not_includes result[:user_prompt], em_dash
+        assert_not_includes result[:sent_content], em_dash
+      end
+
       private
 
       def build_prompt

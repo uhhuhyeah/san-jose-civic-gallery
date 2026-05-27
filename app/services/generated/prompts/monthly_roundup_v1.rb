@@ -51,7 +51,7 @@ module Generated
 
           Voice
           - Warm but neutral. Plain language a resident can follow. Lightly
-            editorial — it is fine to say what the month's patterns suggest.
+            editorial: it is fine to say what the month's patterns suggest.
           - It is fine to be transparent that this recap is produced
             automatically; do NOT pretend a person wrote it.
           - It must NOT read like generic AI writing. Vary sentence structure,
@@ -92,7 +92,7 @@ module Generated
           "in conclusion", "in summary", "overall", "it's important to note",
           "it's worth noting", "moreover", "furthermore", "a wide range of",
           "challenges and opportunities", "not only ... but also".
-          Additionally: NO em dashes (—); use commas, colons, or periods
+          Additionally: Do not use em dashes; use commas, colons, or periods
           instead. Avoid the rule-of-three cliché. Avoid vague throat-clearing
           at the start or end of paragraphs.
 
@@ -179,10 +179,11 @@ module Generated
         return "Decisions made:\n(none)" if decisions.empty?
 
         lines = decisions.map do |d|
-          title = d.matter.descriptive_title.presence || ""
+          title = d.matter.descriptive_title.presence
+          title_part = title ? " #{title}" : ""
           theme = d.primary_theme_label.presence
           theme_part = theme ? " [#{theme}]" : ""
-          "- #{d.matter.display_name}: #{title} — passed #{d.passed_date.to_s}#{theme_part}"
+          "- #{d.matter.display_name}:#{title_part} (passed #{d.passed_date.to_s})#{theme_part}"
         end
         "Decisions made:\n#{lines.join("\n")}"
       end
@@ -192,10 +193,11 @@ module Generated
         return "Introduced:\n(none)" if items.empty?
 
         lines = items.map do |i|
-          title = i.matter.descriptive_title.presence || ""
+          title = i.matter.descriptive_title.presence
+          title_part = title ? " #{title}" : ""
           theme = i.primary_theme_label.presence
           theme_part = theme ? " [#{theme}]" : ""
-          "- #{i.matter.display_name}: #{title} — introduced #{i.intro_date.to_s}#{theme_part}"
+          "- #{i.matter.display_name}:#{title_part} (introduced #{i.intro_date.to_s})#{theme_part}"
         end
         "Introduced:\n#{lines.join("\n")}"
       end
@@ -208,7 +210,7 @@ module Generated
           event_label = m.event.body_name.presence || m.event.title.presence || "Meeting"
           summary = m.summary.to_s.presence || "(no summary)"
           topics = Array(m.key_topics).presence || []
-          topics_part = topics.any? ? " — topics: #{topics.join(", ")}" : ""
+          topics_part = topics.any? ? ", topics: #{topics.join(", ")}" : ""
           "- #{event_label}: #{summary}#{topics_part}"
         end
         "Meeting highlights:\n#{lines.join("\n")}"
