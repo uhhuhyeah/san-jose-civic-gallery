@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_20_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_27_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -228,6 +228,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_20_140000) do
     t.index ["updated_at"], name: "index_civic_matters_on_updated_at"
   end
 
+  create_table "civic_roundup_periods", force: :cascade do |t|
+    t.bigint "civic_jurisdiction_id", null: false
+    t.datetime "created_at", null: false
+    t.string "label", null: false
+    t.date "period_end", null: false
+    t.date "period_start", null: false
+    t.datetime "updated_at", null: false
+    t.index ["civic_jurisdiction_id", "period_start", "period_end"], name: "idx_civic_roundup_periods_unique", unique: true
+    t.index ["civic_jurisdiction_id"], name: "index_civic_roundup_periods_on_civic_jurisdiction_id"
+  end
+
   create_table "document_extracted_texts", force: :cascade do |t|
     t.integer "character_count"
     t.bigint "civic_matter_attachment_id", null: false
@@ -302,5 +313,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_20_140000) do
   add_foreign_key "civic_matter_themes", "generated_artifacts", column: "source_artifact_id", on_delete: :nullify
   add_foreign_key "civic_matters", "civic_jurisdictions"
   add_foreign_key "civic_matters", "ingestion_source_snapshots", column: "last_source_snapshot_id", on_delete: :nullify
+  add_foreign_key "civic_roundup_periods", "civic_jurisdictions"
   add_foreign_key "document_extracted_texts", "civic_matter_attachments"
 end
