@@ -12,7 +12,7 @@ module Generated
     # actually happened. The model is permitted to state that a matter passed or was
     # introduced, but must not invent anything beyond the supplied facts.
     class MonthlyRoundupV1
-      VERSION = "monthly_roundup_v1"
+      VERSION = "monthly_roundup_v2"
       DEFAULT_MAX_INPUT_CHARS = 18_000
       TRUNCATION_MARKER = "\n\n…[truncated]"
 
@@ -110,7 +110,16 @@ module Generated
             storyline  : one to three short paragraphs (a single string) connecting
                          the month's themes to the specific named decisions and
                          introductions in the data
-          No other keys may be returned.
+            decision_blurbs : an array of objects, one per decision you can describe
+                         from the facts. Each object has two keys: matter_file (copy
+                         the exact identifier that begins that decision's line under
+                         "Decisions made", the token right after "- " and before the
+                         colon) and blurb (one short sentence about that decision, using
+                         ONLY the supplied facts). Include at most one object per listed
+                         decision. Omit a decision rather than guess about it. Use an
+                         empty array when there are no decisions. Never invent a
+                         matter_file that does not appear in the facts.
+          No keys other than these four may be returned.
         PROMPT
       end
 

@@ -31,6 +31,41 @@ module Generated
       assert_equal "Story text.", response.content["storyline"]
       assert_equal({ "total_tokens" => 42 }, response.usage_metadata)
       assert_not response.content.key?("extra")
+      assert_equal [], response.content["decision_blurbs"]
+    end
+
+    test "normalizes decision_blurbs and drops malformed entries" do
+      client = RoundupClient.new(api_key: "test-key")
+      response_body = {
+        "choices" => [
+          {
+            "message" => {
+              "content" => {
+                "headline" => "May in San Jose",
+                "intro" => "Intro.",
+                "storyline" => "Story.",
+                "decision_blurbs" => [
+                  { "matter_file" => " 26-100 ", "blurb" => " Council passed the housing agreement. " },
+                  { "matter_file" => "26-200" },                       # missing blurb -> dropped
+                  { "blurb" => "No file number." },                    # missing matter_file -> dropped
+                  "not a hash"                                         # wrong type -> dropped
+                ]
+              }.to_json
+            }
+          }
+        ]
+      }
+
+      client.define_singleton_method(:post_chat_completion) do |system_prompt:, user_prompt:|
+        response_body
+      end
+
+      response = client.call(system_prompt: "system", user_prompt: "user")
+
+      assert_equal(
+        [ { "matter_file" => "26-100", "blurb" => "Council passed the housing agreement." } ],
+        response.content["decision_blurbs"]
+      )
     end
 
     test "rejects responses missing required keys" do

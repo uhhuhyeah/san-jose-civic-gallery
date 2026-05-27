@@ -26,7 +26,7 @@ module Generated
       assert_equal "monthly_roundup", result.artifact.kind
       assert_equal @period, result.artifact.target
       assert_equal "test-roundup-model", result.artifact.model_identifier
-      assert_equal "monthly_roundup_v1", result.artifact.prompt_version
+      assert_equal Generated::Prompts::MonthlyRoundupV1::VERSION, result.artifact.prompt_version
       assert_equal "May in San Jose", result.artifact.content["headline"]
       assert_equal({ "total_tokens" => 42 }, result.artifact.usage_metadata)
     end

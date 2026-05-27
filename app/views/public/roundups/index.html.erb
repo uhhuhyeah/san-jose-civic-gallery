@@ -1,11 +1,28 @@
-<h1>Monthly roundups</h1>
+<% content_for(:title) { "Monthly roundups" } %>
+<% content_for(:description) { "Monthly recaps of #{current_jurisdiction.short_name} civic activity: decisions made, new business introduced, and meeting highlights." } %>
 
-<% if @periods.empty? %>
-  <p>No roundups yet.</p>
-<% else %>
-  <ul>
-    <% @periods.each do |period| %>
-      <li><%= link_to period.label, roundup_path(period) %></li>
-    <% end %>
-  </ul>
-<% end %>
+<main class="page-shell">
+  <%= render "public/shared/topbar" %>
+
+  <p class="breadcrumb"><%= link_to "Pulse", root_path %></p>
+
+  <header class="page-header inset-header">
+    <p class="eyebrow">Monthly Roundups</p>
+    <h1>The month in <%= current_jurisdiction.short_name %></h1>
+    <p>Automated monthly recaps of what <%= current_jurisdiction.civic_subject %> took up: decisions made, new business introduced, and meeting highlights.</p>
+  </header>
+
+  <% if @periods.empty? %>
+    <section class="section-band">
+      <p>No roundups have been published yet.</p>
+    </section>
+  <% else %>
+    <section class="section-band">
+      <ul class="roundup-list">
+        <% @periods.each do |period| %>
+          <li><%= link_to period.label, roundup_path(period) %></li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+</main>

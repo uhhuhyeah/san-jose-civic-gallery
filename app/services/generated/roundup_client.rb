@@ -67,7 +67,25 @@ module Generated
       normalized["headline"] = normalized["headline"].to_s.strip
       normalized["intro"] = normalized["intro"].to_s.strip
       normalized["storyline"] = normalized["storyline"].to_s.strip
+      normalized["decision_blurbs"] = normalize_blurbs(parsed_content["decision_blurbs"])
       normalized
+    end
+
+    # decision_blurbs is optional model output: an array of { matter_file, blurb }
+    # objects. We keep only well-formed entries (both fields present) so the view
+    # can match each blurb back to a real Layer-1 decision by matter_file. Anything
+    # malformed is dropped rather than raising; the blurbs are decoration, and the
+    # authoritative decision list comes from the database, not the model.
+    def normalize_blurbs(value)
+      Array(value).filter_map do |entry|
+        next unless entry.is_a?(Hash)
+
+        matter_file = entry["matter_file"].to_s.strip
+        blurb = entry["blurb"].to_s.strip
+        next if matter_file.blank? || blurb.blank?
+
+        { "matter_file" => matter_file, "blurb" => blurb }
+      end
     end
 
     def post_chat_completion(system_prompt:, user_prompt:)

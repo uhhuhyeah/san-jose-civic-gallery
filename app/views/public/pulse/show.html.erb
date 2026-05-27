@@ -6,7 +6,6 @@
 
   <section class="front-intro">
     <h1><%= current_jurisdiction.site_title %></h1>
-    <p><%= link_to "Monthly roundups", roundups_path %></p>
   </section>
 
   <nav class="topic-bar" aria-label="Browse matters by topic">
@@ -151,6 +150,14 @@
     </div>
 
     <aside class="mini-stack" aria-label="Site overview">
+      <div class="mini-card roundups-card">
+        <span class="subtle">Monthly roundup</span>
+        <strong>The month in <%= current_jurisdiction.short_name %></strong>
+        <%= link_to roundups_path, class: "button-secondary roundups-cta" do %>
+          Read monthly roundups
+          <span class="roundups-cta-arrow" aria-hidden="true">&rarr;</span>
+        <% end %>
+      </div>
       <div class="mini-card">
         <span class="subtle">Current source records</span>
         <strong><%= pluralize(@stats.fetch(:meetings), "meeting") %>, <%= pluralize(@stats.fetch(:agenda_items), "agenda item") %></strong>

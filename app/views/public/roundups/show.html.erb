@@ -1,53 +1,76 @@
-<article>
-  <h1><%= @artifact.content["headline"] %></h1>
-  <p><%= @artifact.content["intro"] %></p>
-  <%= simple_format(@artifact.content["storyline"].to_s) %>
+<% content_for(:title) { @artifact.content["headline"].presence || "#{@period.label} roundup" } %>
+<% content_for(:description) { "#{current_jurisdiction.short_name} civic activity recap for #{@period.label}: decisions, new business, and meeting highlights." } %>
+
+<main class="page-shell">
+  <%= render "public/shared/topbar" %>
+
+  <p class="breadcrumb"><%= link_to "All monthly roundups", roundups_path %></p>
+
+  <header class="page-header inset-header">
+    <p class="eyebrow">The month in <%= current_jurisdiction.short_name %> · <%= @period.label %></p>
+    <h1><%= @artifact.content["headline"] %></h1>
+    <% if @artifact.content["intro"].present? %>
+      <p><%= @artifact.content["intro"] %></p>
+    <% end %>
+  </header>
+
+  <section class="section-band roundup-storyline">
+    <p class="eyebrow">Automated recap</p>
+    <%= simple_format(@artifact.content["storyline"].to_s) %>
+  </section>
 
   <% if @activity.decisions.any? %>
-    <h2>Decisions</h2>
-    <ul>
-      <% @activity.decisions.each do |decision| %>
-        <li>
-          <%= link_to decision.matter.display_name, public_matter_path(decision.matter) %>
-          <% if decision.matter.descriptive_title.present? %>
-            <%= decision.matter.descriptive_title %>
-          <% end %>
-          passed <%= decision.passed_date %>
-          <% if decision.primary_theme_label.present? %>
-            <%= decision.primary_theme_label %>
-          <% end %>
-        </li>
-      <% end %>
-    </ul>
+    <section class="section-band">
+      <h2>Decisions made</h2>
+      <ul class="roundup-items">
+        <% @activity.decisions.each do |decision| %>
+          <li>
+            <%= link_to decision.matter.display_name, public_matter_path(decision.matter) %>
+            <% if decision.matter.descriptive_title.present? %>
+              <span class="roundup-item-title"><%= decision.matter.descriptive_title %></span>
+            <% end %>
+            <span class="roundup-item-meta">
+              passed <%= decision.passed_date %><% if decision.primary_theme_label.present? %> · <%= decision.primary_theme_label %><% end %>
+            </span>
+            <% if (blurb = @decision_blurbs[decision.matter.matter_file]&.fetch("blurb", nil)).present? %>
+              <p class="roundup-item-blurb"><%= blurb %></p>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </section>
   <% end %>
 
   <% if @activity.introduced.any? %>
-    <h2>Introduced</h2>
-    <ul>
-      <% @activity.introduced.each do |intro| %>
-        <li>
-          <%= link_to intro.matter.display_name, public_matter_path(intro.matter) %>
-          <% if intro.matter.descriptive_title.present? %>
-            <%= intro.matter.descriptive_title %>
-          <% end %>
-          introduced <%= intro.intro_date %>
-          <% if intro.primary_theme_label.present? %>
-            <%= intro.primary_theme_label %>
-          <% end %>
-        </li>
-      <% end %>
-    </ul>
+    <section class="section-band">
+      <h2>Introduced</h2>
+      <ul class="roundup-items">
+        <% @activity.introduced.each do |intro| %>
+          <li>
+            <%= link_to intro.matter.display_name, public_matter_path(intro.matter) %>
+            <% if intro.matter.descriptive_title.present? %>
+              <span class="roundup-item-title"><%= intro.matter.descriptive_title %></span>
+            <% end %>
+            <span class="roundup-item-meta">
+              introduced <%= intro.intro_date %><% if intro.primary_theme_label.present? %> · <%= intro.primary_theme_label %><% end %>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    </section>
   <% end %>
 
   <% if @activity.meetings.any? %>
-    <h2>Meeting highlights</h2>
-    <ul>
-      <% @activity.meetings.each do |meeting| %>
-        <li>
-          <%= link_to (meeting.event.body_name.presence || meeting.event.title.presence || "Meeting"), public_event_path(meeting.event) %>
-          <%= meeting.summary %>
-        </li>
-      <% end %>
-    </ul>
+    <section class="section-band">
+      <h2>Meeting highlights</h2>
+      <ul class="roundup-items">
+        <% @activity.meetings.each do |meeting| %>
+          <li>
+            <%= link_to (meeting.event.body_name.presence || meeting.event.title.presence || "Meeting"), public_event_path(meeting.event) %>
+            <p class="roundup-item-blurb"><%= meeting.summary %></p>
+          </li>
+        <% end %>
+      </ul>
+    </section>
   <% end %>
-</article>
+</main>

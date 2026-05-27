@@ -22,6 +22,11 @@ module Public
         period_start: @period.period_start,
         period_end: @period.period_end
       )
+
+      # Model-written per-decision blurbs, keyed by matter_file so the view can
+      # attach each to its real Layer-1 decision. The decision list itself comes
+      # from the database, not the model; an unmatched blurb is simply not shown.
+      @decision_blurbs = Array(@artifact.content["decision_blurbs"]).index_by { |b| b["matter_file"] }
     end
 
     private

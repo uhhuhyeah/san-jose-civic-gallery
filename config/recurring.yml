@@ -50,6 +50,17 @@ production:
     args: [ { limit: 100, dry_run: false } ]
     schedule: every 2 hours at minute 45
 
+  # Generate monthly civic roundups. Runs at 06:00 on the 10th of each month so
+  # late document uploads and summaries from the prior month have settled before
+  # the recap is written (uploads do not always land on the meeting day).
+  # BackfillMonthlyRoundups only targets closed months, gates on civic activity,
+  # and freezes a period once it has a succeeded roundup (only force regenerates),
+  # so this is safe to run on a recurring basis. See docs/monthly-roundup-plan.md.
+  generate_monthly_roundups:
+    class: Generated::BackfillMonthlyRoundupsJob
+    args: [ { limit: 1, dry_run: false } ]
+    schedule: "0 6 10 * *"
+
   # Discover and re-sync recent SJUSD (Simbli) board meetings. Low cadence and a
   # small limit keep us a polite guest on the vendor platform and avoid
   # re-fetching static older meetings; new and amended meetings sit at the top
