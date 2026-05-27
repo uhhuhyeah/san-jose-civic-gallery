@@ -1,0 +1,11 @@
+<h1>Monthly roundups</h1>
+
+<% if @periods.empty? %>
+  <p>No roundups yet.</p>
+<% else %>
+  <ul>
+    <% @periods.each do |period| %>
+      <li><%= link_to period.label, roundup_path(period) %></li>
+    <% end %>
+  </ul>
+<% end %>

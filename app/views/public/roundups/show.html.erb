@@ -1,0 +1,53 @@
+<article>
+  <h1><%= @artifact.content["headline"] %></h1>
+  <p><%= @artifact.content["intro"] %></p>
+  <%= simple_format(@artifact.content["storyline"].to_s) %>
+
+  <% if @activity.decisions.any? %>
+    <h2>Decisions</h2>
+    <ul>
+      <% @activity.decisions.each do |decision| %>
+        <li>
+          <%= link_to decision.matter.display_name, public_matter_path(decision.matter) %>
+          <% if decision.matter.descriptive_title.present? %>
+            <%= decision.matter.descriptive_title %>
+          <% end %>
+          passed <%= decision.passed_date %>
+          <% if decision.primary_theme_label.present? %>
+            <%= decision.primary_theme_label %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <% if @activity.introduced.any? %>
+    <h2>Introduced</h2>
+    <ul>
+      <% @activity.introduced.each do |intro| %>
+        <li>
+          <%= link_to intro.matter.display_name, public_matter_path(intro.matter) %>
+          <% if intro.matter.descriptive_title.present? %>
+            <%= intro.matter.descriptive_title %>
+          <% end %>
+          introduced <%= intro.intro_date %>
+          <% if intro.primary_theme_label.present? %>
+            <%= intro.primary_theme_label %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <% if @activity.meetings.any? %>
+    <h2>Meeting highlights</h2>
+    <ul>
+      <% @activity.meetings.each do |meeting| %>
+        <li>
+          <%= link_to (meeting.event.body_name.presence || meeting.event.title.presence || "Meeting"), public_event_path(meeting.event) %>
+          <%= meeting.summary %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</article>
