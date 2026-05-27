@@ -1414,3 +1414,61 @@ select#pulse-body-name {
 .pulse-page .newspaper-body > div > .section-title:not(:first-child) {
   margin-top: 34px;
 }
+
+/* Monthly roundups */
+.roundups-card .roundups-cta {
+  justify-content: center;
+  gap: 8px;
+  margin-top: 2px;
+  color: var(--civic-dark);
+}
+
+.roundup-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.roundup-list a {
+  font-weight: 600;
+}
+
+.roundup-storyline {
+  color: var(--ink);
+}
+
+.roundup-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 18px;
+}
+
+.roundup-items > li {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.roundup-items > li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.roundup-item-title {
+  color: var(--ink);
+}
+
+.roundup-item-meta {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.roundup-item-blurb {
+  margin: 6px 0 0;
+  color: var(--ink);
+}

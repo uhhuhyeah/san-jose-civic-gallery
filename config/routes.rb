@@ -34,6 +34,10 @@ Rails.application.routes.draw do
   # consistency with the other front-end controllers.
   get "data", to: "public/data#show", as: :data
 
+  # Monthly roundups
+  get "roundups", to: "public/roundups#index", as: :roundups
+  get "roundups/:period", to: "public/roundups#show", as: :roundup
+
   # Legacy preview path, now the homepage. Permanent-redirect any old shared
   # links to root.
   get "pulse-v2", to: redirect("/", status: 301)
