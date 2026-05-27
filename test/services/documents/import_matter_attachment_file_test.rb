@@ -99,6 +99,38 @@ module Documents
       assert_nil @attachment.source_file_import_error
     end
 
+    test "records the original error and re-raises when the reuse attempt itself fails" do
+      sibling = Civic::MatterAttachment.create!(
+        civic_matter_id: @matter.id,
+        legistar_matter_attachment_id: 39_997,
+        name: "Agreement (sibling)",
+        hyperlink: @attachment.hyperlink,
+        file_name: "agreement.pdf"
+      )
+      sibling.source_file.attach(
+        io: StringIO.new("%PDF-1.4 sibling\n%%EOF\n"),
+        filename: "agreement.pdf",
+        content_type: "application/pdf"
+      )
+      sibling.update!(manually_imported_at: Time.current, manually_imported_by: "operator@example.com")
+
+      # Drop the sibling's stored file (keeping its DB rows) so copying it
+      # raises, exercising the fall-through that preserves the original error.
+      blob = sibling.source_file.blob
+      blob.service.delete(blob.key)
+
+      assert_raises(SafeHttpClient::HttpError) do
+        ImportMatterAttachmentFile.call(
+          matter_attachment: @attachment,
+          downloader: failing_downloader(status: 403)
+        )
+      end
+
+      @attachment.reload
+      assert_not @attachment.source_file.attached?
+      assert_match(/HTTP 403/, @attachment.source_file_import_error)
+    end
+
     test "records the error and re-raises on a 403 when no reusable sibling exists" do
       assert_raises(SafeHttpClient::HttpError) do
         ImportMatterAttachmentFile.call(

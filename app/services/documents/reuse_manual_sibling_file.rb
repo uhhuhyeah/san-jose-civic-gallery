@@ -1,3 +1,5 @@
+require "tempfile"
+
 module Documents
   # Last-resort recovery for an attachment whose source download is blocked
   # (for example, an Akamai HTTP 403). Many Civic::MatterAttachment rows point
@@ -19,8 +21,20 @@ module Documents
       sibling = manual_sibling_for(matter_attachment)
       return nil unless sibling
 
-      copy_file(from: sibling, to: matter_attachment)
-      stamp_metadata(matter_attachment, sibling)
+      # Upload the duplicated blob before opening the transaction: attaching an
+      # io inside a transaction defers the upload to commit (after the source
+      # tempfile is closed). With a fully-uploaded blob in hand, the
+      # transaction only associates it and stamps provenance, so a failed stamp
+      # rolls back the attachment row rather than leaving a file attached with
+      # blank manually_imported_* columns. (A rollback orphans the stored blob
+      # but keeps the record coherent.)
+      blob = duplicate_blob(sibling.source_file)
+
+      matter_attachment.transaction do
+        matter_attachment.source_file.attach(blob)
+        stamp_metadata(matter_attachment, sibling)
+      end
+
       matter_attachment
     end
 
@@ -38,14 +52,23 @@ module Documents
         .first
     end
 
-    def copy_file(from:, to:)
-      from.source_file.open do |file|
-        to.source_file.attach(
-          io: file,
-          filename: from.source_file.filename.to_s,
-          content_type: from.source_file.content_type
-        )
-      end
+    # Stream the sibling's bytes into a new, independently stored blob so the
+    # recovered row does not share a blob with its sibling (purging one would
+    # otherwise orphan the other).
+    def duplicate_blob(source_file)
+      tempfile = Tempfile.new([ "reuse-sibling-attachment", File.extname(source_file.filename.to_s) ])
+      tempfile.binmode
+      source_file.download { |chunk| tempfile.write(chunk) }
+      tempfile.rewind
+
+      ActiveStorage::Blob.create_and_upload!(
+        io: tempfile,
+        filename: source_file.filename.to_s,
+        content_type: source_file.content_type
+      )
+    ensure
+      tempfile&.close
+      tempfile&.unlink
     end
 
     def stamp_metadata(attachment, sibling)

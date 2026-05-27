@@ -29,6 +29,20 @@ module Documents
       assert_match(/Reused operator upload from attachment ##{sibling.id}/, target.manual_import_reason)
     end
 
+    test "prefers the most recently uploaded sibling when several exist" do
+      older = create_manual_sibling(legistar_id: 70_002, operator: "older@example.com")
+      older.update!(manually_imported_at: 2.days.ago)
+      newer = create_manual_sibling(legistar_id: 70_004, operator: "newer@example.com")
+      newer.update!(manually_imported_at: 1.hour.ago)
+      target = create_blocked_attachment(legistar_id: 70_003)
+
+      ReuseManualSiblingFile.call(matter_attachment: target)
+
+      target.reload
+      assert_equal "newer@example.com", target.manually_imported_by
+      assert_match(/attachment ##{newer.id}/, target.manual_import_reason)
+    end
+
     test "returns nil when no manually uploaded sibling shares the hyperlink" do
       target = create_blocked_attachment(legistar_id: 70_003)
 

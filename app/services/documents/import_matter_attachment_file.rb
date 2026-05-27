@@ -50,8 +50,18 @@ module Documents
 
         matter_attachment
       rescue StandardError => error
-        if reusable_after?(error) && (reused = ReuseManualSiblingFile.call(matter_attachment:))
-          return reused
+        if reusable_after?(error)
+          reused =
+            begin
+              ReuseManualSiblingFile.call(matter_attachment:)
+            rescue StandardError => reuse_error
+              Rails.logger.warn(
+                "ReuseManualSiblingFile failed for matter attachment #{matter_attachment.id}: " \
+                  "#{reuse_error.class}: #{reuse_error.message}"
+              )
+              nil
+            end
+          return reused if reused
         end
 
         matter_attachment.update!(
