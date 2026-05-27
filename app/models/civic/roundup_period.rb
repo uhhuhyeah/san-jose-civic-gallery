@@ -7,7 +7,7 @@ module Civic
     validates :period_start, presence: true
     validates :period_end, presence: true
     validates :label, presence: true
-    validates :period_start, uniqueness: { scope: [:civic_jurisdiction_id, :period_end] }
+    validates :period_start, uniqueness: { scope: [ :civic_jurisdiction_id, :period_end ] }
 
     scope :for_jurisdiction, ->(jurisdiction) { where(civic_jurisdiction: jurisdiction) }
     scope :recent_first, -> { order(period_start: :desc) }

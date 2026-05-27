@@ -174,6 +174,25 @@ module Generated
         refute result[:truncated]
       end
 
+      # The model must receive exactly the facts that were hashed. If the user
+      # prompt sent untruncated facts while the hash covered the truncated text,
+      # idempotency would ignore the tail and providers could be overrun.
+      test "user prompt sends the same truncated facts that are hashed" do
+        result = Generated::Prompts::MonthlyRoundupV1.build(
+          period: @period,
+          activity: @activity,
+          max_input_chars: 40,
+        )
+
+        assert result[:truncated]
+        assert_includes result[:user_prompt], "[truncated]"
+        assert_includes result[:sent_content], "[truncated]"
+        # The facts block in the user prompt is bounded by the limit plus the marker,
+        # so the untruncated tail never reaches the model.
+        facts = result[:user_prompt][/<facts>\n(.*)\n<\/facts>/m, 1]
+        assert_operator facts.length, :<=, 40 + Generated::Prompts::MonthlyRoundupV1::TRUNCATION_MARKER.length
+      end
+
       # --- no em dashes anywhere in output ----------------------------------
 
       test "built output contains no em-dash character" do
@@ -212,7 +231,7 @@ module Generated
           prompt_version: Generated::SummarizeEvent::PROMPT::VERSION,
           input_sha256: "test-monthly-#{event.id}",
           status: status,
-          content: { "summary" => "Council discussed housing.", "key_topics" => ["Housing"], "limitations" => [] },
+          content: { "summary" => "Council discussed housing.", "key_topics" => [ "Housing" ], "limitations" => [] },
           generated_at: Time.current,
         )
       end

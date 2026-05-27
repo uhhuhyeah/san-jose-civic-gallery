@@ -53,7 +53,7 @@ module Generated
 
     # All jurisdictions when none is given; otherwise just the one.
     def jurisdictions
-      jurisdiction ? [jurisdiction] : Civic::Jurisdiction.all.to_a
+      jurisdiction ? [ jurisdiction ] : Civic::Jurisdiction.all.to_a
     end
 
     def candidate_periods
@@ -61,7 +61,7 @@ module Generated
     end
 
     def candidate_periods_for(j)
-      months = month ? [explicit_month] : recent_activity_months(j)
+      months = month ? [ explicit_month ] : recent_activity_months(j)
       periods = months.filter_map do |first_of_month|
         next unless closed?(first_of_month)
         Civic::RoundupPeriod.for_month(

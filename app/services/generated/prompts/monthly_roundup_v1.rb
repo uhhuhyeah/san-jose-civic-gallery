@@ -135,7 +135,7 @@ module Generated
           #{theme_momentum_text}
 
           <facts>
-          #{facts_text}
+          #{truncated_facts_text}
           </facts>
         PROMPT
       end
@@ -192,7 +192,7 @@ module Generated
           title_part = title ? " #{title}" : ""
           theme = d.primary_theme_label.presence
           theme_part = theme ? " [#{theme}]" : ""
-          "- #{d.matter.display_name}:#{title_part} (passed #{d.passed_date.to_s})#{theme_part}"
+          "- #{d.matter.display_name}:#{title_part} (passed #{d.passed_date})#{theme_part}"
         end
         "Decisions made:\n#{lines.join("\n")}"
       end
@@ -206,7 +206,7 @@ module Generated
           title_part = title ? " #{title}" : ""
           theme = i.primary_theme_label.presence
           theme_part = theme ? " [#{theme}]" : ""
-          "- #{i.matter.display_name}:#{title_part} (introduced #{i.intro_date.to_s})#{theme_part}"
+          "- #{i.matter.display_name}:#{title_part} (introduced #{i.intro_date})#{theme_part}"
         end
         "Introduced:\n#{lines.join("\n")}"
       end
@@ -227,12 +227,13 @@ module Generated
 
       # --- truncation -------------------------------------------------------
 
+      # The single facts string that is BOTH sent to the model and hashed, so the
+      # idempotency key always reflects exactly what the model received. Memoized
+      # so the user prompt and sent_content share one computation.
       def truncated_facts_text
-        raw = facts_text
-        if raw.length > max_input_chars
-          raw[0, max_input_chars] + TRUNCATION_MARKER
-        else
-          raw
+        @truncated_facts_text ||= begin
+          raw = facts_text
+          raw.length > max_input_chars ? raw[0, max_input_chars] + TRUNCATION_MARKER : raw
         end
       end
 

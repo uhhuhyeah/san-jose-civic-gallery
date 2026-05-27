@@ -185,7 +185,7 @@ module Public
       assert_equal 1, result.size
       assert_equal event, result.first.event
       assert_equal "Council discussed housing.", result.first.summary
-      assert_equal ["Housing"], result.first.key_topics
+      assert_equal [ "Housing" ], result.first.key_topics
     end
 
     test "meetings excludes event with no artifact" do
@@ -293,7 +293,7 @@ module Public
         prompt_version: Generated::SummarizeEvent::PROMPT::VERSION,
         input_sha256: "test-#{event.id}",
         status: status,
-        content: { "summary" => "Council discussed housing.", "key_topics" => ["Housing"], "limitations" => [] },
+        content: { "summary" => "Council discussed housing.", "key_topics" => [ "Housing" ], "limitations" => [] },
         generated_at: Time.current,
       )
     end
