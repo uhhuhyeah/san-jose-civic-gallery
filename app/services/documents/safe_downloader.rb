@@ -40,7 +40,7 @@ module Documents
             redirect_url = resolve_redirect(original_url: url, response:, redirects_remaining:)
             return download(url: redirect_url, io:, redirects_remaining: redirects_remaining - 1)
           else
-            raise HttpError, "HTTP #{response.code} from #{url}"
+            raise HttpError.new("HTTP #{response.code} from #{url}", status: response.code.to_i)
           end
         end
       end
