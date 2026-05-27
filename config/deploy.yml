@@ -1,13 +1,14 @@
+<% deploy_host = ENV.fetch("DEPLOY_HOST", "31.220.108.29") %>
 service: san-jose-civic-gallery
 image: uhhuhyeah/san-jose-civic-gallery
 
 servers:
   web:
     hosts:
-      - 31.220.108.29
+      - <%= deploy_host %>
   jobs:
     hosts:
-      - 31.220.108.29
+      - <%= deploy_host %>
     cmd: ./bin/jobs
 
 proxy:
@@ -28,7 +29,7 @@ builder:
   # Build on the native-amd64 deploy host so the ghcr.io push happens over the
   # server's datacenter uplink instead of a local connection (which was
   # stalling the blob upload), and to skip QEMU emulation.
-  remote: ssh://root@31.220.108.29
+  remote: ssh://root@<%= deploy_host %>
 
 env:
   clear:
