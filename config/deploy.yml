@@ -25,6 +25,10 @@ registry:
 
 builder:
   arch: amd64
+  # Build on the native-amd64 deploy host so the ghcr.io push happens over the
+  # server's datacenter uplink instead of a local connection (which was
+  # stalling the blob upload), and to skip QEMU emulation.
+  remote: ssh://root@31.220.108.29
 
 env:
   clear:
