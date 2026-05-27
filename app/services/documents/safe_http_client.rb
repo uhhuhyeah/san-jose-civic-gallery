@@ -14,7 +14,15 @@ module Documents
     class DisallowedSchemeError < Error; end
     class TooLargeError < Error; end
     class TooManyRedirectsError < Error; end
-    class HttpError < Error; end
+
+    class HttpError < Error
+      attr_reader :status
+
+      def initialize(message = nil, status: nil)
+        super(message)
+        @status = status
+      end
+    end
 
     DEFAULT_ALLOWED_HOSTS = %w[
       sanjose.legistar.com

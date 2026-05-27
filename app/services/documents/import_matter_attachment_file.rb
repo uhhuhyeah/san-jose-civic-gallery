@@ -12,6 +12,11 @@ module Documents
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => ".docx"
     }.freeze
 
+    # Access-blocked HTTP responses where re-downloading will keep failing and
+    # an operator may already have manually uploaded the same file for a
+    # sibling attachment with the same hyperlink. See ReuseManualSiblingFile.
+    REUSABLE_AFTER_HTTP_STATUSES = [ 401, 403, 451 ].freeze
+
     def self.call(matter_attachment:, downloader: SafeDownloader)
       raise ArgumentError, "Matter attachment hyperlink is missing" if matter_attachment.hyperlink.blank?
 
@@ -45,6 +50,20 @@ module Documents
 
         matter_attachment
       rescue StandardError => error
+        if reusable_after?(error)
+          reused =
+            begin
+              ReuseManualSiblingFile.call(matter_attachment:)
+            rescue StandardError => reuse_error
+              Rails.logger.warn(
+                "ReuseManualSiblingFile failed for matter attachment #{matter_attachment.id}: " \
+                  "#{reuse_error.class}: #{reuse_error.message}"
+              )
+              nil
+            end
+          return reused if reused
+        end
+
         matter_attachment.update!(
           source_file_import_error: "#{error.class}: #{error.message}"
         )
@@ -54,6 +73,12 @@ module Documents
         tempfile.unlink
       end
     end
+
+    def self.reusable_after?(error)
+      error.is_a?(SafeHttpClient::HttpError) &&
+        REUSABLE_AFTER_HTTP_STATUSES.include?(error.status)
+    end
+    private_class_method :reusable_after?
 
     def self.filename_for(matter_attachment, content_type)
       return matter_attachment.file_name if matter_attachment.file_name.present?
