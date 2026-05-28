@@ -1,64 +1,63 @@
-<section class="glossary-section section-band" aria-labelledby="civic-gallery-heading">
-    <div class="section-title">
-      <h2 id="civic-gallery-heading">Civic Gallery Terms</h2>
-      <span>How this site labels records</span>
-    </div>
+<section class="atlas-glossary-section" aria-labelledby="civic-gallery-heading">
+  <%= render "public/shared/atlas_section_heading",
+             title: "Civic Gallery terms",
+             label: "How this site labels records" %>
 
-    <div class="glossary-grid">
-      <article class="glossary-term">
-        <h3>Extracted Text</h3>
-        <p>
-          Text that Civic Gallery extracts from an official attachment. It helps
-          search and preview documents, but it is not a replacement for the
-          official PDF or source file.
-        </p>
-      </article>
+  <div class="atlas-glossary-grid">
+    <article class="atlas-glossary-term">
+      <h3>Extracted Text</h3>
+      <p>
+        Text that Civic Gallery extracts from an official attachment. It helps
+        search and preview documents, but it is not a replacement for the
+        official PDF or source file.
+      </p>
+    </article>
 
-      <article class="glossary-term">
-        <h3>Generated Summary</h3>
-        <p>
-          An AI-produced summary based on extracted text. It is assistive and
-          may be incomplete or wrong, so the official attachment should be
-          reviewed before relying on the summary.
-        </p>
-      </article>
+    <article class="atlas-glossary-term">
+      <h3>Generated Summary</h3>
+      <p>
+        An AI-produced summary based on extracted text. It is assistive and
+        may be incomplete or wrong, so the official attachment should be
+        reviewed before relying on the summary.
+      </p>
+    </article>
 
-      <article class="glossary-term">
-        <h3>Theme</h3>
-        <p>
-          A broad subject area, such as <%= current_jurisdiction.city? ? "Housing or Transportation" : "Curriculum or School Safety" %>, that Civic
-          Gallery assigns to a matter using AI. Themes are assistive labels to
-          help browsing, not official classifications, and a matter can carry
-          more than one.
-        </p>
-      </article>
+    <article class="atlas-glossary-term">
+      <h3>Theme</h3>
+      <p>
+        A broad subject area, such as <%= current_jurisdiction.city? ? "Housing or Transportation" : "Curriculum or School Safety" %>, that Civic
+        Gallery assigns to a matter using AI. Themes are assistive labels to
+        help browsing, not official classifications, and a matter can carry
+        more than one.
+      </p>
+    </article>
 
-      <article class="glossary-term">
-        <h3>Pulse</h3>
-        <p>
-          The homepage view of which themes <%= current_jurisdiction.governing_bodies_phrase %> appear to have
-          focused on recently. "Heating up" highlights themes appearing on more
-          agendas this quarter than last. It is derived from AI theme tags and
-          is a guide for discovery, not an official measure.
-        </p>
-      </article>
+    <article class="atlas-glossary-term">
+      <h3>Pulse</h3>
+      <p>
+        The homepage view of which themes <%= current_jurisdiction.governing_bodies_phrase %> appear to have
+        focused on recently. "Heating up" highlights themes appearing on more
+        agendas this quarter than last. It is derived from AI theme tags and
+        is a guide for discovery, not an official measure.
+      </p>
+    </article>
 
-      <article class="glossary-term">
-        <h3>Source Snapshot</h3>
-        <p>
-          A stored copy of an official source payload observed during ingestion.
-          It helps Civic Gallery keep records traceable to the public source
-          data that produced them.
-        </p>
-      </article>
+    <article class="atlas-glossary-term">
+      <h3>Source Snapshot</h3>
+      <p>
+        A stored copy of an official source payload observed during ingestion.
+        It helps Civic Gallery keep records traceable to the public source
+        data that produced them.
+      </p>
+    </article>
 
-      <article class="glossary-term">
-        <h3>Source Present</h3>
-        <p>
-          A Civic Gallery status meaning the record still appears in the latest
-          source data. If a record disappears from the source, the app preserves
-          the historical record while marking that source absence separately.
-        </p>
-      </article>
-    </div>
-  </section>
+    <article class="atlas-glossary-term">
+      <h3>Source Present</h3>
+      <p>
+        A Civic Gallery status meaning the record still appears in the latest
+        source data. If a record disappears from the source, the app preserves
+        the historical record while marking that source absence separately.
+      </p>
+    </article>
+  </div>
+</section>

@@ -1,12 +1,19 @@
 <%
   percent = denominator.positive? ? (numerator.to_f / denominator * 100).round : nil
-  filled = percent ? (percent / 10.0).round : 0
-  bar = ("█" * filled) + ("░" * (10 - filled))
+  fill_variant = case percent
+                 when nil then nil
+                 when 0..49 then "low"
+                 when 50..79 then "mid"
+                 else nil
+                 end
+  fill_classes = [ "atlas-data-rate-fill", ("atlas-data-rate-fill--#{fill_variant}" if fill_variant) ].compact.join(" ")
 %>
-<div class="data-rate">
-  <div class="data-rate-label"><%= label %></div>
-  <div class="data-rate-meter" aria-hidden="true"><%= bar %></div>
-  <div class="data-rate-value">
+<div class="atlas-data-rate" role="group" aria-label="<%= label %>">
+  <div class="atlas-data-rate-label"><%= label %></div>
+  <div class="atlas-data-rate-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= percent || 0 %>" aria-label="<%= label %>: <%= percent ? "#{percent}%" : "no eligible records" %>">
+    <div class="<%= fill_classes %>" style="width: <%= percent || 0 %>%;"></div>
+  </div>
+  <div class="atlas-data-rate-value">
     <% if percent %>
       <strong><%= percent %>%</strong>
       <span>(<%= number_with_delimiter(numerator) %> / <%= number_with_delimiter(denominator) %>)</span>

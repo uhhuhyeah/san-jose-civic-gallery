@@ -191,6 +191,7 @@
   --atlas-heat:         #d9663f;
   --atlas-heat-soft:    #efb89c;
   --atlas-sage:         #6f8068;
+  --atlas-amber:        #b89048;
 
   --atlas-serif: "Fraunces", "Iowan Old Style", Georgia, serif;
   --atlas-sans:  "Inter Tight", ui-sans-serif, system-ui, sans-serif;
@@ -315,11 +316,11 @@
   font-size: 16px;
   color: var(--atlas-oxblood);
 }
-.atlas-shell .atlas-topbar .atlas-brand-sub::before {
+/* .atlas-shell .atlas-topbar .atlas-brand-sub::before {
   content: "— ";
   color: var(--atlas-rule);
   margin-right: 2px;
-}
+} */
 
 .atlas-shell .atlas-topbar nav {
   display: flex;
@@ -531,7 +532,6 @@
   color: var(--atlas-ink-mute);
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  max-width: 80ch;
 }
 .atlas-shell .atlas-summary .atlas-ai-note svg { color: var(--atlas-heat); flex: none; }
 
@@ -1442,6 +1442,436 @@
 
 
 /* ============================================================
+ * DATA HEALTH — transparency / ingestion status at /data.
+ * Header + freshness banner + facts-strip ("what we have") + sections of
+ * stat cards + rate meters for reliability + closing about block.
+ * ============================================================ */
+
+.atlas-shell .atlas-data-header {
+  padding: 28px 0 16px;
+  border-bottom: 1px solid var(--atlas-rule);
+}
+.atlas-shell .atlas-data-header .atlas-eyebrow {
+  color: var(--atlas-oxblood);
+}
+.atlas-shell .atlas-data-header h1 {
+  margin: 8px 0 12px;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 144, "SOFT" 50, "WONK" 0;
+  font-weight: 400;
+  font-size: clamp(36px, 5vw, 60px);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.atlas-shell .atlas-data-header p {
+  margin: 0;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 18, "SOFT" 50, "WONK" 0;
+  font-weight: 350;
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--atlas-ink-soft);
+  max-width: 70ch;
+}
+
+/* Empty-state card for when nothing has been ingested. */
+.atlas-shell .atlas-data-empty {
+  margin: 28px 0 0;
+  padding: 28px 32px;
+  background: var(--atlas-paper);
+  border: 1px dashed var(--atlas-rule);
+  border-radius: var(--atlas-r-lg);
+}
+.atlas-shell .atlas-data-empty h2 {
+  margin: 0 0 8px;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 30, "SOFT" 50, "WONK" 0;
+  font-weight: 450;
+  font-size: 22px;
+  letter-spacing: -0.015em;
+}
+.atlas-shell .atlas-data-empty p {
+  margin: 0;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--atlas-ink-soft);
+  max-width: 70ch;
+}
+.atlas-shell .atlas-data-empty code {
+  font-family: var(--atlas-mono);
+  font-size: 13px;
+  background: var(--atlas-paper-deep);
+  border: 1px solid var(--atlas-paper-edge);
+  border-radius: var(--atlas-r);
+  padding: 1px 6px;
+}
+
+/* Freshness banner (status dot + last-sync time + source). */
+.atlas-shell .atlas-data-freshness {
+  margin: 28px 0 0;
+  padding: 14px 18px;
+  background: var(--atlas-paper);
+  border: 1px solid var(--atlas-rule);
+  border-left: 3px solid var(--atlas-sage);
+  border-radius: var(--atlas-r-lg);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+.atlas-shell .atlas-data-freshness--amber   { border-left-color: var(--atlas-amber); }
+.atlas-shell .atlas-data-freshness--red     { border-left-color: var(--atlas-heat); }
+.atlas-shell .atlas-data-freshness--unknown { border-left-color: var(--atlas-ink-mute); }
+
+.atlas-shell .atlas-data-freshness-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--atlas-sage);
+  flex: none;
+}
+.atlas-shell .atlas-data-freshness--amber   .atlas-data-freshness-dot { background: var(--atlas-amber); }
+.atlas-shell .atlas-data-freshness--red     .atlas-data-freshness-dot { background: var(--atlas-heat); }
+.atlas-shell .atlas-data-freshness--unknown .atlas-data-freshness-dot { background: var(--atlas-ink-mute); }
+
+.atlas-shell .atlas-data-freshness-status {
+  font-family: var(--atlas-sans);
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--atlas-ink);
+}
+.atlas-shell .atlas-data-freshness-source {
+  margin-left: auto;
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--atlas-ink-mute);
+}
+
+/* Section heading + content blocks. */
+.atlas-shell .atlas-data-section { padding-top: 44px; }
+.atlas-shell .atlas-data-section .atlas-section-head { margin-bottom: 18px; }
+.atlas-shell .atlas-data-section-note {
+  margin: 0 0 14px;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--atlas-ink-soft);
+  max-width: 75ch;
+}
+
+/* Grid of stat cards. */
+.atlas-shell .atlas-data-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+.atlas-shell .atlas-data-stat {
+  background: var(--atlas-paper-deep);
+  border: 1px solid var(--atlas-paper-edge);
+  border-radius: var(--atlas-r-lg);
+  padding: 14px 16px;
+}
+.atlas-shell .atlas-data-stat dt {
+  font-family: var(--atlas-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--atlas-ink-mute);
+  margin-bottom: 6px;
+}
+.atlas-shell .atlas-data-stat dd {
+  margin: 0;
+}
+.atlas-shell .atlas-data-stat strong {
+  display: inline-block;
+  font-family: var(--atlas-sans);
+  font-weight: 500;
+  font-size: 22px;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  color: var(--atlas-ink);
+  font-variant-numeric: tabular-nums;
+}
+.atlas-shell .atlas-data-stat span {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 12, "SOFT" 50, "WONK" 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--atlas-ink-soft);
+}
+.atlas-shell .atlas-data-stat .atlas-data-stat-sep {
+  display: inline-block;
+  color: var(--atlas-paper-edge);
+  margin: 0 8px;
+  font-weight: 400;
+}
+
+/* Rate meters — coverage percentages. */
+.atlas-shell .atlas-data-rate {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: var(--atlas-paper);
+  border: 1px solid var(--atlas-rule);
+  border-radius: var(--atlas-r-lg);
+}
+.atlas-shell .atlas-data-rate-label {
+  font-family: var(--atlas-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--atlas-ink);
+  margin-bottom: 8px;
+}
+.atlas-shell .atlas-data-rate-bar {
+  background: var(--atlas-paper-edge);
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.atlas-shell .atlas-data-rate-fill {
+  height: 100%;
+  background: var(--atlas-sage);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+.atlas-shell .atlas-data-rate-fill--mid { background: var(--atlas-amber); }
+.atlas-shell .atlas-data-rate-fill--low { background: var(--atlas-heat); }
+.atlas-shell .atlas-data-rate-value {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--atlas-ink-mute);
+}
+.atlas-shell .atlas-data-rate-value strong {
+  font-family: var(--atlas-sans);
+  font-weight: 500;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+  color: var(--atlas-ink);
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+}
+
+/* Closing "About this page" block. */
+.atlas-shell .atlas-data-about {
+  margin-top: 44px;
+  padding: 22px 24px;
+  background: var(--atlas-paper-deep);
+  border: 1px solid var(--atlas-paper-edge);
+  border-radius: var(--atlas-r-lg);
+}
+.atlas-shell .atlas-data-about h3 {
+  margin: 0 0 10px;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 24, "SOFT" 50, "WONK" 0;
+  font-weight: 450;
+  font-size: 18px;
+  letter-spacing: -0.012em;
+}
+.atlas-shell .atlas-data-about p {
+  margin: 0 0 12px;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--atlas-ink-soft);
+}
+.atlas-shell .atlas-data-about p:last-child { margin-bottom: 0; }
+.atlas-shell .atlas-data-about ul {
+  margin: 0 0 12px 0;
+  padding-left: 18px;
+}
+.atlas-shell .atlas-data-about ul ul { margin: 4px 0; }
+.atlas-shell .atlas-data-about li {
+  font-family: var(--atlas-serif);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--atlas-ink-soft);
+  margin: 4px 0;
+}
+.atlas-shell .atlas-data-about code {
+  font-family: var(--atlas-mono);
+  font-size: 12.5px;
+  background: var(--atlas-paper);
+  border: 1px solid var(--atlas-rule);
+  border-radius: var(--atlas-r);
+  padding: 1px 5px;
+  color: var(--atlas-ink-soft);
+}
+.atlas-shell .atlas-data-about a {
+  color: var(--atlas-oxblood);
+  border-bottom: 1px dotted var(--atlas-oxblood);
+  padding-bottom: 1px;
+}
+.atlas-shell .atlas-data-about a:hover {
+  text-decoration: none;
+  border-bottom-style: solid;
+}
+
+/* AI-disclaimer line at the bottom. */
+.atlas-shell .atlas-data-ai-note {
+  margin-top: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  color: var(--atlas-ink-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  border-top: 1px solid var(--atlas-rule);
+}
+.atlas-shell .atlas-data-ai-note svg {
+  color: var(--atlas-heat);
+  flex: none;
+}
+
+
+/* ============================================================
+ * GLOSSARY — plain-language reference page at /glossary.
+ * Header + intro note + grouped grids of term cards + sources block.
+ * ============================================================ */
+
+.atlas-shell .atlas-glossary-header {
+  padding: 28px 0 16px;
+  border-bottom: 1px solid var(--atlas-rule);
+}
+.atlas-shell .atlas-glossary-header .atlas-eyebrow {
+  color: var(--atlas-oxblood);
+}
+.atlas-shell .atlas-glossary-header h1 {
+  margin: 8px 0 12px;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 144, "SOFT" 50, "WONK" 0;
+  font-weight: 400;
+  font-size: clamp(36px, 5vw, 60px);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.atlas-shell .atlas-glossary-header p {
+  margin: 0;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 18, "SOFT" 50, "WONK" 0;
+  font-weight: 350;
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--atlas-ink-soft);
+}
+
+.atlas-shell .atlas-glossary-note {
+  margin: 24px 0 0;
+  padding: 16px 20px;
+  background: var(--atlas-paper-deep);
+  border-radius: var(--atlas-r-lg);
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--atlas-ink-soft);
+}
+.atlas-shell .atlas-glossary-note p { margin: 0; }
+
+.atlas-shell .atlas-glossary-section {
+  padding: 44px 0 0;
+}
+
+.atlas-shell .atlas-glossary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.atlas-shell .atlas-glossary-term {
+  background: var(--atlas-paper);
+  border: 1px solid var(--atlas-rule);
+  border-radius: var(--atlas-r-lg);
+  padding: 18px 20px 16px;
+}
+.atlas-shell .atlas-glossary-term h3 {
+  margin: 0 0 8px;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 30, "SOFT" 50, "WONK" 0;
+  font-weight: 450;
+  font-size: 18px;
+  line-height: 1.2;
+  letter-spacing: -0.012em;
+  color: var(--atlas-ink);
+}
+.atlas-shell .atlas-glossary-term p {
+  margin: 0;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--atlas-ink-soft);
+}
+.atlas-shell .atlas-glossary-term p + p { margin-top: 10px; }
+.atlas-shell .atlas-glossary-term--wide {
+  grid-column: 1 / -1;
+  margin-top: 16px;
+  border-left: 3px solid var(--atlas-oxblood);
+}
+.atlas-shell .atlas-glossary-term--wide h3 { font-size: 20px; }
+.atlas-shell .atlas-glossary-term--wide p { font-size: 15.5px; }
+.atlas-shell .atlas-glossary-term code {
+  font-family: var(--atlas-mono);
+  font-size: 12.5px;
+  background: var(--atlas-paper-deep);
+  border: 1px solid var(--atlas-paper-edge);
+  border-radius: var(--atlas-r);
+  padding: 1px 5px;
+  color: var(--atlas-ink-soft);
+}
+.atlas-shell .atlas-glossary-term a {
+  color: var(--atlas-oxblood);
+  border-bottom: 1px dotted var(--atlas-oxblood);
+  padding-bottom: 1px;
+}
+.atlas-shell .atlas-glossary-term a:hover {
+  text-decoration: none;
+  border-bottom-style: solid;
+}
+
+/* Sources block — references list at the bottom. */
+.atlas-shell .atlas-glossary-sources {
+  margin-top: 56px;
+  padding-top: 28px;
+  border-top: 1px solid var(--atlas-rule);
+}
+.atlas-shell .atlas-glossary-sources ol {
+  margin: 16px 0 0;
+  padding-left: 22px;
+}
+.atlas-shell .atlas-glossary-sources li {
+  margin: 8px 0;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 12, "SOFT" 50, "WONK" 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--atlas-ink-soft);
+}
+.atlas-shell .atlas-glossary-sources li a {
+  color: var(--atlas-oxblood);
+  border-bottom: 1px dotted var(--atlas-oxblood);
+  padding-bottom: 1px;
+}
+
+
+/* ============================================================
  * MEETINGS INDEX — listing page for /public/meetings (Phase 5).
  * Same general shape as the matters index (header, banner, filter form,
  * list of rows, empty state) but rows lead with a medium date plate and
@@ -1472,7 +1902,6 @@
   font-size: 18px;
   line-height: 1.45;
   color: var(--atlas-ink-soft);
-  max-width: 60ch;
 }
 
 /* Month nav strip (prev / current / next), filter-preserving. */

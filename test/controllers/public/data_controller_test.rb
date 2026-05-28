@@ -52,10 +52,11 @@ module Public
       get data_url
 
       assert_response :success
-      assert_includes response.body, "What we have"
-      assert_includes response.body, "Freshness"
-      assert_includes response.body, "Reliability"
-      assert_includes response.body, "Reconciliation"
+      # New Atlas section headings (em-flourish wraps the second word)
+      assert_select ".atlas-section-head h2 .atlas-em", text: "we have"
+      assert_select ".atlas-section-head h2 .atlas-em", text: "fresh"
+      assert_select ".atlas-section-head h2 .atlas-em", text: "reliable"
+      assert_select ".atlas-section-head h2 .atlas-em", text: "fell out"
       assert_includes response.body, "About this page"
       # New label and shared denominator (1 processed of 4 eligible = 25%).
       assert_includes response.body, "Attachments with imported source files"
@@ -115,6 +116,42 @@ module Public
       assert_includes response.body, "Data Health"
       assert_includes response.body, data_path
       assert_includes response.body, public_meetings_path
+    end
+
+    test "data page renders inside the Atlas shell" do
+      get data_url
+
+      assert_response :success
+      assert_select "body.atlas-shell"
+      assert_select "link[rel=stylesheet][href*=atlas]"
+      assert_select "header.atlas-data-header h1", text: "Data Health"
+    end
+
+    test "freshness banner status variant reflects the snapshot freshness level" do
+      Civic::Event.create!(legistar_event_id: 1, body_name: "City Council", event_date: Date.current, last_synced_at: 2.hours.ago)
+
+      get data_url
+
+      assert_response :success
+      assert_select "section.atlas-data-freshness"
+      assert_select ".atlas-data-freshness-dot"
+    end
+
+    test "rate meters render with progressbar role and percentage labels" do
+      matter = Civic::Matter.create!(legistar_matter_id: 1, matter_file: "26-001", last_synced_at: 2.hours.ago)
+      3.times do |i|
+        matter.all_attachments.create!(
+          legistar_matter_attachment_id: 100 + i,
+          name: "Pending #{i}",
+          hyperlink: "https://sanjose.legistar.com/View.ashx?ID=#{100 + i}"
+        )
+      end
+
+      get data_url
+
+      assert_response :success
+      assert_select ".atlas-data-rate[role=group]", minimum: 5
+      assert_select ".atlas-data-rate-bar[role=progressbar]"
     end
   end
 end
