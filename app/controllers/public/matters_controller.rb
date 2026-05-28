@@ -27,10 +27,53 @@ module Public
       @event_items = @matter.event_items.agenda_order.includes(:event)
       @primary_theme = @matter.themes.detect { |theme| theme.rank == 1 }
       @matter_cache_version = Public::CacheVersion.matter_show(@matter)
+      load_matter_atlas_context
       stale?(etag: @matter_cache_version, public: true)
     end
 
     private
+
+    SHOW_CACHE_TTL = 10.minutes
+    SIBLING_MATTERS_LIMIT = 4
+
+    # Atlas sidebar data for the matter detail page. Each piece is small and
+    # cheap to compute, so we co-locate them rather than splitting into another
+    # service object. Cached per-matter under the existing matter_cache_version.
+    def load_matter_atlas_context
+      @latest_event_item = @event_items.max_by { |item| item.event.event_date }
+      @latest_event = @latest_event_item&.event
+      @sibling_matters = cached_sibling_matter_ids.then do |ids|
+        records_in_cached_order(ids, Civic::Matter.for_jurisdiction(current_jurisdiction).includes(:themes))
+      end
+      @primary_theme_stat = cached_primary_theme_stat
+    end
+
+    # Sibling matters from the most recent meeting this matter was heard at.
+    # Filters out the matter itself; excluded from rendering when empty.
+    def cached_sibling_matter_ids
+      Rails.cache.fetch([ @matter_cache_version, "sibling-matter-ids" ], expires_in: SHOW_CACHE_TTL) do
+        next [] if @latest_event.nil?
+
+        Civic::Matter
+          .for_jurisdiction(current_jurisdiction)
+          .joins(:event_items)
+          .where(civic_event_items: { civic_event_id: @latest_event.id })
+          .where.not(id: @matter.id)
+          .distinct
+          .limit(SIBLING_MATTERS_LIMIT)
+          .pluck(:id)
+      end
+    end
+
+    # Pulse stat for the matter's primary theme — drives the Atlas-language
+    # sidebar tile. Returns nil when the matter has no primary theme yet.
+    def cached_primary_theme_stat
+      return nil unless @primary_theme
+
+      Rails.cache.fetch([ @matter_cache_version, "primary-theme-stat", @primary_theme.theme_slug ], expires_in: SHOW_CACHE_TTL) do
+        Public::ThemePulse.new(jurisdiction: current_jurisdiction).stats.find { |stat| stat.slug == @primary_theme.theme_slug }
+      end
+    end
 
     INDEX_CACHE_TTL = 5.minutes
 
