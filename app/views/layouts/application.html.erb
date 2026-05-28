@@ -34,7 +34,7 @@
     <%= Sentry.get_trace_propagation_meta.html_safe %>
   </head>
 
-  <body>
+  <%= content_tag :body, class: content_for(:body_class).presence do %>
     <%= yield %>
-  </body>
+  <% end %>
 </html>

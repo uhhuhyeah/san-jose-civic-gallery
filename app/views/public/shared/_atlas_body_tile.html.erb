@@ -1,0 +1,35 @@
+<%# Atlas body tile — paper-deep tile summarizing a body (committee, commission).
+    Mirrors the theme tile's shape so the rail rhythm is consistent.
+    Locals:
+      name:        body name (required)
+      acronym:     short acronym chip (optional, e.g. "T&E")
+      count:       integer
+      label:       text under the count (e.g. "Meetings on record · since 2022")
+      cta:         optional CTA link text (e.g. "See all meetings of this body")
+      href:        link target (optional — tile becomes <a> if present)
+      aria_label:  optional accessible name override
+%>
+<%
+  acronym    = local_assigns[:acronym]
+  cta        = local_assigns[:cta]
+  href       = local_assigns[:href]
+  aria_label = local_assigns[:aria_label] || "#{name}: #{count} #{label}"
+  tag_name   = href.present? ? :a : :article
+  tag_attrs  = { class: "atlas-body-tile", "aria-label": aria_label }
+  tag_attrs[:href] = href if href.present?
+%>
+<%= content_tag(tag_name, tag_attrs) do %>
+  <div class="atlas-body-tile-row">
+    <h3 class="atlas-body-tile-name"><%= name %></h3>
+    <% if acronym.present? %>
+      <span class="atlas-body-tile-acronym"><%= acronym %></span>
+    <% end %>
+  </div>
+  <p class="atlas-body-tile-count"><%= number_with_delimiter(count) %></p>
+  <% if local_assigns[:label].present? %>
+    <p class="atlas-body-tile-label"><%= label %></p>
+  <% end %>
+  <% if cta.present? %>
+    <span class="atlas-body-tile-cta"><%= cta %></span>
+  <% end %>
+<% end %>

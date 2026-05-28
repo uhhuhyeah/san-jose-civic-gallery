@@ -1,0 +1,53 @@
+<%# Atlas theme tile — the treemap primitive. Re-used in the homepage Atlas grid,
+    the matter page sidebar ("Theme"), and anywhere a theme is summarized.
+
+    Locals:
+      name:           theme label (required)
+      count:          appearances this quarter (required, integer)
+      size:           :xl | :l | :m | :s (default :m)
+      trend:          :up | :hot | :flat | :down (default :flat)
+      trend_label:    pill text (e.g. "▲ 15% vs Q1"). Falls back to a glyph.
+      sparkline:      Array of integers (optional). Renders via AtlasHelper.
+      count_label:    text under the count (optional, default "Appearances")
+      footer:         Hash { label:, text: } to render the surfaced-matter footer slot (optional, XL only)
+      href:           link target (optional — tile becomes <a> if present)
+      aria_label:     optional accessible name override
+%>
+<%
+  size          = local_assigns.fetch(:size, :m)
+  trend         = local_assigns.fetch(:trend, :flat)
+  trend_label   = local_assigns[:trend_label] || { up: "▲", hot: "▲▲", flat: "→", down: "▽" }.fetch(trend, "→")
+  sparkline     = local_assigns[:sparkline]
+  count_label   = local_assigns.fetch(:count_label, "Appearances")
+  footer        = local_assigns[:footer]
+  href          = local_assigns[:href]
+  aria_label    = local_assigns[:aria_label] || "#{name}: #{count} #{count_label.downcase}"
+  classes       = ["atlas-tile", "atlas-tile--#{size}", ("atlas-tile--#{trend}" if %i[up hot down].include?(trend))].compact.join(" ")
+  tag_name      = href.present? ? :a : :article
+  tag_attrs     = { class: classes, "aria-label": aria_label }
+  tag_attrs[:href] = href if href.present?
+%>
+<%= content_tag(tag_name, tag_attrs) do %>
+  <div class="atlas-tile-top">
+    <h3 class="atlas-tile-name"><%= name %></h3>
+    <span class="atlas-tile-trend atlas-tile-trend--<%= trend %>"><%= trend_label %></span>
+  </div>
+
+  <% if sparkline.present? && size != :s %>
+    <%= atlas_sparkline_svg(sparkline, aria_label: "#{name} quarterly trend") %>
+  <% end %>
+
+  <% if footer.present? && size == :xl %>
+    <div class="atlas-tile-foot">
+      <% if footer[:label].present? %><b><%= footer[:label] %></b><% end %>
+      <%= footer[:text] %>
+    </div>
+  <% end %>
+
+  <div class="atlas-tile-bottom">
+    <p class="atlas-tile-count"><%= number_with_delimiter(count) %></p>
+    <% unless size == :s %>
+      <span class="atlas-tile-count-label"><%= count_label %></span>
+    <% end %>
+  </div>
+<% end %>

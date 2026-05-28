@@ -1,0 +1,61 @@
+<%# Atlas summary card — paper-on-paper card for AI summaries.
+    Locals:
+      summary:       paragraph text (required, may contain inline HTML if pre-sanitized)
+      label:         small mono-caps label (default "Generated summary")
+      ai_pill:       optional pill text on the right of the header
+      key_points:    Array<String> (optional)
+      limitations:   Array<String> (optional)
+      status_note:   optional heat-orange note paragraph above the summary (e.g., "draft document")
+      ai_note:       text for the bottom AI disclaimer line (required)
+      aria_label:    optional override for the section's accessible name
+%>
+<%
+  label       = local_assigns.fetch(:label, "Generated summary")
+  ai_pill     = local_assigns[:ai_pill]
+  key_points  = local_assigns[:key_points]
+  limitations = local_assigns[:limitations]
+  status_note = local_assigns[:status_note]
+  ai_note     = local_assigns.fetch(:ai_note, "Generated from extracted text. Review the official source before relying.")
+  aria_label  = local_assigns[:aria_label] || "AI-generated summary"
+%>
+<section class="atlas-summary" aria-label="<%= aria_label %>">
+  <header class="atlas-summary-head">
+    <span class="atlas-summary-label"><%= label %></span>
+    <% if ai_pill.present? %>
+      <span class="atlas-ai-pill"><%= ai_pill %></span>
+    <% end %>
+  </header>
+
+  <% if status_note.present? %>
+    <p class="atlas-summary-status"><%= status_note %></p>
+  <% end %>
+
+  <p><%= summary %></p>
+
+  <% if key_points.present? %>
+    <h5 class="keys">Key points</h5>
+    <ul>
+      <% key_points.each do |point| %>
+        <li><%= point %></li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <% if limitations.present? %>
+    <h5 class="limits">Limitations</h5>
+    <ul class="limits-list">
+      <% limitations.each do |point| %>
+        <li><%= point %></li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <p class="atlas-ai-note">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M12 3 2 21h20L12 3Z"></path>
+      <path d="M12 9v5"></path>
+      <circle cx="12" cy="17" r="1" fill="currentColor"></circle>
+    </svg>
+    <%= ai_note %>
+  </p>
+</section>

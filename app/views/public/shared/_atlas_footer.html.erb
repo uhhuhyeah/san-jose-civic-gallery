@@ -1,0 +1,16 @@
+<%# Atlas footer — mono caps source line + nav. %>
+<footer class="atlas-footer">
+  <div>
+    <span class="atlas-em">Mirrors</span>
+    <code><%= current_jurisdiction.source_host %></code>
+    — always consult the official source.
+  </div>
+  <nav aria-label="Footer">
+    <%= link_to "Pulse", root_path %>
+    <%= link_to "Matters", public_matters_path %>
+    <%= link_to "Meetings", public_meetings_path %>
+    <%= link_to "Glossary", glossary_path %>
+    <%= link_to "Data Health", data_path %>
+    <a href="https://github.com/uhhuhyeah/san-jose-civic-gallery" rel="noopener">Source on GitHub</a>
+  </nav>
+</footer>

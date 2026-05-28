@@ -1,0 +1,18 @@
+<%# Atlas facts strip — horizontal mono-caps facts header.
+    Locals:
+      facts: Array of Hashes [{ dt:, dd:, class: (optional dd modifier), href: (optional) }, ...]
+%>
+<dl class="atlas-facts-strip" style="--cols: <%= facts.length %>">
+  <% facts.each do |fact| %>
+    <div>
+      <dt><%= fact[:dt] %></dt>
+      <dd class="<%= fact[:class] %>">
+        <% if fact[:href].present? %>
+          <%= link_to fact[:dd], fact[:href] %>
+        <% else %>
+          <%= fact[:dd] %>
+        <% end %>
+      </dd>
+    </div>
+  <% end %>
+</dl>

@@ -1,0 +1,26 @@
+<%# Atlas date plate — contour-textured plate for meeting hero, calendar strip, sidebar.
+    Locals:
+      date:     Date / Time / DateTime (required)
+      size:     :xs | :sm | :md | :lg (default :md)
+      show_dow: true to render the day-of-week label (default false)
+      href:     optional link target — if present, plate becomes a link
+      aria_label: optional override; default derives from date
+%>
+<%
+  size       = local_assigns.fetch(:size, :md)
+  show_dow   = local_assigns.fetch(:show_dow, false)
+  href       = local_assigns[:href]
+  aria_label = local_assigns[:aria_label] || date.strftime("%-d %B %Y")
+  classes    = "atlas-date atlas-date--#{size}"
+  tag_name   = href.present? ? :a : :div
+  tag_attrs  = { class: classes, "aria-label": aria_label }
+  tag_attrs[:href] = href if href.present?
+%>
+<%= content_tag(tag_name, tag_attrs) do %>
+  <% if show_dow %>
+    <span class="atlas-date-dow"><%= date.strftime("%A") %></span>
+  <% end %>
+  <span class="atlas-date-mo"><%= date.strftime("%b") %></span>
+  <span class="atlas-date-day"><%= date.strftime("%d") %></span>
+  <span class="atlas-date-yr">·<%= date.strftime("%Y") %></span>
+<% end %>

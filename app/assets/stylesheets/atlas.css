@@ -1,0 +1,1010 @@
+/*
+ * Atlas redesign — design system bundle.
+ *
+ * This file is loaded ONLY on pages that opt in via `<% content_for :body_class, "atlas-shell" %>`
+ * in the view. Existing pages render unchanged because every rule below is scoped under
+ * `.atlas-shell`. Fonts in app/assets/fonts/ are vendored from Google Fonts (OFL).
+ *
+ * See docs/redesign-plan.md and docs/redesign/{pulse,matter,meeting}.html.
+ */
+
+
+/* ============================================================
+ * FONTS — self-hosted WOFF2, variable, with unicode-range routing
+ * ============================================================ */
+
+/* Fraunces — display + italic flourishes */
+@font-face {
+  font-family: 'Fraunces';
+  font-style: italic;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url("fraunces-italic-vietnamese.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Fraunces';
+  font-style: italic;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url("fraunces-italic-latin-ext.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Fraunces';
+  font-style: italic;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url("fraunces-italic-latin.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url("fraunces-roman-vietnamese.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url("fraunces-roman-latin-ext.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url("fraunces-roman-latin.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Inter Tight — UI sans */
+@font-face {
+  font-family: 'Inter Tight';
+  font-style: normal;
+  font-weight: 300 600;
+  font-display: swap;
+  src: url("inter-tight-roman-cyrillic-ext.woff2") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'Inter Tight';
+  font-style: normal;
+  font-weight: 300 600;
+  font-display: swap;
+  src: url("inter-tight-roman-cyrillic.woff2") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'Inter Tight';
+  font-style: normal;
+  font-weight: 300 600;
+  font-display: swap;
+  src: url("inter-tight-roman-greek-ext.woff2") format('woff2');
+  unicode-range: U+1F00-1FFF;
+}
+@font-face {
+  font-family: 'Inter Tight';
+  font-style: normal;
+  font-weight: 300 600;
+  font-display: swap;
+  src: url("inter-tight-roman-greek.woff2") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'Inter Tight';
+  font-style: normal;
+  font-weight: 300 600;
+  font-display: swap;
+  src: url("inter-tight-roman-vietnamese.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Inter Tight';
+  font-style: normal;
+  font-weight: 300 600;
+  font-display: swap;
+  src: url("inter-tight-roman-latin-ext.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Inter Tight';
+  font-style: normal;
+  font-weight: 300 600;
+  font-display: swap;
+  src: url("inter-tight-roman-latin.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* JetBrains Mono — codes / dates */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url("jbm-roman-cyrillic-ext.woff2") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url("jbm-roman-cyrillic.woff2") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url("jbm-roman-greek.woff2") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url("jbm-roman-vietnamese.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url("jbm-roman-latin-ext.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url("jbm-roman-latin.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+
+/* ============================================================
+ * TOKENS — palette, type stack, spacing
+ * Custom properties live on :root so they're inert until referenced.
+ * ============================================================ */
+
+:root {
+  --atlas-paper:        #f1ece2;
+  --atlas-paper-deep:   #e7e0d2;
+  --atlas-paper-edge:   #d6cdb8;
+  --atlas-ink:          #1a1a1f;
+  --atlas-ink-soft:     #3a3a44;
+  --atlas-ink-mute:     #6a6a72;
+  --atlas-rule:         #c9bfa7;
+  --atlas-oxblood:      #7a1f2b;
+  --atlas-oxblood-deep: #5a161f;
+  --atlas-slate:        #455362;
+  --atlas-heat:         #d9663f;
+  --atlas-heat-soft:    #efb89c;
+  --atlas-sage:         #6f8068;
+
+  --atlas-serif: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --atlas-sans:  "Inter Tight", ui-sans-serif, system-ui, sans-serif;
+  --atlas-mono:  "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  --atlas-r:    2px;
+  --atlas-r-lg: 4px;
+
+  --atlas-pad: clamp(20px, 3vw, 44px);
+  --atlas-content-max: 1320px;
+}
+
+
+/* ============================================================
+ * BASE — applies only inside the .atlas-shell body class.
+ * Existing pages have no .atlas-shell class so nothing below fires.
+ * ============================================================ */
+
+.atlas-shell {
+  background: var(--atlas-paper);
+  color: var(--atlas-ink);
+  font-family: var(--atlas-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  background-image:
+    radial-gradient(rgba(122, 31, 43, 0.025) 1px, transparent 1px),
+    radial-gradient(rgba(26, 26, 31, 0.02) 1px, transparent 1px);
+  background-size: 3px 3px, 7px 7px;
+  background-position: 0 0, 1px 2px;
+}
+
+.atlas-shell *,
+.atlas-shell *::before,
+.atlas-shell *::after { box-sizing: border-box; }
+
+.atlas-shell a { color: inherit; text-decoration: none; }
+.atlas-shell a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.atlas-shell h1, .atlas-shell h2, .atlas-shell h3,
+.atlas-shell h4, .atlas-shell h5, .atlas-shell h6 {
+  font-family: var(--atlas-serif);
+  font-weight: 450;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.atlas-shell .atlas-wrap {
+  max-width: var(--atlas-content-max);
+  margin: 0 auto;
+  padding: 0 var(--atlas-pad);
+}
+
+/* Editorial flourish helper: italic Fraunces with the wonky/soft variant.
+   Used for "in <em>brief</em>" style accents in headings. */
+.atlas-shell .atlas-em {
+  font-family: var(--atlas-serif);
+  font-style: italic;
+  font-variation-settings: "opsz" 9, "SOFT" 100, "WONK" 1;
+  font-weight: 350;
+  color: var(--atlas-oxblood);
+}
+
+/* Mono caps eyebrow used for section labels / status tags. */
+.atlas-shell .atlas-eyebrow {
+  font-family: var(--atlas-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--atlas-ink-mute);
+}
+
+
+/* ============================================================
+ * TOPBAR — brand wordmark, command search, primary nav
+ * ============================================================ */
+
+.atlas-shell .atlas-topbar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 28px;
+  align-items: center;
+  padding: 22px 0 18px;
+  border-bottom: 1px solid var(--atlas-rule);
+}
+
+.atlas-shell .atlas-topbar .atlas-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.atlas-shell .atlas-topbar .atlas-brand-mark {
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 1;
+  font-weight: 600;
+  font-size: 30px;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--atlas-ink);
+}
+
+.atlas-shell .atlas-topbar .atlas-brand-sub {
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 9, "SOFT" 100, "WONK" 1;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 16px;
+  color: var(--atlas-oxblood);
+}
+.atlas-shell .atlas-topbar .atlas-brand-sub::before {
+  content: "— ";
+  color: var(--atlas-rule);
+  margin-right: 2px;
+}
+
+.atlas-shell .atlas-topbar nav {
+  display: flex;
+  gap: 22px;
+  justify-content: flex-end;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--atlas-ink-soft);
+}
+.atlas-shell .atlas-topbar nav a[aria-current="page"] {
+  color: var(--atlas-oxblood);
+  border-bottom: 1px solid var(--atlas-oxblood);
+  padding-bottom: 4px;
+}
+
+.atlas-shell .atlas-cmd {
+  justify-self: stretch;
+  max-width: 540px;
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--atlas-paper-deep);
+  border: 1px solid var(--atlas-rule);
+  border-radius: 999px;
+  padding: 8px 16px 8px 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.atlas-shell .atlas-cmd::before {
+  content: "⌖";
+  color: var(--atlas-oxblood);
+  margin-right: 10px;
+  font-size: 16px;
+}
+.atlas-shell .atlas-cmd input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  font: 14px/1 var(--atlas-sans);
+  color: var(--atlas-ink);
+  outline: none;
+}
+.atlas-shell .atlas-cmd input::placeholder { color: var(--atlas-ink-mute); }
+.atlas-shell .atlas-cmd input:focus-visible {
+  outline: 2px solid var(--atlas-oxblood);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+.atlas-shell .atlas-cmd kbd {
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  background: var(--atlas-paper);
+  border: 1px solid var(--atlas-rule);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  padding: 2px 6px;
+  color: var(--atlas-ink-mute);
+}
+
+
+/* ============================================================
+ * SECTION HEADING — the three-column title + rule + label pattern
+ * ============================================================ */
+
+.atlas-shell .atlas-section-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 20px;
+  align-items: baseline;
+  margin: 0 0 24px;
+}
+.atlas-shell .atlas-section-head h2 {
+  margin: 0;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 72, "SOFT" 50, "WONK" 0;
+  font-weight: 400;
+  font-size: clamp(28px, 3.4vw, 40px);
+  line-height: 1;
+  letter-spacing: -0.022em;
+}
+.atlas-shell .atlas-section-head h2 em,
+.atlas-shell .atlas-section-head h2 .atlas-em {
+  font-style: italic;
+  font-variation-settings: "opsz" 9, "SOFT" 100, "WONK" 1;
+  color: var(--atlas-oxblood);
+  font-weight: 350;
+}
+.atlas-shell .atlas-section-head .atlas-rule {
+  height: 1px;
+  background: var(--atlas-rule);
+  align-self: center;
+  margin-bottom: 6px;
+}
+.atlas-shell .atlas-section-head .atlas-section-label {
+  font-family: var(--atlas-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--atlas-ink-mute);
+  align-self: center;
+  margin-bottom: 6px;
+}
+
+
+/* ============================================================
+ * SUMMARY CARD — paper-on-paper with oxblood left rule
+ * Used for AI summaries on matter (per attachment) and meeting pages.
+ * ============================================================ */
+
+.atlas-shell .atlas-summary {
+  background: var(--atlas-paper);
+  border: 1px solid var(--atlas-rule);
+  border-left: 3px solid var(--atlas-oxblood);
+  border-radius: var(--atlas-r-lg);
+  padding: 22px 24px 18px;
+}
+.atlas-shell .atlas-summary-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.atlas-shell .atlas-summary-head .atlas-summary-label {
+  font-family: var(--atlas-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--atlas-oxblood);
+}
+.atlas-shell .atlas-summary-head .atlas-summary-label::before { content: "◇ "; }
+.atlas-shell .atlas-summary-head .atlas-ai-pill {
+  font-family: var(--atlas-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--atlas-ink-mute);
+  border: 1px solid var(--atlas-rule);
+  border-radius: 999px;
+  padding: 2px 8px 1px;
+}
+.atlas-shell .atlas-summary p {
+  margin: 0 0 12px;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--atlas-ink-soft);
+}
+.atlas-shell .atlas-summary h5 {
+  margin: 16px 0 8px;
+  font-family: var(--atlas-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--atlas-ink);
+  font-weight: 500;
+}
+.atlas-shell .atlas-summary h5.keys::before  { content: "▣ "; color: var(--atlas-oxblood); }
+.atlas-shell .atlas-summary h5.limits        { color: var(--atlas-heat); }
+.atlas-shell .atlas-summary h5.limits::before { content: "▽ "; }
+.atlas-shell .atlas-summary ul {
+  margin: 0 0 4px;
+  padding: 0;
+  list-style: none;
+}
+.atlas-shell .atlas-summary ul li {
+  position: relative;
+  padding: 6px 0 6px 24px;
+  border-top: 1px dashed var(--atlas-paper-edge);
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--atlas-ink-soft);
+}
+.atlas-shell .atlas-summary ul li:first-child { border-top: 0; }
+.atlas-shell .atlas-summary ul li::before {
+  content: "";
+  position: absolute;
+  left: 4px; top: 14px;
+  width: 10px; height: 1px;
+  background: var(--atlas-oxblood);
+}
+.atlas-shell .atlas-summary ul.limits-list li::before { background: var(--atlas-heat); }
+.atlas-shell .atlas-summary .atlas-ai-note {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--atlas-paper-edge);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--atlas-mono);
+  font-size: 10.5px;
+  color: var(--atlas-ink-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  max-width: 80ch;
+}
+.atlas-shell .atlas-summary .atlas-ai-note svg { color: var(--atlas-heat); flex: none; }
+
+.atlas-shell .atlas-summary .atlas-summary-status {
+  margin: -4px 0 12px;
+  padding: 8px 10px;
+  background: rgba(217, 102, 63, 0.08);
+  border-left: 2px solid var(--atlas-heat);
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  color: var(--atlas-heat);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+
+/* ============================================================
+ * FACTS STRIP — horizontal mono-caps facts header
+ * ============================================================ */
+
+.atlas-shell .atlas-facts-strip {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 6), 1fr);
+  border-top: 1px solid var(--atlas-rule);
+  border-bottom: 1px solid var(--atlas-rule);
+  background: var(--atlas-paper-deep);
+  margin: 0;
+}
+.atlas-shell .atlas-facts-strip > div {
+  padding: 14px 16px;
+  border-right: 1px solid var(--atlas-rule);
+}
+.atlas-shell .atlas-facts-strip > div:last-child { border-right: 0; }
+.atlas-shell .atlas-facts-strip dt {
+  font-family: var(--atlas-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--atlas-ink-mute);
+  margin-bottom: 6px;
+}
+.atlas-shell .atlas-facts-strip dd {
+  margin: 0;
+  font-family: var(--atlas-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--atlas-ink);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.atlas-shell .atlas-facts-strip dd.unknown {
+  color: var(--atlas-ink-mute);
+  font-weight: 400;
+  font-style: italic;
+}
+.atlas-shell .atlas-facts-strip dd.mono {
+  font-family: var(--atlas-mono);
+  font-weight: 400;
+  font-size: 13px;
+}
+.atlas-shell .atlas-facts-strip dd a {
+  color: var(--atlas-oxblood);
+  border-bottom: 1px solid var(--atlas-oxblood);
+  padding-bottom: 1px;
+}
+
+
+/* ============================================================
+ * DATE PLATE — used for meeting hero, calendar strip, sidebar entries
+ * Variants: .atlas-date--xs / --sm / --md / --lg
+ * ============================================================ */
+
+.atlas-shell .atlas-date {
+  background: var(--atlas-paper-deep);
+  border: 1px solid var(--atlas-paper-edge);
+  border-radius: var(--atlas-r-lg);
+  text-align: center;
+  line-height: 1;
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+  text-decoration: none;
+}
+.atlas-shell .atlas-date::after {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient( 32deg, rgba(122, 31, 43, 0.05) 0 1px, transparent 1px 14px),
+    repeating-linear-gradient(-32deg, rgba(69, 83, 98, 0.04) 0 1px, transparent 1px 22px);
+  mix-blend-mode: multiply;
+  opacity: 0.6;
+}
+.atlas-shell .atlas-date > * { position: relative; z-index: 1; display: block; }
+
+.atlas-shell .atlas-date .atlas-date-dow {
+  font-family: var(--atlas-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--atlas-ink-mute);
+}
+.atlas-shell .atlas-date .atlas-date-mo {
+  font-family: var(--atlas-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--atlas-oxblood);
+}
+.atlas-shell .atlas-date .atlas-date-day {
+  font-family: var(--atlas-sans);
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  color: var(--atlas-ink);
+  font-variant-numeric: tabular-nums;
+}
+.atlas-shell .atlas-date .atlas-date-yr {
+  font-family: var(--atlas-mono);
+  letter-spacing: 0.18em;
+  color: var(--atlas-ink-mute);
+}
+
+/* Sizes */
+.atlas-shell .atlas-date--lg { padding: 14px 16px 12px; min-width: 130px; }
+.atlas-shell .atlas-date--lg .atlas-date-dow { font-size: 11px; margin-bottom: 8px; }
+.atlas-shell .atlas-date--lg .atlas-date-mo  { font-size: 12px; margin-bottom: 6px; }
+.atlas-shell .atlas-date--lg .atlas-date-day { font-size: 88px; }
+.atlas-shell .atlas-date--lg .atlas-date-yr  { font-size: 11px; margin-top: 6px; }
+
+.atlas-shell .atlas-date--md { padding: 10px 14px 10px; min-width: 96px; }
+.atlas-shell .atlas-date--md .atlas-date-mo  { font-size: 12px; margin-bottom: 4px; }
+.atlas-shell .atlas-date--md .atlas-date-day { font-size: 44px; }
+.atlas-shell .atlas-date--md .atlas-date-yr  { font-size: 10px; margin-top: 4px; }
+
+.atlas-shell .atlas-date--sm { padding: 8px 12px 8px; min-width: 64px; }
+.atlas-shell .atlas-date--sm .atlas-date-mo  { font-size: 10px; margin-bottom: 2px; }
+.atlas-shell .atlas-date--sm .atlas-date-day { font-size: 28px; }
+.atlas-shell .atlas-date--sm .atlas-date-yr  { font-size: 9.5px; margin-top: 4px; }
+
+.atlas-shell .atlas-date--xs { padding: 6px 8px 6px; min-width: 50px; }
+.atlas-shell .atlas-date--xs .atlas-date-mo  { font-size: 9px; margin-bottom: 2px; }
+.atlas-shell .atlas-date--xs .atlas-date-day { font-size: 22px; }
+.atlas-shell .atlas-date--xs .atlas-date-yr  { display: none; }
+
+
+/* ============================================================
+ * TILE — theme or body tile (same shape, different content)
+ * Contour-line texture makes it read as a map plate rather than a card.
+ * Size variants: --xl --l --m --s
+ * Trend variants: --up --hot --flat --down
+ * ============================================================ */
+
+.atlas-shell .atlas-tile {
+  position: relative;
+  background: var(--atlas-paper-deep);
+  border: 1px solid var(--atlas-paper-edge);
+  border-radius: var(--atlas-r-lg);
+  padding: 16px 18px 14px;
+  color: var(--atlas-ink);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.atlas-shell .atlas-tile::after {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient( 32deg, rgba(122, 31, 43, 0.04) 0 1px, transparent 1px 14px),
+    repeating-linear-gradient(-32deg, rgba(69, 83, 98, 0.035) 0 1px, transparent 1px 22px);
+  mix-blend-mode: multiply;
+  opacity: 0.55;
+}
+.atlas-shell a.atlas-tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--atlas-oxblood);
+  box-shadow: 0 6px 0 -3px var(--atlas-oxblood);
+  text-decoration: none;
+}
+
+.atlas-shell .atlas-tile-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.atlas-shell .atlas-tile-name {
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 30, "SOFT" 50, "WONK" 0;
+  font-weight: 450;
+  font-size: 18px;
+  line-height: 1.05;
+  letter-spacing: -0.012em;
+  color: var(--atlas-ink);
+  max-width: 80%;
+  margin: 0;
+}
+
+.atlas-shell .atlas-tile-trend {
+  font-family: var(--atlas-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  padding: 3px 7px 2px;
+  border-radius: 999px;
+  border: 1px solid var(--atlas-rule);
+  background: rgba(255, 255, 255, 0.45);
+  white-space: nowrap;
+  color: var(--atlas-ink-soft);
+}
+.atlas-shell .atlas-tile-trend--up   { color: var(--atlas-oxblood); border-color: var(--atlas-oxblood); background: rgba(122, 31, 43, 0.06); }
+.atlas-shell .atlas-tile-trend--hot  { color: var(--atlas-heat);    border-color: var(--atlas-heat);    background: rgba(217, 102, 63, 0.08); }
+.atlas-shell .atlas-tile-trend--flat { color: var(--atlas-ink-mute); }
+.atlas-shell .atlas-tile-trend--down { color: var(--atlas-slate); border-color: var(--atlas-slate); }
+
+.atlas-shell .atlas-tile svg.atlas-spark {
+  margin-top: 8px;
+  width: 100%;
+  height: 26px;
+  color: var(--atlas-slate);
+}
+.atlas-shell .atlas-tile--up  svg.atlas-spark { color: var(--atlas-oxblood); }
+.atlas-shell .atlas-tile--hot svg.atlas-spark { color: var(--atlas-heat); }
+
+.atlas-shell .atlas-tile-bottom {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+}
+.atlas-shell .atlas-tile-count {
+  font-family: var(--atlas-sans);
+  font-weight: 500;
+  font-size: 36px;
+  line-height: 0.9;
+  letter-spacing: -0.035em;
+  color: var(--atlas-ink);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+.atlas-shell .atlas-tile-count-label {
+  font-family: var(--atlas-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--atlas-ink-mute);
+  text-align: right;
+}
+
+/* Tile size variants */
+.atlas-shell .atlas-tile--xl .atlas-tile-name  { font-size: 30px; max-width: 70%; }
+.atlas-shell .atlas-tile--xl .atlas-tile-count { font-size: 76px; letter-spacing: -0.045em; }
+.atlas-shell .atlas-tile--xl svg.atlas-spark   { height: 56px; }
+
+.atlas-shell .atlas-tile--l .atlas-tile-name  { font-size: 22px; }
+.atlas-shell .atlas-tile--l .atlas-tile-count { font-size: 54px; letter-spacing: -0.04em; }
+.atlas-shell .atlas-tile--l svg.atlas-spark   { height: 36px; }
+
+.atlas-shell .atlas-tile--m .atlas-tile-name  { font-size: 17px; }
+.atlas-shell .atlas-tile--m .atlas-tile-count { font-size: 40px; }
+
+.atlas-shell .atlas-tile--s              { padding: 12px 14px 10px; }
+.atlas-shell .atlas-tile--s .atlas-tile-name  { font-size: 14px; max-width: 70%; }
+.atlas-shell .atlas-tile--s .atlas-tile-count { font-size: 22px; }
+.atlas-shell .atlas-tile--s svg.atlas-spark   { display: none; }
+.atlas-shell .atlas-tile--s .atlas-tile-bottom { margin-top: 0; }
+
+/* Optional surfaced footer (e.g. "Latest matter" inside an XL tile) */
+.atlas-shell .atlas-tile-foot {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--atlas-paper-edge);
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 12, "SOFT" 50, "WONK" 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--atlas-ink-soft);
+  max-width: 92%;
+  position: relative; z-index: 1;
+}
+.atlas-shell .atlas-tile-foot b {
+  font-family: var(--atlas-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--atlas-oxblood);
+  text-transform: uppercase;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 4px;
+}
+
+
+/* ============================================================
+ * BODY TILE — same paper / contour as theme tile, different content shape.
+ * Header row: name + acronym chip. Count. Label. Optional CTA link.
+ * ============================================================ */
+
+.atlas-shell .atlas-body-tile {
+  position: relative;
+  background: var(--atlas-paper-deep);
+  border: 1px solid var(--atlas-paper-edge);
+  border-radius: var(--atlas-r-lg);
+  padding: 14px 16px 14px;
+  color: var(--atlas-ink);
+  overflow: hidden;
+  display: block;
+  text-decoration: none;
+  transition: border-color 0.2s ease;
+}
+.atlas-shell .atlas-body-tile::after {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient( 32deg, rgba(122, 31, 43, 0.04) 0 1px, transparent 1px 14px),
+    repeating-linear-gradient(-32deg, rgba(69, 83, 98, 0.035) 0 1px, transparent 1px 22px);
+  mix-blend-mode: multiply;
+  opacity: 0.55;
+}
+.atlas-shell a.atlas-body-tile:hover { border-color: var(--atlas-oxblood); text-decoration: none; }
+.atlas-shell .atlas-body-tile > * { position: relative; z-index: 1; }
+
+.atlas-shell .atlas-body-tile-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.atlas-shell .atlas-body-tile-name {
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 24, "SOFT" 50, "WONK" 0;
+  font-weight: 450;
+  font-size: 17px;
+  line-height: 1.15;
+  letter-spacing: -0.012em;
+  margin: 0;
+  max-width: 75%;
+}
+.atlas-shell .atlas-body-tile-acronym {
+  font-family: var(--atlas-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--atlas-oxblood);
+  border: 1px solid var(--atlas-oxblood);
+  border-radius: 999px;
+  padding: 2px 7px 1px;
+  background: rgba(122, 31, 43, 0.05);
+}
+.atlas-shell .atlas-body-tile-count {
+  font-family: var(--atlas-sans);
+  font-weight: 500;
+  font-size: 28px;
+  letter-spacing: -0.035em;
+  color: var(--atlas-ink);
+  font-variant-numeric: tabular-nums;
+  margin: 8px 0 0;
+  line-height: 1;
+}
+.atlas-shell .atlas-body-tile-label {
+  font-family: var(--atlas-mono);
+  font-size: 10px;
+  color: var(--atlas-ink-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  margin-top: 4px;
+}
+.atlas-shell .atlas-body-tile-cta {
+  margin-top: 12px;
+  display: block;
+  font-family: var(--atlas-mono);
+  font-size: 10.5px;
+  color: var(--atlas-oxblood);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.atlas-shell .atlas-body-tile-cta::after { content: " →"; }
+
+
+/* ============================================================
+ * SPARKLINE — SVG styling. Path color inherits from currentColor
+ * so trend variants on the parent tile drive the line color.
+ * ============================================================ */
+
+.atlas-shell svg.atlas-spark { display: block; }
+.atlas-shell svg.atlas-spark path   { fill: none; stroke: currentColor; stroke-width: 1.6; }
+.atlas-shell svg.atlas-spark circle { fill: currentColor; }
+
+
+/* ============================================================
+ * STATUS / TAG CHIPS — small reusable chip vocabulary
+ * ============================================================ */
+
+.atlas-shell .atlas-chip {
+  display: inline-block;
+  font-family: var(--atlas-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  border: 1px solid var(--atlas-rule);
+  border-radius: var(--atlas-r);
+  padding: 3px 7px 2px;
+  color: var(--atlas-ink);
+  background: var(--atlas-paper-deep);
+  line-height: 1.4;
+  font-weight: 500;
+}
+.atlas-shell .atlas-chip--pill   { border-radius: 999px; }
+.atlas-shell .atlas-chip--oxblood { color: var(--atlas-oxblood); border-color: var(--atlas-oxblood); background: rgba(122, 31, 43, 0.04); }
+.atlas-shell .atlas-chip--sage   { color: var(--atlas-sage);    border-color: var(--atlas-sage);    background: transparent; }
+.atlas-shell .atlas-chip--heat   { color: var(--atlas-heat);    border-color: var(--atlas-heat);    background: transparent; }
+.atlas-shell .atlas-chip--slate  { color: var(--atlas-slate);   border-color: var(--atlas-slate);   background: transparent; }
+.atlas-shell .atlas-chip--mute   { color: var(--atlas-ink-mute); }
+
+
+/* ============================================================
+ * FOOTER
+ * ============================================================ */
+
+.atlas-shell .atlas-footer {
+  border-top: 1px solid var(--atlas-rule);
+  margin-top: 28px;
+  padding: 24px 0 56px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  color: var(--atlas-ink-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  flex-wrap: wrap;
+}
+.atlas-shell .atlas-footer .atlas-em {
+  font-size: 14px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.atlas-shell .atlas-footer nav {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.atlas-shell .atlas-footer a:hover { color: var(--atlas-oxblood); }
+
+
+/* ============================================================
+ * ANIMATIONS — used sparingly for entrance, with reduced-motion override
+ * ============================================================ */
+
+@keyframes atlas-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+.atlas-shell .atlas-rise { animation: atlas-rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  .atlas-shell *,
+  .atlas-shell *::before,
+  .atlas-shell *::after {
+    animation-duration: 0.001s !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.001s !important;
+  }
+}
+
+
+/* ============================================================
+ * RESPONSIVE — narrow viewport adjustments to shared components.
+ * Page-specific responsive rules belong with their page in Phase 2-4.
+ * ============================================================ */
+
+@media (max-width: 960px) {
+  .atlas-shell .atlas-topbar {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .atlas-shell .atlas-topbar nav {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  .atlas-shell .atlas-facts-strip {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .atlas-shell .atlas-facts-strip > div:nth-child(3n) { border-right: 0; }
+  .atlas-shell .atlas-facts-strip > div { border-top: 1px solid var(--atlas-rule); }
+  .atlas-shell .atlas-facts-strip > div:nth-child(-n + 3) { border-top: 0; }
+}
+
+@media (max-width: 720px) {
+  .atlas-shell .atlas-facts-strip { grid-template-columns: repeat(2, 1fr); }
+  .atlas-shell .atlas-facts-strip > div:nth-child(3n) { border-right: 1px solid var(--atlas-rule); }
+  .atlas-shell .atlas-facts-strip > div:nth-child(2n) { border-right: 0; }
+  .atlas-shell .atlas-date--lg .atlas-date-day { font-size: 64px; }
+  .atlas-shell .atlas-footer { flex-direction: column; align-items: flex-start; }
+}

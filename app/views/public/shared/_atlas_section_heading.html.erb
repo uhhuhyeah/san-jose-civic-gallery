@@ -1,0 +1,20 @@
+<%# Atlas section heading — three-column "title + rule + mono label" pattern.
+    Locals:
+      title:  heading text (required)
+      em:     optional italic flourish appended in oxblood
+      label:  optional small mono-caps label on the right (e.g. "Q2 2026 · Citywide")
+      level:  optional heading level, 2-4 (default 2)
+%>
+<%
+  heading_level = local_assigns.fetch(:level, 2)
+  heading_tag = "h#{heading_level}"
+%>
+<div class="atlas-section-head">
+  <%= content_tag(heading_tag) do %>
+    <%= title %><% if local_assigns[:em].present? %> <span class="atlas-em"><%= local_assigns[:em] %></span><% end %>
+  <% end %>
+  <span class="atlas-rule" aria-hidden="true"></span>
+  <% if local_assigns[:label].present? %>
+    <span class="atlas-section-label"><%= local_assigns[:label] %></span>
+  <% end %>
+</div>
