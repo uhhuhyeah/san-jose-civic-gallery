@@ -97,18 +97,27 @@ skipped.
 
 ## Trend aggregation
 
-`Public::ThemePulse` produces two views over a window (default: the current
+`Public::ThemePulse` produces three views over a window (default: the current
 quarter, `13.weeks`):
 
-- **`top_themes`**: ranked by raw appearances in the current window
-  (steady-state volume).
-- **`heating_up`**: ranked by momentum. The current window's appearance *rate*
-  versus the prior window's. Rate is appearances per meeting, so the comparison
-  stays fair when the two windows hold different numbers of meetings (recess) or
-  when comparing a single body. A theme needs at least
-  `DEFAULT_MIN_APPEARANCES` (3) current-window appearances to qualify, so a
-  single agenda item can't spike it. Themes with real activity now and none last
-  quarter are flagged `surging` and sort first.
+- **`stats`**: every theme in the jurisdiction's vocabulary with its
+  current-window appearances, prior-window appearances, per-meeting rates,
+  `lift` (current rate / prior rate), and a `surging` flag. Themes with no
+  appearances still appear with zeros, so the front page can render the full
+  taxonomy.
+- **`heating_up`**: a sorted, filtered slice of `stats` ranked by momentum.
+  Rate is appearances per meeting, so the comparison stays fair when the two
+  windows hold different numbers of meetings (recess) or when comparing a
+  single body. A theme needs at least `DEFAULT_MIN_APPEARANCES` (3)
+  current-window appearances to qualify, so a single agenda item can't spike
+  it. Themes with real activity now and none last quarter are flagged
+  `surging` and sort first.
+- **`quarterly_series(buckets: 4)`**: a multi-bucket time series per theme
+  (oldest bucket first, current bucket last) used to draw sparklines on the
+  homepage. Bucket boundaries align with `stats`' current/prior windows so the
+  last bucket equals the current-window appearance count exactly. Four
+  quarters is the spec; production has ~7.3 years of San Jose history and ~2
+  years of SJUSD history, so no jurisdiction needs leading-empty padding.
 
 It accepts `body_name` (nil = citywide rollup) and only counts
 `current_from_source` events and event items.
@@ -118,46 +127,55 @@ The data is also inspectable from the CLI via the rake task below.
 ## The homepage
 
 The Pulse page is the site homepage (`root` -> `Public::PulseController#show`).
-It has grown past a single trend view into the front door of the site, composed
-to serve two audiences at once: the resident who is *just curious* and wants to
-follow something interesting, and the *power user* who already knows what they
-want. So it offers several browse axes instead of a lone search box:
+After the Atlas redesign (see `docs/atlas.md`), the page composes the Pulse
+data into a spatial front door: the resident who is *just curious* should be
+able to wander it the way they'd wander a map, while the power user still has
+search and per-body filters. The composition, top to bottom:
 
-- **Browse by topic** (the chip bar at the top): every theme in the
-  jurisdiction's vocabulary, each linking to the Matters index filtered by theme
-  (`/public/matters?theme=<slug>`). It is pure wayfinding, built straight from
-  the static `Civic::ThemeTaxonomy`, so it costs no database query and always
-  shows the complete menu. It is distinct from Pulse Changes *by design*: the
-  topic bar answers "take me to the subject I care about," Pulse Changes answers
-  "what is City Hall focused on right now." Navigation vs. editorial, not two
-  rankings of the same data.
-- **Pulse Changes** (`heating_up`): the momentum view, with a per-body filter.
-  Theme labels link to the same theme-filtered Matters index.
-- **What's being decided**: the few most recent matters that already carry a
-  non-empty generated summary, newest agendas first. This surfaces the product's
-  actual output (an AI summary of a real matter) on the front page rather than
-  only describing the capability. Summaries are read from existing
-  `attachment_summary` artifacts; the module never triggers a new generation.
-  The representative summary per matter comes from `matter_summary_preview`,
-  which filters preloaded artifacts in Ruby to avoid an N+1.
-- **Recent meetings** and **source-record counts**: time-based browsing and the
-  raw scale of what has been ingested.
-
-`top_themes` (ranked by absolute volume) is no longer surfaced anywhere: topic
-wayfinding is the static bar, trend is Pulse Changes.
+- **The Pulse treemap** (centerpiece): every theme in the jurisdiction's
+  vocabulary as a sized, tinted tile. Tile size is driven by
+  `current_appearances` (XL/L/M/S buckets — top 1, next 2, next 8, rest); tile
+  tint is driven by `lift` (heat for >100%, oxblood for >10%, slate for steady,
+  muted for down). Each tile carries a sparkline drawn from
+  `quarterly_series` and links to `/public/matters?theme=<slug>`. The treemap
+  is both the visualisation of attention *and* the topic wayfinding primitive —
+  what used to be a chip bar of every theme is now the spatial map itself.
+  Per-body filter sits below the hero and re-scopes the whole treemap.
+- **What's heating up**: the top movers (`heating_up.first(4)`) as four
+  editorial cards with bigger sparklines. Same data as the treemap's
+  heat-tinted tiles, just pulled out for emphasis.
+- **In session**: the few most recent matters that already carry a non-empty
+  generated summary, newest agendas first, rendered as a numbered editorial
+  list. This surfaces the product's actual output (an AI summary of a real
+  matter) on the front page rather than only describing the capability.
+  Summaries are read from existing `attachment_summary` artifacts; the module
+  never triggers a new generation. The representative summary per matter comes
+  from `matter_summary_preview`, which filters preloaded artifacts in Ruby to
+  avoid an N+1.
+- **The calendar**: a horizontally scrolling strip of the latest meetings —
+  date plate, body name, agenda/minutes status chips. Links to the meeting
+  detail page.
+- **Monthly roundup CTA**: a single block pointing at `/roundups`.
+- **The ledger**: four headline stats — meetings ingested, **matters heard**
+  (the count of `civic_event_items` with a `civic_matter_id`, *not* raw agenda
+  items), distinct matters, document extractions. The "matters heard" framing
+  was chosen over "agenda items" because roughly 73% of EventItems are
+  procedural rows (notices, ADA boilerplate, Levine Act, etc.) that inflate
+  the total without informing residents.
 
 Two technical invariants worth preserving:
 
 - **Conditional GET stays cheap.** Every per-module query runs in
-  `load_homepage_context`, after the `stale?(etag:)` check. A matching
-  `If-None-Match` returns 304 before any of them fire, so a conditional request
-  never probes `generated_artifacts`, `document_extracted_texts`, or
-  `civic_matter_themes`. A controller test pins this; keep new modules behind the
-  same gate.
+  `load_homepage_context` or `load_atlas`, after the `stale?(etag:)` check. A
+  matching `If-None-Match` returns 304 before any of them fire, so a
+  conditional request never probes `generated_artifacts`,
+  `document_extracted_texts`, or `civic_matter_themes`. A controller test pins
+  this; keep new modules behind the same gate.
 - **The cache key is inline.** Conditional GET and per-module fragment caching
-  use a key built in the controller (`public/pulse-homepage/v2`, keyed on
-  jurisdiction, date, body filter, window, and a 10-minute TTL bucket), not
-  `Public::CacheVersion.pulse` (removed).
+  use a key built in the controller (`public/pulse-homepage/v3`, keyed on
+  jurisdiction, date, body filter, window, spark bucket count, and a 10-minute
+  TTL bucket), not `Public::CacheVersion.pulse` (removed). Bump the version
+  suffix (`v3` → `v4`) when changing the cache contract.
 
 ## Operating it
 
