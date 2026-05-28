@@ -1442,6 +1442,805 @@
 
 
 /* ============================================================
+ * MEETINGS INDEX — listing page for /public/meetings (Phase 5).
+ * Same general shape as the matters index (header, banner, filter form,
+ * list of rows, empty state) but rows lead with a medium date plate and
+ * surface agenda-item previews. Adds a month-nav strip above the list.
+ * ============================================================ */
+
+.atlas-shell .atlas-meetings-header {
+  padding: 28px 0 16px;
+  border-bottom: 1px solid var(--atlas-rule);
+}
+.atlas-shell .atlas-meetings-header .atlas-eyebrow {
+  color: var(--atlas-oxblood);
+}
+.atlas-shell .atlas-meetings-header h1 {
+  margin: 8px 0 12px;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 144, "SOFT" 50, "WONK" 0;
+  font-weight: 400;
+  font-size: clamp(44px, 6.5vw, 80px);
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+}
+.atlas-shell .atlas-meetings-header .atlas-meetings-header-lede {
+  margin: 0;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 18, "SOFT" 50, "WONK" 0;
+  font-weight: 350;
+  font-size: 18px;
+  line-height: 1.45;
+  color: var(--atlas-ink-soft);
+  max-width: 60ch;
+}
+
+/* Month nav strip (prev / current / next), filter-preserving. */
+.atlas-shell .atlas-meetings-monthnav {
+  margin: 22px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 12px 18px;
+  background: var(--atlas-paper-deep);
+  border: 1px solid var(--atlas-paper-edge);
+  border-radius: var(--atlas-r-lg);
+}
+.atlas-shell .atlas-meetings-monthnav a {
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--atlas-oxblood);
+  border-bottom: 1px solid var(--atlas-oxblood);
+  padding-bottom: 1px;
+}
+.atlas-shell .atlas-meetings-monthnav a:hover { color: var(--atlas-oxblood-deep); text-decoration: none; }
+.atlas-shell .atlas-meetings-monthnav strong {
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 36, "SOFT" 50, "WONK" 0;
+  font-weight: 450;
+  font-size: 22px;
+  letter-spacing: -0.015em;
+  color: var(--atlas-ink);
+}
+
+/* Active-filter banner (body filter only — query is implicit in the form). */
+.atlas-shell .atlas-meetings-banner {
+  margin: 22px 0 0;
+  padding: 14px 18px;
+  background: var(--atlas-paper-deep);
+  border-left: 3px solid var(--atlas-oxblood);
+  border-radius: var(--atlas-r-lg);
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
+  font-size: 15px;
+  color: var(--atlas-ink-soft);
+}
+.atlas-shell .atlas-meetings-banner strong {
+  color: var(--atlas-ink);
+  font-weight: 500;
+}
+.atlas-shell .atlas-meetings-banner .atlas-meetings-banner-clear {
+  margin-left: 8px;
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--atlas-oxblood);
+  border-bottom: 1px solid var(--atlas-oxblood);
+  padding-bottom: 1px;
+}
+
+/* Search + body-filter form (matches matters-filter shape). */
+.atlas-shell .atlas-meetings-filter {
+  margin: 22px 0 36px;
+  display: grid;
+  gap: 10px 12px;
+}
+.atlas-shell .atlas-meetings-filter > label {
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--atlas-ink-mute);
+}
+.atlas-shell .atlas-meetings-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.atlas-shell .atlas-meetings-filter input[type="search"] {
+  flex: 1 1 280px;
+  min-width: 0;
+  font: 15px/1.4 var(--atlas-sans);
+  background: var(--atlas-paper-deep);
+  border: 1px solid var(--atlas-rule);
+  border-radius: var(--atlas-r-lg);
+  padding: 10px 14px;
+  color: var(--atlas-ink);
+  outline: none;
+}
+.atlas-shell .atlas-meetings-filter input[type="search"]:focus {
+  border-color: var(--atlas-oxblood);
+  box-shadow: 0 0 0 2px rgba(122, 31, 43, 0.08);
+}
+.atlas-shell .atlas-meetings-filter select {
+  font: 14px var(--atlas-sans);
+  background: var(--atlas-paper-deep);
+  border: 1px solid var(--atlas-rule);
+  border-radius: var(--atlas-r-lg);
+  padding: 10px 28px 10px 14px;
+  color: var(--atlas-ink);
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--atlas-oxblood) 50%),
+                    linear-gradient(135deg, var(--atlas-oxblood) 50%, transparent 50%);
+  background-position: calc(100% - 14px) 50%, calc(100% - 10px) 50%;
+  background-size: 4px 4px;
+  background-repeat: no-repeat;
+}
+.atlas-shell .atlas-meetings-filter input[type="submit"] {
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--atlas-paper);
+  background: var(--atlas-oxblood);
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 22px;
+  cursor: pointer;
+}
+.atlas-shell .atlas-meetings-filter input[type="submit"]:hover { background: var(--atlas-oxblood-deep); }
+.atlas-shell .atlas-meetings-filter .atlas-meetings-filter-clear {
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--atlas-ink-mute);
+  border-bottom: 1px dotted var(--atlas-rule);
+  padding-bottom: 1px;
+  margin-left: 4px;
+}
+.atlas-shell .atlas-meetings-filter .atlas-meetings-filter-clear:hover {
+  color: var(--atlas-oxblood);
+  border-bottom-color: var(--atlas-oxblood);
+  text-decoration: none;
+}
+
+/* Results count line. */
+.atlas-shell .atlas-meetings-count {
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--atlas-ink-mute);
+  margin: 0 0 12px;
+}
+.atlas-shell .atlas-meetings-count strong {
+  color: var(--atlas-ink);
+  font-family: var(--atlas-sans);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Results list. */
+.atlas-shell .atlas-meetings-results {
+  border-top: 1px solid var(--atlas-rule);
+}
+.atlas-shell .atlas-meeting-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  column-gap: 24px;
+  align-items: start;
+  padding: 22px 16px 22px 14px;
+  border-bottom: 1px solid var(--atlas-rule);
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  border-radius: var(--atlas-r-lg);
+}
+.atlas-shell .atlas-meeting-row:hover {
+  background: rgba(122, 31, 43, 0.04);
+  box-shadow: inset 3px 0 0 var(--atlas-oxblood);
+}
+.atlas-shell .atlas-meeting-row-body { min-width: 0; }
+
+.atlas-shell .atlas-meeting-row h2 {
+  margin: 0 0 8px;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 30, "SOFT" 50, "WONK" 0;
+  font-weight: 450;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  color: var(--atlas-ink);
+}
+.atlas-shell .atlas-meeting-row h2 a { color: inherit; text-decoration: none; }
+.atlas-shell .atlas-meeting-row h2 a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--atlas-r-lg);
+  z-index: 0;
+}
+.atlas-shell .atlas-meeting-row:hover h2 a { color: var(--atlas-oxblood); }
+
+.atlas-shell .atlas-meeting-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: center;
+  font-family: var(--atlas-mono);
+  font-size: 11.5px;
+  color: var(--atlas-ink-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.atlas-shell .atlas-meeting-row-meta .atlas-meeting-row-body-name {
+  color: var(--atlas-ink-soft);
+}
+
+/* Agenda items preview inside the row. */
+.atlas-shell .atlas-meeting-row-preview {
+  position: relative;
+  z-index: 1;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--atlas-paper-edge);
+}
+.atlas-shell .atlas-meeting-row-preview-label {
+  font-family: var(--atlas-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--atlas-oxblood);
+  margin: 0 0 6px;
+}
+.atlas-shell .atlas-meeting-row-preview-label::before { content: "◇ "; }
+.atlas-shell .atlas-meeting-row-preview ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.atlas-shell .atlas-meeting-row-preview li {
+  margin: 4px 0;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 12, "SOFT" 50, "WONK" 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--atlas-ink-soft);
+}
+.atlas-shell .atlas-meeting-row-preview li a {
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--atlas-oxblood);
+  border-bottom: 1px dotted var(--atlas-oxblood);
+  margin-right: 8px;
+  padding-bottom: 1px;
+}
+.atlas-shell .atlas-meeting-row-preview .atlas-meeting-row-preview-more {
+  display: inline-block;
+  margin-top: 6px;
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--atlas-ink-mute);
+  border-bottom: 1px dotted var(--atlas-rule);
+  padding-bottom: 1px;
+}
+.atlas-shell .atlas-meeting-row-preview .atlas-meeting-row-preview-more:hover {
+  color: var(--atlas-oxblood);
+  border-bottom-color: var(--atlas-oxblood);
+  text-decoration: none;
+}
+
+/* Right-side facts column for the row. */
+.atlas-shell .atlas-meeting-row-facts {
+  margin: 0;
+  align-self: center;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 8px 16px;
+}
+.atlas-shell .atlas-meeting-row-facts > div {
+  display: flex;
+  flex-direction: column;
+}
+.atlas-shell .atlas-meeting-row-facts dt {
+  font-family: var(--atlas-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--atlas-ink-mute);
+  margin-bottom: 2px;
+}
+.atlas-shell .atlas-meeting-row-facts dd {
+  margin: 0;
+  font-family: var(--atlas-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--atlas-ink);
+  font-variant-numeric: tabular-nums;
+}
+.atlas-shell .atlas-meeting-row-facts dd.unknown {
+  color: var(--atlas-ink-mute);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* Empty state. */
+.atlas-shell .atlas-meetings-empty {
+  padding: 36px 28px;
+  background: var(--atlas-paper);
+  border: 1px dashed var(--atlas-rule);
+  border-radius: var(--atlas-r-lg);
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 18, "SOFT" 50, "WONK" 0;
+  font-size: 18px;
+  color: var(--atlas-ink-soft);
+  text-align: center;
+}
+
+
+/* ============================================================
+ * MEETING DETAIL — composition for /public/events/:id (Phase 4).
+ * Header (date plate + body title + status chips + matters count),
+ * facts strip, AI summary card, tiered agenda
+ * (sections + substantive matter rows + folded notices), side rail.
+ * ============================================================ */
+
+.atlas-shell .atlas-mtg-header {
+  padding: 28px 0;
+  border-bottom: 1px solid var(--atlas-rule);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 36px;
+  align-items: end;
+}
+.atlas-shell .atlas-mtg-headline {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 26px;
+  align-items: end;
+}
+.atlas-shell .atlas-mtg-eyebrow {
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--atlas-oxblood);
+  margin: 0 0 12px;
+}
+.atlas-shell .atlas-mtg-title {
+  margin: 0;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 120, "SOFT" 50, "WONK" 0;
+  font-weight: 400;
+  font-size: clamp(30px, 4.2vw, 52px);
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  color: var(--atlas-ink);
+}
+.atlas-shell .atlas-mtg-title em,
+.atlas-shell .atlas-mtg-title .atlas-em {
+  font-variation-settings: "opsz" 9, "SOFT" 100, "WONK" 1;
+  color: var(--atlas-oxblood);
+  font-style: italic;
+  font-weight: 350;
+}
+.atlas-shell .atlas-mtg-meta {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+  font-family: var(--atlas-mono);
+  font-size: 11.5px;
+  color: var(--atlas-ink-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.atlas-shell .atlas-mtg-side {
+  text-align: right;
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--atlas-ink-mute);
+  line-height: 1.8;
+}
+.atlas-shell .atlas-mtg-side .atlas-mtg-matters-count {
+  font-family: var(--atlas-sans);
+  font-weight: 500;
+  font-size: 64px;
+  color: var(--atlas-ink);
+  letter-spacing: -0.045em;
+  line-height: 0.9;
+  display: block;
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+}
+
+/* Body grid for meeting detail — same shape as matter page. */
+.atlas-shell .atlas-mtg-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 56px;
+  padding: 44px 0 56px;
+  align-items: start;
+}
+.atlas-shell .atlas-mtg-grid > main { min-width: 0; }
+
+/* Agenda container. */
+.atlas-shell .atlas-agenda {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Section heading row — agenda scope marker like (a), (b), (d). */
+.atlas-shell .atlas-ag-section {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 24px;
+  padding: 24px 0 14px;
+  border-top: 1px solid var(--atlas-rule);
+  align-items: baseline;
+}
+.atlas-shell .atlas-ag-section:first-child { border-top: 0; }
+.atlas-shell .atlas-ag-section .atlas-ag-marker {
+  font-family: var(--atlas-mono);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: var(--atlas-oxblood);
+  text-transform: uppercase;
+  padding-top: 6px;
+}
+.atlas-shell .atlas-ag-section h3 {
+  margin: 0;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 36, "SOFT" 50, "WONK" 0;
+  font-weight: 450;
+  font-size: 22px;
+  line-height: 1.15;
+  letter-spacing: -0.018em;
+  color: var(--atlas-ink);
+}
+.atlas-shell .atlas-ag-section h3 em,
+.atlas-shell .atlas-ag-section h3 .atlas-em {
+  font-variation-settings: "opsz" 9, "SOFT" 100, "WONK" 1;
+  color: var(--atlas-ink-mute);
+  font-style: italic;
+  font-weight: 350;
+  font-size: 16px;
+}
+.atlas-shell .atlas-ag-section .atlas-ag-note {
+  margin-top: 6px;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 12, "SOFT" 50, "WONK" 0;
+  font-size: 14px;
+  color: var(--atlas-ink-mute);
+  line-height: 1.5;
+  max-width: 70ch;
+}
+
+/* Substantive matter row inside the agenda. Stretched-link pattern. */
+.atlas-shell .atlas-ag-matter {
+  position: relative;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  column-gap: 22px;
+  align-items: start;
+  padding: 20px 16px 20px 14px;
+  margin-left: 24px;
+  border-top: 1px dashed var(--atlas-paper-edge);
+  border-radius: var(--atlas-r-lg);
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.atlas-shell .atlas-ag-matter:first-of-type { border-top: 0; }
+.atlas-shell .atlas-ag-matter:hover {
+  background: rgba(122, 31, 43, 0.04);
+  box-shadow: inset 3px 0 0 var(--atlas-oxblood);
+}
+.atlas-shell .atlas-ag-matter .atlas-ag-item-num {
+  font-family: var(--atlas-sans);
+  font-weight: 500;
+  font-size: 32px;
+  color: var(--atlas-oxblood);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  padding-top: 2px;
+}
+.atlas-shell .atlas-ag-matter .atlas-ag-item-num small {
+  display: block;
+  font-family: var(--atlas-mono);
+  font-size: 9.5px;
+  color: var(--atlas-ink-mute);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-top: 6px;
+  font-weight: 500;
+}
+.atlas-shell .atlas-ag-matter .atlas-ag-item-body { min-width: 0; }
+.atlas-shell .atlas-ag-matter .atlas-ag-item-code {
+  font-family: var(--atlas-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--atlas-oxblood);
+  border: 1px solid var(--atlas-oxblood);
+  border-radius: var(--atlas-r);
+  padding: 2px 7px 1px;
+  background: rgba(122, 31, 43, 0.04);
+  display: inline-block;
+  margin-bottom: 10px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.atlas-shell .atlas-ag-matter h4 {
+  margin: 0 0 10px;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 30, "SOFT" 50, "WONK" 0;
+  font-weight: 450;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  color: var(--atlas-ink);
+}
+.atlas-shell .atlas-ag-matter h4 a { color: inherit; text-decoration: none; }
+.atlas-shell .atlas-ag-matter h4 a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--atlas-r-lg);
+  z-index: 0;
+}
+.atlas-shell .atlas-ag-matter:hover h4 a { color: var(--atlas-oxblood); }
+.atlas-shell .atlas-ag-matter .atlas-ag-item-theme {
+  display: inline-block;
+  font-family: var(--atlas-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--atlas-ink);
+  background: var(--atlas-paper-deep);
+  border: 1px solid var(--atlas-paper-edge);
+  border-radius: var(--atlas-r);
+  padding: 3px 7px 2px;
+  line-height: 1.4;
+  position: relative;
+  z-index: 1;
+}
+.atlas-shell .atlas-ag-matter .atlas-ag-att-line {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  color: var(--atlas-ink-mute);
+  letter-spacing: 0.04em;
+  position: relative;
+  z-index: 1;
+}
+.atlas-shell .atlas-ag-matter .atlas-ag-att-count {
+  color: var(--atlas-ink);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+}
+.atlas-shell .atlas-ag-matter .atlas-ag-att-count::after {
+  content: "·";
+  color: var(--atlas-paper-edge);
+  margin-left: 8px;
+}
+.atlas-shell .atlas-ag-matter .atlas-ag-att-line a.atlas-ag-att {
+  color: var(--atlas-ink-soft);
+  border-bottom: 1px dotted var(--atlas-rule);
+  padding-bottom: 1px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 11.5px;
+}
+.atlas-shell .atlas-ag-matter .atlas-ag-att-line a.atlas-ag-att + a.atlas-ag-att::before {
+  content: "·";
+  color: var(--atlas-paper-edge);
+  margin-right: 8px;
+  margin-left: -2px;
+  border-bottom: 0;
+}
+.atlas-shell .atlas-ag-matter .atlas-ag-att-line a.atlas-ag-att:hover {
+  color: var(--atlas-oxblood);
+  border-bottom-color: var(--atlas-oxblood);
+  text-decoration: none;
+}
+.atlas-shell .atlas-ag-matter .atlas-ag-arrow {
+  align-self: center;
+  font-family: var(--atlas-mono);
+  font-size: 18px;
+  color: var(--atlas-ink-mute);
+  padding-left: 8px;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+.atlas-shell .atlas-ag-matter:hover .atlas-ag-arrow {
+  color: var(--atlas-oxblood);
+  transform: translateX(3px);
+}
+
+/* Matter-pending hint (Linked matter sync pending). */
+.atlas-shell .atlas-ag-matter-pending {
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--atlas-heat);
+  margin-top: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Folded notices panel. */
+.atlas-shell .atlas-notices {
+  background: var(--atlas-paper-deep);
+  border: 1px solid var(--atlas-paper-edge);
+  border-radius: var(--atlas-r-lg);
+  padding: 22px 24px 8px;
+  margin-top: 32px;
+}
+.atlas-shell .atlas-notices-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.atlas-shell .atlas-notices-head h3 {
+  margin: 0;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 30, "SOFT" 50, "WONK" 0;
+  font-weight: 450;
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: -0.015em;
+}
+.atlas-shell .atlas-notices-head h3 em,
+.atlas-shell .atlas-notices-head h3 .atlas-em {
+  font-variation-settings: "opsz" 9, "SOFT" 100, "WONK" 1;
+  color: var(--atlas-oxblood);
+  font-style: italic;
+  font-weight: 350;
+}
+.atlas-shell .atlas-notices-head .atlas-notices-src {
+  font-family: var(--atlas-mono);
+  font-size: 10.5px;
+  color: var(--atlas-ink-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+.atlas-shell details.atlas-notice {
+  border-top: 1px dashed var(--atlas-paper-edge);
+  padding: 12px 0;
+}
+.atlas-shell details.atlas-notice:first-of-type {
+  border-top: 1px solid var(--atlas-rule);
+  margin-top: 14px;
+}
+.atlas-shell details.atlas-notice > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--atlas-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--atlas-ink);
+  letter-spacing: -0.005em;
+}
+.atlas-shell details.atlas-notice > summary::-webkit-details-marker { display: none; }
+.atlas-shell details.atlas-notice > summary .atlas-notice-icn {
+  font-family: var(--atlas-mono);
+  color: var(--atlas-oxblood);
+  font-size: 16px;
+  line-height: 1;
+  flex: none;
+}
+.atlas-shell details.atlas-notice > summary .atlas-notice-icn::before { content: "+"; }
+.atlas-shell details.atlas-notice[open] > summary .atlas-notice-icn::before { content: "−"; }
+.atlas-shell details.atlas-notice .atlas-notice-body {
+  margin-top: 10px;
+  padding-left: 0;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 12, "SOFT" 50, "WONK" 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--atlas-ink-soft);
+  max-width: 70ch;
+  white-space: pre-wrap;
+}
+
+/* Side-rail themes-on-agenda mini list. */
+.atlas-shell .atlas-rail-themes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.atlas-shell .atlas-rail-themes a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-family: var(--atlas-sans);
+  font-size: 14px;
+  padding: 8px 12px;
+  background: var(--atlas-paper-deep);
+  border: 1px solid var(--atlas-paper-edge);
+  border-radius: var(--atlas-r-lg);
+  color: var(--atlas-ink);
+  text-decoration: none;
+}
+.atlas-shell .atlas-rail-themes a:hover {
+  border-color: var(--atlas-oxblood);
+  text-decoration: none;
+}
+.atlas-shell .atlas-rail-themes .atlas-rail-themes-count {
+  font-family: var(--atlas-mono);
+  font-size: 10px;
+  color: var(--atlas-oxblood);
+  border: 1px solid var(--atlas-oxblood);
+  border-radius: 999px;
+  padding: 2px 7px 1px;
+  background: rgba(122, 31, 43, 0.05);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+/* Adjacent meeting sibling row. */
+.atlas-shell .atlas-rail-sibling {
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px dashed var(--atlas-paper-edge);
+  text-decoration: none;
+  color: inherit;
+}
+.atlas-shell .atlas-rail-sibling:first-of-type { border-top: 0; padding-top: 0; }
+.atlas-shell .atlas-rail-sibling:hover { background: rgba(122, 31, 43, 0.025); border-radius: var(--atlas-r-lg); }
+.atlas-shell .atlas-rail-sibling .atlas-rail-sibling-where {
+  font-family: var(--atlas-sans);
+  font-size: 13px;
+  color: var(--atlas-ink);
+  line-height: 1.25;
+}
+.atlas-shell .atlas-rail-sibling .atlas-rail-sibling-where small {
+  display: block;
+  font-family: var(--atlas-mono);
+  font-size: 10px;
+  color: var(--atlas-ink-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  margin-top: 2px;
+}
+.atlas-shell .atlas-rail-sibling .atlas-rail-sibling-arrow {
+  font-family: var(--atlas-mono);
+  font-size: 14px;
+  color: var(--atlas-ink-mute);
+}
+.atlas-shell .atlas-rail-sibling:hover .atlas-rail-sibling-arrow { color: var(--atlas-oxblood); }
+
+
+/* ============================================================
  * MATTERS INDEX — listing page for /public/matters (Phase 5 early).
  * Page header + theme-active banner + filter form + scrollable list of
  * matter rows. Rows reuse the agenda-matter pattern: date plate, code chip,
@@ -2187,10 +2986,13 @@
  * ============================================================ */
 
 @media (max-width: 1060px) {
-  .atlas-shell .atlas-matter-grid { grid-template-columns: 1fr; }
+  .atlas-shell .atlas-matter-grid,
+  .atlas-shell .atlas-mtg-grid { grid-template-columns: 1fr; }
   .atlas-shell .atlas-rail { position: static; }
-  .atlas-shell .atlas-matter-header { grid-template-columns: 1fr; }
-  .atlas-shell .atlas-matter-side { text-align: left; }
+  .atlas-shell .atlas-matter-header,
+  .atlas-shell .atlas-mtg-header { grid-template-columns: 1fr; }
+  .atlas-shell .atlas-matter-side,
+  .atlas-shell .atlas-mtg-side { text-align: left; }
 }
 
 @media (max-width: 960px) {
@@ -2243,6 +3045,27 @@
   }
   .atlas-shell .atlas-paper-num { font-size: 28px; }
   .atlas-shell .atlas-matter-side .atlas-matter-docs-count { font-size: 42px; }
+  .atlas-shell .atlas-ag-matter {
+    grid-template-columns: 44px 1fr;
+    margin-left: 0;
+  }
+  .atlas-shell .atlas-ag-matter .atlas-ag-arrow { display: none; }
+  .atlas-shell .atlas-ag-section { grid-template-columns: 44px 1fr; gap: 14px; }
+  .atlas-shell .atlas-mtg-headline { grid-template-columns: 1fr; gap: 18px; }
+  .atlas-shell .atlas-mtg-side .atlas-mtg-matters-count { font-size: 48px; }
+  .atlas-shell .atlas-meeting-row {
+    grid-template-columns: 1fr;
+    row-gap: 12px;
+    padding: 18px 12px;
+  }
+  .atlas-shell .atlas-meeting-row-facts {
+    grid-template-columns: repeat(2, 1fr);
+    align-self: start;
+  }
+  .atlas-shell .atlas-meetings-monthnav {
+    flex-direction: column;
+    gap: 8px;
+  }
   .atlas-shell .atlas-matter-row {
     grid-template-columns: 1fr;
     row-gap: 8px;
