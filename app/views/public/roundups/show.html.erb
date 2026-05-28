@@ -16,6 +16,14 @@
 
   <section class="section-band roundup-storyline">
     <p class="eyebrow">Automated recap</p>
+    <% highlights = Array(@artifact.content["highlights"]).reject(&:blank?) %>
+    <% if highlights.any? %>
+      <ul class="roundup-highlights">
+        <% highlights.each do |highlight| %>
+          <li><%= highlight %></li>
+        <% end %>
+      </ul>
+    <% end %>
     <%= simple_format(@artifact.content["storyline"].to_s) %>
   </section>
 

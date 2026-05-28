@@ -18,21 +18,28 @@ module Generated
     DEFAULT_API_BASE = "https://api.openai.com/v1"
     DEFAULT_MODEL = "gpt-4o-mini"
     DEFAULT_TIMEOUT_SECONDS = 30
+    # Warmer than the factual summary clients (which use 0.1): the roundup is
+    # narrative prose, so a little more variation reads less flat. Overridable via
+    # ENV so it can be tuned in production without a redeploy. The Layer-1 facts
+    # remain the hallucination firewall regardless of temperature.
+    DEFAULT_TEMPERATURE = 0.6
     REQUIRED_CONTENT_KEYS = %w[headline intro storyline].freeze
 
-    attr_reader :model_name, :max_input_chars
+    attr_reader :model_name, :max_input_chars, :temperature
 
     def initialize(
       api_key: ENV["GENERATED_SUMMARY_API_KEY"],
       api_base: ENV.fetch("GENERATED_SUMMARY_API_BASE", DEFAULT_API_BASE),
       model_name: ENV.fetch("GENERATED_ROUNDUP_MODEL", DEFAULT_MODEL),
       timeout_seconds: ENV.fetch("GENERATED_ROUNDUP_TIMEOUT_SECONDS", DEFAULT_TIMEOUT_SECONDS).to_i,
+      temperature: ENV.fetch("GENERATED_ROUNDUP_TEMPERATURE", DEFAULT_TEMPERATURE).to_f,
       max_input_chars: ENV.fetch("GENERATED_ROUNDUP_MAX_INPUT_CHARS", Generated::Prompts::MonthlyRoundupV1::DEFAULT_MAX_INPUT_CHARS).to_i
     )
       @api_key = api_key
       @api_base = api_base
       @model_name = model_name
       @timeout_seconds = timeout_seconds
+      @temperature = temperature
       @max_input_chars = max_input_chars
     end
 
@@ -67,8 +74,15 @@ module Generated
       normalized["headline"] = normalized["headline"].to_s.strip
       normalized["intro"] = normalized["intro"].to_s.strip
       normalized["storyline"] = normalized["storyline"].to_s.strip
+      normalized["highlights"] = normalize_strings(parsed_content["highlights"])
       normalized["decision_blurbs"] = normalize_blurbs(parsed_content["decision_blurbs"])
       normalized
+    end
+
+    # highlights is optional model output: an array of short scannable bullet
+    # strings. Coerce to stripped, non-blank strings; default to an empty array.
+    def normalize_strings(value)
+      Array(value).map { |item| item.to_s.strip }.reject(&:blank?)
     end
 
     # decision_blurbs is optional model output: an array of { matter_file, blurb }
@@ -99,7 +113,7 @@ module Generated
           { role: "system", content: system_prompt },
           { role: "user", content: user_prompt }
         ],
-        temperature: 0.1,
+        temperature: temperature,
         response_format: { type: "json_object" }
       }.to_json
 

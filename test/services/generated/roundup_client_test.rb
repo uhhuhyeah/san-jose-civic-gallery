@@ -32,6 +32,38 @@ module Generated
       assert_equal({ "total_tokens" => 42 }, response.usage_metadata)
       assert_not response.content.key?("extra")
       assert_equal [], response.content["decision_blurbs"]
+      assert_equal [], response.content["highlights"]
+    end
+
+    test "normalizes highlights into stripped non-blank strings" do
+      client = RoundupClient.new(api_key: "test-key")
+      response_body = {
+        "choices" => [
+          {
+            "message" => {
+              "content" => {
+                "headline" => "May in San Jose",
+                "intro" => "Intro.",
+                "storyline" => "Story.",
+                "highlights" => [ "  Housing package introduced  ", "", "Transit funding debated", 42 ]
+              }.to_json
+            }
+          }
+        ]
+      }
+
+      client.define_singleton_method(:post_chat_completion) do |system_prompt:, user_prompt:|
+        response_body
+      end
+
+      response = client.call(system_prompt: "system", user_prompt: "user")
+
+      assert_equal [ "Housing package introduced", "Transit funding debated", "42" ], response.content["highlights"]
+    end
+
+    test "temperature is configurable and warmer by default" do
+      assert_in_delta 0.6, RoundupClient.new(api_key: "k").temperature, 0.001
+      assert_in_delta 0.3, RoundupClient.new(api_key: "k", temperature: 0.3).temperature, 0.001
     end
 
     test "normalizes decision_blurbs and drops malformed entries" do
