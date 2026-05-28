@@ -12,7 +12,7 @@
   has_activity = @atlas_tiles.any? { |tile| tile[:stat].current_appearances.positive? }
 %>
 
-<main class="atlas-wrap">
+<main class="atlas-wrap" id="main">
   <%= render "public/shared/atlas_topbar", active: :pulse %>
 
   <%# ---------- HERO ---------- %>
@@ -29,7 +29,7 @@
   <p class="atlas-pulse-lede">
     The <span class="atlas-em">Pulse</span> sizes each civic theme by how often it has come before
     <%= current_jurisdiction.governing_bodies_phrase %> this quarter and tints the heat by what is rising.
-    Wander it the way you'd wander a map — follow whatever catches your eye.
+    Wander it the way you'd wander a map. Follow whatever catches your eye.
   </p>
 
   <%# ---------- BODY FILTER ---------- %>

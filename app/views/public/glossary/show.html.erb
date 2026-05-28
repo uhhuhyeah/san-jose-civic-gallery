@@ -3,7 +3,7 @@
   <%= stylesheet_link_tag "atlas", "data-turbo-track": "reload" %>
 <% end %>
 
-<main class="atlas-wrap">
+<main class="atlas-wrap" id="main">
   <%= render "public/shared/atlas_topbar", active: :glossary %>
 
   <%= render "public/glossary/#{current_jurisdiction.slug}" %>

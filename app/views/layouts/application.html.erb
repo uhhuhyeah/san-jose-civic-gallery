@@ -37,6 +37,7 @@
   </head>
 
   <%= content_tag :body, class: content_for(:body_class).presence do %>
+    <a href="#main" class="atlas-skip-link">Skip to main content</a>
     <%= yield %>
   <% end %>
 </html>

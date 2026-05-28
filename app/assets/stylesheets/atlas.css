@@ -245,6 +245,56 @@
   margin: 0;
 }
 
+/* Global focus-visible — consistent oxblood ring around any keyboard-focused
+   interactive element. Component-specific focus rules (search lozenge, filter
+   inputs) override below where they need a tighter look. */
+.atlas-shell a:focus-visible,
+.atlas-shell button:focus-visible,
+.atlas-shell select:focus-visible,
+.atlas-shell summary:focus-visible,
+.atlas-shell [tabindex]:focus-visible {
+  outline: 2px solid var(--atlas-oxblood);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* Skip-to-main-content link. sr-only by default, revealed at the top-left
+   corner of the viewport when keyboard-focused. The target `id="main"` lives
+   on each Atlas view's <main> element. */
+.atlas-skip-link {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  z-index: 100;
+}
+.atlas-shell .atlas-skip-link:focus,
+.atlas-shell .atlas-skip-link:focus-visible {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  width: auto;
+  height: auto;
+  padding: 10px 16px;
+  clip: auto;
+  background: var(--atlas-oxblood);
+  color: var(--atlas-paper);
+  font-family: var(--atlas-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  text-decoration: none;
+  border-radius: var(--atlas-r-lg);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+  outline: 0;
+}
+
 .atlas-shell .atlas-wrap {
   max-width: var(--atlas-content-max);
   margin: 0 auto;
@@ -3507,4 +3557,256 @@
     gap: 18px;
   }
   .atlas-shell .atlas-matter-row-facts > div { align-items: flex-start; }
+}
+
+
+/* ============================================================
+ * PRINT — civic researchers routinely print matter and meeting
+ * pages for annotation. Strip the topbar / nav / sidebar; keep
+ * the title, facts, AI summaries (with disclaimer), agenda, and
+ * matter papers; expand hidden extracts and adjacent rails so the
+ * full record fits on paper. Tested at A4 and US Letter.
+ * ============================================================ */
+
+@media print {
+  /* Page setup */
+  @page { margin: 14mm 16mm; }
+
+  /* Drop interactive page chrome and decorative backgrounds. */
+  .atlas-shell {
+    background: white !important;
+    background-image: none !important;
+    color: black;
+    font-family: var(--atlas-serif);
+    font-size: 11pt;
+    line-height: 1.45;
+  }
+
+  /* Hide non-content. */
+  .atlas-shell .atlas-topbar,
+  .atlas-shell .atlas-footer,
+  .atlas-shell .atlas-cmd,
+  .atlas-shell .atlas-skip-link,
+  .atlas-shell .atlas-pulse-dateline,
+  .atlas-shell .atlas-body-filter,
+  .atlas-shell .atlas-matters-filter,
+  .atlas-shell .atlas-meetings-filter,
+  .atlas-shell .atlas-meetings-monthnav,
+  .atlas-shell .atlas-rail,
+  .atlas-shell .atlas-papers-toc,
+  .atlas-shell .atlas-pulse-grid,
+  .atlas-shell .atlas-heat-rail,
+  .atlas-shell .atlas-calendar,
+  .atlas-shell .atlas-pulse-legend,
+  .atlas-shell .atlas-pulse-ledger,
+  .atlas-shell .atlas-data-rate,
+  .atlas-shell .atlas-meetings-banner,
+  .atlas-shell .atlas-matters-banner,
+  .atlas-shell .atlas-ag-arrow,
+  .atlas-shell .atlas-open-arrow,
+  .atlas-shell .atlas-tile,
+  .atlas-shell .atlas-body-tile,
+  .atlas-shell .atlas-rail-themes,
+  .atlas-shell .atlas-data-freshness-source,
+  .atlas-shell .atlas-em::before {
+    display: none !important;
+  }
+
+  /* Layout grids collapse to single column on paper. */
+  .atlas-shell .atlas-wrap { max-width: none; padding: 0; }
+  .atlas-shell .atlas-matter-grid,
+  .atlas-shell .atlas-mtg-grid {
+    display: block !important;
+    grid-template-columns: none !important;
+    gap: 0 !important;
+    padding: 0;
+  }
+
+  /* Header treatment — flatten ornaments. */
+  .atlas-shell .atlas-matter-header,
+  .atlas-shell .atlas-mtg-header {
+    display: block;
+    border-bottom: 1px solid #999;
+    padding: 0 0 12pt;
+    margin-bottom: 18pt;
+  }
+  .atlas-shell .atlas-matter-side,
+  .atlas-shell .atlas-mtg-side { display: none; }
+  .atlas-shell .atlas-matter-title,
+  .atlas-shell .atlas-mtg-title {
+    font-family: var(--atlas-serif);
+    font-size: 22pt;
+    font-weight: 500;
+    line-height: 1.15;
+    margin: 6pt 0 8pt;
+    color: black;
+  }
+  .atlas-shell .atlas-matter-title em,
+  .atlas-shell .atlas-mtg-title em,
+  .atlas-shell .atlas-em {
+    font-style: italic;
+    color: black;
+  }
+  .atlas-shell .atlas-matter-eyebrow,
+  .atlas-shell .atlas-mtg-eyebrow,
+  .atlas-shell .atlas-eyebrow {
+    font-family: var(--atlas-mono);
+    font-size: 9pt;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    margin-bottom: 4pt;
+  }
+
+  /* Date plate in the meeting hero — print-friendly. */
+  .atlas-shell .atlas-date {
+    background: white !important;
+    border: 1px solid #999 !important;
+  }
+  .atlas-shell .atlas-date::after { display: none !important; }
+  .atlas-shell .atlas-date-day { color: black; }
+  .atlas-shell .atlas-date-mo { color: #555; }
+
+  /* Facts strip — keep as a table-like row. */
+  .atlas-shell .atlas-facts-strip {
+    background: white !important;
+    border: 1px solid #999;
+    page-break-inside: avoid;
+    margin-bottom: 16pt;
+  }
+  .atlas-shell .atlas-facts-strip > div { border-right: 1px solid #ccc; }
+  .atlas-shell .atlas-facts-strip dd { color: black; }
+
+  /* Section headings — keep visual hierarchy but lighter. */
+  .atlas-shell .atlas-section-head {
+    margin: 18pt 0 8pt;
+    page-break-after: avoid;
+  }
+  .atlas-shell .atlas-section-head h2 { font-size: 16pt; color: black; }
+  .atlas-shell .atlas-section-head .atlas-rule { display: none; }
+  .atlas-shell .atlas-section-head .atlas-section-label {
+    font-family: var(--atlas-mono);
+    font-size: 9pt;
+    color: #666;
+  }
+
+  /* AI summary card — flatten. */
+  .atlas-shell .atlas-summary {
+    background: white !important;
+    border: 1px solid #999;
+    border-left: 3pt solid #555;
+    page-break-inside: avoid;
+    padding: 10pt 12pt;
+  }
+  .atlas-shell .atlas-summary p { color: black; }
+  .atlas-shell .atlas-summary .atlas-summary-label,
+  .atlas-shell .atlas-summary .atlas-ai-pill {
+    color: #555;
+    border-color: #999;
+  }
+  .atlas-shell .atlas-summary h5 { color: black; }
+  .atlas-shell .atlas-summary ul li { color: black; border-color: #ccc; }
+  .atlas-shell .atlas-summary ul li::before { background: #555; }
+  .atlas-shell .atlas-summary .atlas-ai-note { color: #555; }
+  .atlas-shell .atlas-summary .atlas-summary-status {
+    background: transparent;
+    border-left-color: #999;
+    color: #555;
+  }
+
+  /* Paper cards (matter attachments). */
+  .atlas-shell .atlas-paper {
+    page-break-inside: auto;
+    border-bottom: 1px solid #ccc;
+  }
+  .atlas-shell .atlas-paper-num { color: #555; }
+  .atlas-shell .atlas-paper h3 { color: black; page-break-after: avoid; }
+  .atlas-shell .atlas-paper-chips .atlas-chip {
+    background: white !important;
+    border-color: #999 !important;
+    color: black !important;
+  }
+  .atlas-shell .atlas-paper-file { color: #555; }
+  .atlas-shell .atlas-paper-file .atlas-paper-file-src-missing { color: #555; }
+
+  /* Expand the collapsed extracts so the full text prints. */
+  .atlas-shell .atlas-paper-extract {
+    background: white !important;
+    border-color: #999 !important;
+  }
+  .atlas-shell .atlas-paper-extract > summary::after { display: none; }
+  .atlas-shell .atlas-paper-extract > summary {
+    border-bottom: 1px solid #ccc;
+    color: #555;
+    cursor: default;
+  }
+  .atlas-shell .atlas-paper-extract[open] > summary { border-bottom: 1px solid #ccc; }
+  .atlas-shell .atlas-paper-extract:not([open]) > summary + .atlas-paper-extract-body {
+    display: block;
+  }
+  .atlas-shell .atlas-paper-extract-body {
+    max-height: none !important;
+    overflow: visible !important;
+    color: black;
+  }
+
+  /* Meeting agenda — keep the tiered layout, drop hover affordances. */
+  .atlas-shell .atlas-ag-section { border-top: 1px solid #ccc; page-break-after: avoid; }
+  .atlas-shell .atlas-ag-section .atlas-ag-marker { color: #555; }
+  .atlas-shell .atlas-ag-section h3 { color: black; }
+  .atlas-shell .atlas-ag-matter {
+    page-break-inside: avoid;
+    background: white !important;
+    box-shadow: none !important;
+    border-top: 1px dashed #ccc;
+  }
+  .atlas-shell .atlas-ag-matter:hover {
+    background: white !important;
+    box-shadow: none !important;
+  }
+  .atlas-shell .atlas-ag-item-num,
+  .atlas-shell .atlas-ag-item-code {
+    color: #555;
+    background: white !important;
+    border-color: #999 !important;
+  }
+  .atlas-shell .atlas-ag-item-theme {
+    background: white !important;
+    border-color: #999 !important;
+    color: black !important;
+  }
+  .atlas-shell .atlas-ag-att-line { color: #555; page-break-inside: avoid; }
+
+  /* Notices panel — expand all accordions so the boilerplate prints. */
+  .atlas-shell .atlas-notices {
+    background: white !important;
+    border-color: #999 !important;
+    page-break-before: auto;
+  }
+  .atlas-shell details.atlas-notice > summary::-webkit-details-marker { display: none; }
+  .atlas-shell details.atlas-notice > summary .atlas-notice-icn { display: none; }
+  .atlas-shell details.atlas-notice .atlas-notice-body { display: block !important; }
+
+  /* Show URL after external/source links so a printed page is verifiable. */
+  .atlas-shell a[href^="http"]::after,
+  .atlas-shell a[target="_blank"]::after {
+    content: " (" attr(href) ")";
+    font-family: var(--atlas-mono);
+    font-size: 9pt;
+    color: #555;
+    word-break: break-all;
+  }
+  /* Don't print URLs for in-page nav or footnote anchors. */
+  .atlas-shell a[href^="#"]::after,
+  .atlas-shell .atlas-glossary-sources a::after { content: ""; }
+
+  /* Generic links: keep them visible but no underline noise. */
+  .atlas-shell a { color: black; text-decoration: none; }
+
+  /* Avoid awkward page breaks. */
+  .atlas-shell h1, .atlas-shell h2, .atlas-shell h3, .atlas-shell h4 { page-break-after: avoid; }
+  .atlas-shell p, .atlas-shell li { orphans: 3; widows: 3; }
+
+  /* Drop the dev/test page badge if it ever prints. */
+  .atlas-shell .atlas-badge { display: none !important; }
 }

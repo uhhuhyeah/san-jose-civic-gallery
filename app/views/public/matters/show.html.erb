@@ -12,7 +12,7 @@
   summary_count = @matter.attachments.count { |a| attachment_summary_artifact(a) }
 %>
 
-<main class="atlas-wrap">
+<main class="atlas-wrap" id="main">
   <%= render "public/shared/atlas_topbar", active: :matters %>
 
   <nav class="atlas-crumbs" aria-label="Breadcrumb">
