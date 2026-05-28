@@ -29,8 +29,10 @@
     <link rel="alternate icon" href="/icon.png" type="image/png">
     <link rel="apple-touch-icon" href="/icon.png">
 
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
-    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%# The global stylesheet. Atlas-shelled pages additionally load `atlas.css`
+        via `content_for :head`. Naming the bundle explicitly (rather than `:app`)
+        keeps atlas.css from auto-loading on non-Atlas pages. %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= Sentry.get_trace_propagation_meta.html_safe %>
   </head>
 

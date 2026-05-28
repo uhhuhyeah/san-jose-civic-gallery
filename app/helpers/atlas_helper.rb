@@ -1,4 +1,33 @@
 module AtlasHelper
+  # Trend variant for a `Public::ThemePulse::ThemeStat`. Maps the existing
+  # surging / lift values onto the four-way visual vocabulary the Atlas tiles
+  # use. Returns :hot | :up | :flat | :down.
+  def atlas_trend_for(stat)
+    return :hot if stat.surging
+    return :hot if stat.lift && stat.lift > 2.0
+    return :up  if stat.lift && stat.lift > 1.1
+    return :down if stat.lift && stat.lift < 0.9
+    :flat
+  end
+
+  # Pill text matching a trend variant. Short on purpose — "vs last quarter"
+  # context lives in the section heading, not in every pill.
+  def atlas_trend_label(stat)
+    return "▲▲ new" if stat.surging
+    return "→"      unless stat.lift
+
+    pct = ((stat.lift - 1) * 100).round
+    if pct >= 100
+      "▲▲ #{pct}%"
+    elsif pct > 10
+      "▲ #{pct}%"
+    elsif pct.abs <= 10
+      "→ #{pct.positive? ? '+' : ''}#{pct}%"
+    else
+      "▽ #{pct}%"
+    end
+  end
+
   # Renders an inline SVG sparkline path from a series of integers (or floats).
   # Path uses `currentColor` so the parent's CSS class (`atlas-tile--up`,
   # `atlas-tile--hot`, etc.) drives the stroke color.

@@ -1,197 +1,208 @@
 <% content_for(:description) { "#{current_jurisdiction.site_title} shows which civic themes #{current_jurisdiction.governing_bodies_phrase} are focused on, what is heating up, and the latest official agenda records, matters, and documents." } %>
 <% content_for(:robots) { "noindex,follow" } if @body_name.present? %>
+<% content_for :body_class, "atlas-shell" %>
+<% content_for :head do %>
+  <%= stylesheet_link_tag "atlas", "data-turbo-track": "reload" %>
+<% end %>
 
-<main class="newspaper-shell pulse-page">
-  <%= render "public/shared/topbar", active: :pulse %>
+<%
+  scope_label = @body_name.presence || current_jurisdiction.all_scope_label
+  current_quarter = ((@as_of.month - 1) / 3) + 1
+  heating_rail = @heating_up.first(Public::PulseController::HEATING_UP_RAIL_LIMIT)
+  has_activity = @atlas_tiles.any? { |tile| tile[:stat].current_appearances.positive? }
+%>
 
-  <section class="front-intro">
-    <h1><%= current_jurisdiction.site_title %></h1>
+<main class="atlas-wrap">
+  <%= render "public/shared/atlas_topbar", active: :pulse %>
+
+  <%# ---------- HERO ---------- %>
+  <section class="atlas-pulse-hero">
+    <div>
+      <h1>What the city<br><em>is paying attention to.</em></h1>
+    </div>
+    <div class="atlas-pulse-dateline" aria-label="Pulse window">
+      <div><strong>Q<%= current_quarter %> · <%= @as_of.year %></strong></div>
+      <div><%= scope_label %></div>
+      <div>Updated <%= @as_of.strftime("%-d %b %Y") %></div>
+    </div>
+  </section>
+  <p class="atlas-pulse-lede">
+    The <span class="atlas-em">Pulse</span> sizes each civic theme by how often it has come before
+    <%= current_jurisdiction.governing_bodies_phrase %> this quarter and tints the heat by what is rising.
+    Wander it the way you'd wander a map — follow whatever catches your eye.
+  </p>
+
+  <%# ---------- BODY FILTER ---------- %>
+  <%= form_with url: root_path, method: :get, local: true, class: "atlas-body-filter" do |form| %>
+    <%= form.label :body_name, "Show themes for", for: "pulse-body-name" %>
+    <%= form.select :body_name,
+      options_for_select([ [ current_jurisdiction.all_bodies_option_label, "" ] ] + @body_options.map { |body| [ body, body ] }, @body_name),
+      {},
+      id: "pulse-body-name",
+      aria: { label: "Filter themes by body" } %>
+    <%= form.submit "Update" %>
+    <% if @body_name.present? %>
+      <%= link_to current_jurisdiction.view_all_scope_label, root_path, class: "atlas-body-filter-clear" %>
+    <% end %>
+  <% end %>
+
+  <%# ---------- THE ATLAS ---------- %>
+  <section style="padding: 56px 0 12px;">
+    <%= render "public/shared/atlas_section_heading",
+               title: "The",
+               em: "Pulse",
+               label: "Themes · Q#{current_quarter} #{@as_of.year} · #{scope_label}" %>
+
+    <% if has_activity %>
+      <div class="atlas-pulse-grid" role="list" aria-label="Themes ranked by quarterly activity">
+        <% @atlas_tiles.each do |tile| %>
+          <% trend = atlas_trend_for(tile[:stat]) %>
+          <%= render "public/shared/atlas_theme_tile",
+                     name: tile[:stat].label,
+                     count: tile[:stat].current_appearances,
+                     size: tile[:size],
+                     trend: trend,
+                     trend_label: atlas_trend_label(tile[:stat]),
+                     sparkline: (tile[:series].any? { |c| c.positive? } ? tile[:series] : nil),
+                     count_label: (tile[:stat].surging || trend == :hot) ? "Heating up" : "Appearances",
+                     href: public_matters_path(theme: tile[:stat].slug) %>
+        <% end %>
+      </div>
+      <div class="atlas-pulse-legend">
+        <span><span class="atlas-pulse-legend-swatch atlas-pulse-legend-swatch--hot" aria-hidden="true"></span> Heating up · &gt;100% vs last quarter</span>
+        <span><span class="atlas-pulse-legend-swatch atlas-pulse-legend-swatch--up" aria-hidden="true"></span> Trending up</span>
+        <span><span class="atlas-pulse-legend-swatch atlas-pulse-legend-swatch--flat" aria-hidden="true"></span> Steady</span>
+        <span>Tile size · appearances this quarter</span>
+      </div>
+    <% else %>
+      <div class="atlas-empty-state">
+        <h3>Not enough activity yet</h3>
+        <p>
+          There are not enough tagged agenda appearances in this window
+          <% if @body_name.present? %>for <%= @body_name %> <% end %>to show a Pulse.
+          Try viewing <%= current_jurisdiction.all_scope_label.downcase %>, or check back as more meetings are ingested.
+        </p>
+      </div>
+    <% end %>
   </section>
 
-  <nav class="topic-bar" aria-label="Browse matters by topic">
-    <span class="topic-bar-label">Browse by theme</span>
-    <div class="topic-bar-chips">
-      <% Civic::ThemeTaxonomy.themes_for(current_jurisdiction).sort_by { |theme| theme[:label] }.each do |theme| %>
-        <%= link_to theme[:label], public_matters_path(theme: theme[:slug]), class: "pill" %>
-      <% end %>
-    </div>
-  </nav>
-
-  <%# Main content: Pulse selector, changes, decisions and meetings (left);
-      source-record counts and about (right). Two independent columns. %>
-  <section class="newspaper-body">
-    <div>
-      <%= form_with url: root_path, method: :get, local: true, class: "search-form" do |form| %>
-        <div class="section-title">
-          <h2>The Civic Gallery <em>Pulse</em></h2>
-          <span>Themes trending across agendas this quarter</span>
-        </div>
-        <p class="data-section-note">
-          The <em>"Pulse"</em> shows which themes <%= current_jurisdiction.governing_bodies_phrase %> have been focused on
-          this quarter and what is heating up, alongside the latest official
-          agenda materials.
-        </p>
-        <p class="data-section-note">
-          Themes are derived from AI tagging of matters and
-          are assistive, not official.
-        </p>
-        <%= form.label :body_name, "Show themes for", for: "pulse-body-name" %>
-        <div class="search-row">
-          <%= form.select :body_name,
-            options_for_select([ [ current_jurisdiction.all_bodies_option_label, "" ] ] + @body_options.map { |body| [ body, body ] }, @body_name),
-            {},
-            id: "pulse-body-name",
-            aria: { label: "Filter themes by body" } %>
-          <%= form.submit "Update" %>
-          <% if @body_name.present? %>
-            <%= link_to current_jurisdiction.view_all_scope_label, root_path, class: "button-secondary" %>
+  <%# ---------- HEATING UP RAIL ---------- %>
+  <% if heating_rail.any? %>
+    <section style="padding: 56px 0 12px;">
+      <%= render "public/shared/atlas_section_heading",
+                 title: "What's",
+                 em: "heating up",
+                 label: "Top movers vs last quarter" %>
+      <div class="atlas-heat-rail">
+        <% heating_rail.each_with_index do |stat, i| %>
+          <%= link_to public_matters_path(theme: stat.slug), class: "atlas-heat-card", aria: { label: "#{stat.label}: #{atlas_trend_label(stat)}" } do %>
+            <span class="atlas-heat-num"><%= format("%02d ·", i + 1) %></span>
+            <h3><%= stat.label %></h3>
+            <div class="atlas-heat-delta"><%= atlas_trend_label(stat) %> vs last quarter</div>
+            <div class="atlas-heat-meta"><%= pluralize(stat.current_appearances, "appearance") %></div>
+            <% series = @quarterly_series&.dig(stat.slug) %>
+            <% if series&.any? { |c| c.positive? } %>
+              <%= atlas_sparkline_svg(series, aria_label: "#{stat.label} quarterly trend") %>
+            <% end %>
           <% end %>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
 
-      <% scope_label = @body_name.presence || current_jurisdiction.all_scope_label %>
-      <% if @heating_up.empty? %>
-        <div class="section-title">
-          <h2>Pulse Changes <span class="subtle">&middot; <%= scope_label %></span></h2>
-          <span>More than last quarter, per meeting</span>
-        </div>
-        <div class="card">
-          <article class="item">
-            <h3 class="item-title">Not enough activity yet</h3>
-            <p>
-              There are not enough tagged agenda appearances in this window
-              <% if @body_name.present? %>for <%= @body_name %> <% end %>to show a
-              pulse. Try viewing <%= current_jurisdiction.all_scope_label.downcase %>, or check back as more meetings are
-              ingested.
-            </p>
-          </article>
-        </div>
-      <% else %>
-        <div class="section-title">
-          <h2>Pulse Changes <span class="subtle">&middot; <%= scope_label %></span></h2>
-          <span>More than last quarter, per meeting</span>
-        </div>
-        <div class="card">
-          <% @heating_up.each do |stat| %>
-            <article class="item">
-              <h3 class="item-title"><%= link_to stat.label, public_matters_path(theme: stat.slug) %></h3>
-              <div class="tags">
-                <% if stat.surging %>
-                  <span class="pill gold">New this quarter</span>
-                <% else %>
-                  <span class="pill green">&#9650; <%= ((stat.lift - 1) * 100).round %>% vs last quarter</span>
-                <% end %>
-                <span class="pill"><%= pluralize(stat.current_appearances, "appearance") %> this quarter</span>
-              </div>
-            </article>
-          <% end %>
-        </div>
-      <% end %>
-
-      <% if @recent_decisions.any? %>
-        <div class="section-title">
-          <h2>What's being decided</h2>
-          <span>Recent matters, with generated summaries</span>
-        </div>
-        <div class="card">
-          <% @recent_decisions.each do |matter| %>
-            <% preview = matter_summary_preview(matter) %>
-            <% next unless preview %>
-            <% _attachment, summary = preview %>
-            <% primary_theme = matter.themes.detect { |theme| theme.rank == 1 } %>
-            <article class="item">
-              <h3 class="item-title">
+  <%# ---------- IN SESSION ---------- %>
+  <% rendered_session_rows = @recent_decisions.filter_map { |matter|
+       preview = matter_summary_preview(matter)
+       [ matter, preview ] if preview
+     } %>
+  <% if rendered_session_rows.any? %>
+    <section style="padding: 56px 0 12px;">
+      <%= render "public/shared/atlas_section_heading",
+                 title: "In",
+                 em: "session",
+                 label: "Recent matters · generated summaries" %>
+      <div class="atlas-session-list">
+        <% rendered_session_rows.each_with_index do |(matter, preview), i| %>
+          <% _attachment, summary = preview %>
+          <% primary_theme = matter.themes.detect { |t| t.rank == 1 } %>
+          <article class="atlas-session-row">
+            <div class="atlas-session-num"><%= format("%02d", i + 1) %></div>
+            <div>
+              <h3>
                 <%= link_to public_matter_path(matter) do %>
-                  <%= matter.display_name %><% if matter.descriptive_title && matter.descriptive_title != matter.display_name %> &middot; <%= matter.descriptive_title %><% end %>
+                  <%= matter.display_name %><% if matter.descriptive_title && matter.descriptive_title != matter.display_name %> · <%= matter.descriptive_title %><% end %>
                 <% end %>
               </h3>
-              <div class="tags">
+              <div class="atlas-session-meta">
                 <% if primary_theme %>
-                  <span class="pill green"><%= primary_theme.label %></span>
+                  <%= link_to primary_theme.label, public_matters_path(theme: primary_theme.theme_slug), class: "atlas-session-theme" %>
                 <% end %>
                 <% if matter.body_name.present? %>
-                  <span class="pill"><%= matter.body_name %></span>
+                  <span><%= matter.body_name %></span>
                 <% end %>
               </div>
-              <p><%= truncate(summary.squish, length: 220, separator: " ") %></p>
-            </article>
-          <% end %>
-          <p class="card-note">Generated summaries are assistive, not official.</p>
-        </div>
-      <% end %>
-
-      <div class="section-title meetings-title" id="meetings">
-        <h2>Recent Meetings</h2>
-        <span>Official source events</span>
-      </div>
-      <div class="compact-list">
-        <% if @events.any? %>
-          <% @events.each do |event| %>
-            <article class="meeting-row">
-              <time class="meeting-date" datetime="<%= event.event_date %>">
-                <span><%= event.event_date.strftime("%b") %></span>
-                <strong><%= event.event_date.day %></strong>
-                <small><%= event.event_date.year %></small>
-              </time>
-              <div>
-                <h3><%= link_to event.listing_title, public_event_path(event) %></h3>
-                <p><%= event.body_name.presence || "Unknown body" %></p>
-              </div>
-              <div class="meeting-status">
-                <span>Agenda: <%= event.agenda_status_name.presence || "Unknown" %></span>
-                <span>Minutes: <%= event.minutes_status_name.presence || "Unknown" %></span>
-              </div>
-            </article>
-          <% end %>
-        <% else %>
-          <p>No events have been ingested yet.</p>
+              <div class="atlas-session-ai-flag">AI-assisted summary — not the official record</div>
+            </div>
+            <p class="atlas-session-summary"><%= truncate(summary.squish, length: 280, separator: " ") %></p>
+          </article>
         <% end %>
       </div>
-    </div>
+    </section>
+  <% end %>
 
-    <aside class="mini-stack" aria-label="Site overview">
-      <div class="mini-card roundups-card">
-        <span class="subtle">Monthly roundup</span>
-        <strong>The month in <%= current_jurisdiction.short_name %></strong>
-        <%= link_to roundups_path, class: "button-secondary roundups-cta" do %>
-          Read monthly roundups
-          <span class="roundups-cta-arrow" aria-hidden="true">&rarr;</span>
+  <%# ---------- CALENDAR STRIP ---------- %>
+  <% if @events.any? %>
+    <section style="padding: 56px 0 12px;">
+      <%= render "public/shared/atlas_section_heading",
+                 title: "The",
+                 em: "calendar",
+                 label: "Recent meetings · scroll →" %>
+      <div class="atlas-calendar" aria-label="Recent meetings">
+        <% @events.each do |event| %>
+          <%= link_to public_event_path(event), class: "atlas-cal-card", aria: { label: "#{event.body_name.presence || event.listing_title} on #{event.event_date.strftime('%-d %B %Y')}" } do %>
+            <%= render "public/shared/atlas_date_plate", date: event.event_date, size: :md %>
+            <h4><%= event.body_name.presence || event.listing_title %></h4>
+            <div class="atlas-cal-status">
+              <span class="atlas-chip atlas-chip--pill atlas-chip--<%= event.agenda_status_name&.downcase == "final" ? "sage" : "heat" %>">
+                Agenda <%= event.agenda_status_name.presence&.downcase || "unknown" %>
+              </span>
+              <span class="atlas-chip atlas-chip--pill atlas-chip--<%= event.minutes_status_name&.downcase == "final" ? "sage" : "heat" %>">
+                Minutes <%= event.minutes_status_name.presence&.downcase || "unknown" %>
+              </span>
+            </div>
+          <% end %>
         <% end %>
       </div>
-      <div class="mini-card">
-        <span class="subtle">Current source records</span>
-        <strong><%= pluralize(@stats.fetch(:meetings), "meeting") %>, <%= pluralize(@stats.fetch(:agenda_items), "agenda item") %></strong>
-        <%= link_to "View meeting calendar", public_meetings_path, class: "source-link" %>
-      </div>
-      <div class="mini-card">
-        <span class="subtle">Linked matters</span>
-        <strong><%= pluralize(@stats.fetch(:matters), "matter") %>, <%= pluralize(@stats.fetch(:attachments), "attachment") %></strong>
-        <%= link_to "Browse official matters", public_matters_path, class: "source-link" %>
-      </div>
-      <div class="mini-card">
-        <span class="subtle">Document processing</span>
-        <strong><%= pluralize(@stats.fetch(:imported_files), "file") %> imported, <%= pluralize(@stats.fetch(:extracted_texts), "text extraction") %></strong>
-        <span class="source-link">Source files stay separate from extracted text</span>
-      </div>
-      <div class="mini-card">
-        <span class="subtle">About <%= current_jurisdiction.site_title %></span>
-        <p>
-          <strong><%= current_jurisdiction.site_title %></strong> is a free, open-source intelligence
-          layer over <%= current_jurisdiction.civic_subject %>'s public records.
-        </p>
-        <p>
-          Every meeting agenda and matter is ingested, tagged, and summarized so residents
-          can cut through the noise and follow the topics they care about.
-        </p>
-        <p>The official records remain the source of truth: this site is a tool to help you research,
-          understand, and ask better questions of your elected officials.
-        </p>
-        <p>
-          Browse by <%= link_to 'meeting', public_meetings_path %>, browse by <%= link_to 'topic', public_matters_path %>, or search across both.
-        </p>
-      </div>
-    </aside>
+    </section>
+  <% end %>
+
+  <%# ---------- MONTHLY ROUNDUP CTA ---------- %>
+  <section style="padding: 32px 0 12px;">
+    <%= link_to roundups_path, class: "atlas-empty-state", style: "display: block; text-decoration: none; color: inherit; border-left-color: var(--atlas-oxblood);" do %>
+      <h3>The month in <%= current_jurisdiction.short_name %>, in brief</h3>
+      <p>Monthly roundups summarize what came before <%= current_jurisdiction.governing_bodies_phrase %> in one read. <span class="atlas-em">Read monthly roundups →</span></p>
+    <% end %>
   </section>
 
-  <%= render "public/shared/footer" %>
+  <%# ---------- LEDGER ---------- %>
+  <section class="atlas-pulse-ledger" aria-label="Current data scale">
+    <div class="atlas-pulse-ledger-cell">
+      <strong><%= number_with_delimiter(@stats[:meetings]) %></strong>
+      <span>Meetings ingested</span>
+    </div>
+    <div class="atlas-pulse-ledger-cell">
+      <strong><%= number_with_delimiter(@stats[:matters_heard]) %></strong>
+      <span>Matters heard</span>
+    </div>
+    <div class="atlas-pulse-ledger-cell">
+      <strong><%= number_with_delimiter(@stats[:matters]) %></strong>
+      <span>Distinct matters</span>
+    </div>
+    <div class="atlas-pulse-ledger-cell">
+      <strong><%= number_with_delimiter(@stats[:extracted_texts]) %></strong>
+      <span>Document extractions</span>
+    </div>
+  </section>
+
+  <%= render "public/shared/atlas_footer" %>
 </main>

@@ -14,6 +14,7 @@ module Public
   class ThemePulse
     DEFAULT_WINDOW = 13.weeks
     DEFAULT_MIN_APPEARANCES = 3
+    DEFAULT_SPARK_BUCKETS = 4
 
     ThemeStat = Data.define(
       :slug, :label,
@@ -39,6 +40,36 @@ module Public
 
     def stats
       @stats ||= build_stats
+    end
+
+    # Quarterly time series for each theme, used to draw sparklines on the
+    # Atlas tiles. Returns { "housing" => [c1, c2, c3, c4], ... } where index 0
+    # is the oldest bucket and the last index is the current quarter
+    # (matching `stats[:current_appearances]`).
+    #
+    # Each bucket is `window` long (13 weeks by default). The whole series spans
+    # `buckets * window` ending at `as_of`. The taxonomy is iterated so themes
+    # with zero appearances anywhere in the series still appear with all zeros,
+    # keeping the Atlas grid stable when matters cluster on a few themes.
+    #
+    # Production has 7.3y of San Jose history and 2y of SJUSD history, so 4
+    # buckets covers both jurisdictions without leading empty quarters. See
+    # docs/redesign-data-spike.md section 1.
+    def quarterly_series(buckets: DEFAULT_SPARK_BUCKETS)
+      bucket_counts = buckets.times.map do |i|
+        # `i` is 0 for the oldest bucket, `buckets - 1` for the current bucket.
+        range_end   = as_of - (window * (buckets - 1 - i))
+        range_start = range_end - window
+        # Mirror the closed-end shape `current_range` uses for the most recent
+        # bucket (so an event on `as_of` is counted) and keep all earlier
+        # buckets half-open at the end to prevent boundary double-counting.
+        range = i == buckets - 1 ? (range_start..range_end) : (range_start...range_end)
+        appearances_by_theme(range)
+      end
+
+      Civic::ThemeTaxonomy.themes_for(jurisdiction).each_with_object({}) do |theme, acc|
+        acc[theme[:slug]] = bucket_counts.map { |counts| counts[theme[:slug]] || 0 }
+      end
     end
 
     private

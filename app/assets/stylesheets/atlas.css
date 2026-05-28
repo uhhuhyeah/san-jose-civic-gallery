@@ -274,11 +274,17 @@
  * TOPBAR — brand wordmark, command search, primary nav
  * ============================================================ */
 
+/* Two-row layout: row 1 puts brand on the left and nav on the right,
+   row 2 gives the search lozenge the full width so its placeholder isn't
+   truncated. Flex-wrap + `order` keeps the semantic source order
+   (brand → search → nav) while visually rendering brand → nav → search. */
 .atlas-shell .atlas-topbar {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 28px;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
+  column-gap: 28px;
+  row-gap: 16px;
   padding: 22px 0 18px;
   border-bottom: 1px solid var(--atlas-rule);
 }
@@ -287,6 +293,8 @@
   display: flex;
   align-items: baseline;
   gap: 14px;
+  order: 0;
+  flex-shrink: 0;
 }
 
 .atlas-shell .atlas-topbar .atlas-brand-mark {
@@ -321,6 +329,8 @@
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--atlas-ink-soft);
+  order: 1;
+  flex-shrink: 0;
 }
 .atlas-shell .atlas-topbar nav a[aria-current="page"] {
   color: var(--atlas-oxblood);
@@ -329,31 +339,42 @@
 }
 
 .atlas-shell .atlas-cmd {
-  justify-self: stretch;
-  max-width: 540px;
-  margin: 0 auto;
+  /* Search sits on its own row beneath the brand/nav row. Full width within
+     the content wrap so the placeholder reads in full. */
+  order: 2;
+  flex: 1 1 100%;
+  width: 100%;
+  max-width: none;
   position: relative;
   display: flex;
   align-items: center;
   background: var(--atlas-paper-deep);
   border: 1px solid var(--atlas-rule);
   border-radius: 999px;
-  padding: 8px 16px 8px 18px;
+  padding: 10px 18px 10px 20px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.atlas-shell .atlas-cmd:hover,
+.atlas-shell .atlas-cmd:focus-within {
+  border-color: var(--atlas-oxblood);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 0 0 2px rgba(122, 31, 43, 0.08);
 }
 .atlas-shell .atlas-cmd::before {
   content: "⌖";
   color: var(--atlas-oxblood);
-  margin-right: 10px;
-  font-size: 16px;
+  margin-right: 12px;
+  font-size: 18px;
+  flex: none;
 }
 .atlas-shell .atlas-cmd input {
   flex: 1;
   border: 0;
   background: transparent;
-  font: 14px/1 var(--atlas-sans);
+  font: 15px/1 var(--atlas-sans);
   color: var(--atlas-ink);
   outline: none;
+  min-width: 0;
 }
 .atlas-shell .atlas-cmd input::placeholder { color: var(--atlas-ink-mute); }
 .atlas-shell .atlas-cmd input:focus-visible {
@@ -980,18 +1001,401 @@
 
 
 /* ============================================================
+ * PULSE PAGE — composition specific to the homepage (Phase 2).
+ * Hero, theme atlas grid, heating-up rail, in-session list, calendar
+ * strip, ledger, and body-filter form.
+ * ============================================================ */
+
+.atlas-shell .atlas-pulse-hero {
+  padding: 60px 0 28px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: end;
+  border-bottom: 1px solid var(--atlas-rule);
+}
+.atlas-shell .atlas-pulse-hero h1 {
+  margin: 0;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 144, "SOFT" 30, "WONK" 0;
+  font-weight: 400;
+  font-size: clamp(48px, 7vw, 96px);
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+  color: var(--atlas-ink);
+}
+.atlas-shell .atlas-pulse-hero h1 em,
+.atlas-shell .atlas-pulse-hero h1 .atlas-em {
+  font-style: italic;
+  font-variation-settings: "opsz" 9, "SOFT" 100, "WONK" 1;
+  color: var(--atlas-oxblood);
+  font-weight: 300;
+}
+.atlas-shell .atlas-pulse-dateline {
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--atlas-ink-mute);
+  text-align: right;
+  line-height: 1.7;
+}
+.atlas-shell .atlas-pulse-dateline strong {
+  color: var(--atlas-ink);
+  font-weight: 500;
+}
+.atlas-shell .atlas-pulse-lede {
+  margin: 20px 0 0;
+  max-width: 720px;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 18, "SOFT" 50, "WONK" 0;
+  font-weight: 350;
+  font-size: 20px;
+  line-height: 1.45;
+  color: var(--atlas-ink-soft);
+}
+
+/* Body filter form — subtle, under the hero. */
+.atlas-shell .atlas-body-filter {
+  margin: 20px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 14px;
+}
+.atlas-shell .atlas-body-filter label {
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--atlas-ink-mute);
+}
+.atlas-shell .atlas-body-filter select {
+  font-family: var(--atlas-sans);
+  font-size: 13px;
+  background: var(--atlas-paper-deep);
+  border: 1px solid var(--atlas-rule);
+  border-radius: var(--atlas-r);
+  padding: 6px 28px 6px 10px;
+  color: var(--atlas-ink);
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--atlas-oxblood) 50%),
+                    linear-gradient(135deg, var(--atlas-oxblood) 50%, transparent 50%);
+  background-position: calc(100% - 12px) 50%, calc(100% - 8px) 50%;
+  background-size: 4px 4px;
+  background-repeat: no-repeat;
+}
+.atlas-shell .atlas-body-filter input[type="submit"],
+.atlas-shell .atlas-body-filter button {
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--atlas-oxblood);
+  background: transparent;
+  border: 1px solid var(--atlas-oxblood);
+  border-radius: 999px;
+  padding: 5px 12px 4px;
+  cursor: pointer;
+}
+.atlas-shell .atlas-body-filter input[type="submit"]:hover,
+.atlas-shell .atlas-body-filter button:hover {
+  background: rgba(122, 31, 43, 0.06);
+}
+.atlas-shell .atlas-body-filter .atlas-body-filter-clear {
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--atlas-ink-mute);
+  border-bottom: 1px dotted var(--atlas-rule);
+}
+
+/* Theme Atlas grid — dense flow packs tiles around the XL anchor. */
+.atlas-shell .atlas-pulse-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-auto-rows: 84px;
+  gap: 6px;
+  grid-auto-flow: dense;
+}
+.atlas-shell .atlas-pulse-grid .atlas-tile--xl { grid-column: span 5; grid-row: span 3; }
+.atlas-shell .atlas-pulse-grid .atlas-tile--l  { grid-column: span 4; grid-row: span 2; }
+.atlas-shell .atlas-pulse-grid .atlas-tile--m  { grid-column: span 3; grid-row: span 2; }
+.atlas-shell .atlas-pulse-grid .atlas-tile--s  { grid-column: span 3; grid-row: span 1; }
+
+/* Legend underneath the grid. */
+.atlas-shell .atlas-pulse-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 28px;
+  margin-top: 18px;
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  color: var(--atlas-ink-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+.atlas-shell .atlas-pulse-legend .atlas-pulse-legend-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 10px;
+  border: 1px solid var(--atlas-rule);
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.atlas-shell .atlas-pulse-legend .atlas-pulse-legend-swatch--hot  { background: rgba(217, 102, 63, 0.25); border-color: var(--atlas-heat); }
+.atlas-shell .atlas-pulse-legend .atlas-pulse-legend-swatch--up   { background: rgba(122, 31, 43, 0.12); border-color: var(--atlas-oxblood); }
+.atlas-shell .atlas-pulse-legend .atlas-pulse-legend-swatch--flat { background: var(--atlas-paper-deep); }
+
+/* Heating-up rail — four cards with bigger sparklines. */
+.atlas-shell .atlas-heat-rail {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.atlas-shell .atlas-heat-card {
+  display: block;
+  background: var(--atlas-paper);
+  border: 1px solid var(--atlas-rule);
+  border-top: 3px solid var(--atlas-heat);
+  border-radius: var(--atlas-r-lg);
+  padding: 18px 18px 16px;
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+}
+.atlas-shell a.atlas-heat-card:hover { border-color: var(--atlas-heat); text-decoration: none; }
+.atlas-shell .atlas-heat-card .atlas-heat-num {
+  position: absolute;
+  top: 14px; right: 16px;
+  font-family: var(--atlas-sans);
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--atlas-heat);
+  line-height: 1;
+  letter-spacing: 0.18em;
+  font-variant-numeric: tabular-nums;
+}
+.atlas-shell .atlas-heat-card h3 {
+  margin: 0 0 8px;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 30, "SOFT" 50, "WONK" 0;
+  font-weight: 450;
+  font-size: 20px;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  max-width: 80%;
+}
+.atlas-shell .atlas-heat-card .atlas-heat-delta {
+  font-family: var(--atlas-mono);
+  font-size: 12px;
+  color: var(--atlas-heat);
+  letter-spacing: 0.04em;
+}
+.atlas-shell .atlas-heat-card .atlas-heat-meta {
+  font-family: var(--atlas-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--atlas-ink-mute);
+  margin-top: 6px;
+}
+.atlas-shell .atlas-heat-card svg.atlas-spark {
+  margin-top: 12px;
+  width: 100%;
+  height: 44px;
+  color: var(--atlas-heat);
+}
+
+/* In-session — numbered editorial entries. */
+.atlas-shell .atlas-session-list {
+  border-top: 1px solid var(--atlas-rule);
+}
+.atlas-shell .atlas-session-row {
+  display: grid;
+  grid-template-columns: 96px 1.4fr 1fr;
+  gap: 28px;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--atlas-rule);
+  align-items: start;
+}
+.atlas-shell .atlas-session-num {
+  font-family: var(--atlas-sans);
+  font-weight: 500;
+  font-size: 56px;
+  line-height: 0.85;
+  color: var(--atlas-oxblood);
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.atlas-shell .atlas-session-row h3 {
+  margin: 0 0 10px;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 60, "SOFT" 50, "WONK" 0;
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--atlas-ink);
+}
+.atlas-shell .atlas-session-row h3 a:hover {
+  color: var(--atlas-oxblood);
+  text-decoration: none;
+  border-bottom: 1px solid var(--atlas-oxblood);
+}
+.atlas-shell .atlas-session-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: center;
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--atlas-ink-mute);
+  text-transform: uppercase;
+}
+.atlas-shell .atlas-session-meta .atlas-session-code {
+  color: var(--atlas-oxblood);
+  border: 1px solid var(--atlas-oxblood);
+  border-radius: var(--atlas-r);
+  padding: 2px 6px 1px;
+  background: rgba(122, 31, 43, 0.04);
+}
+.atlas-shell .atlas-session-meta .atlas-session-theme {
+  color: var(--atlas-ink);
+  background: var(--atlas-paper-deep);
+  border: 1px solid var(--atlas-paper-edge);
+  border-radius: var(--atlas-r);
+  padding: 2px 6px 1px;
+}
+.atlas-shell .atlas-session-summary {
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--atlas-ink-soft);
+  margin: 0;
+}
+.atlas-shell .atlas-session-ai-flag {
+  margin-top: 12px;
+  font-family: var(--atlas-mono);
+  font-size: 10.5px;
+  color: var(--atlas-ink-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+.atlas-shell .atlas-session-ai-flag::before {
+  content: "◇ ";
+  color: var(--atlas-oxblood);
+}
+
+/* Calendar strip — horizontal scroll of meeting cards. */
+.atlas-shell .atlas-calendar {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 6px 2px 18px;
+  scroll-snap-type: x mandatory;
+}
+.atlas-shell .atlas-calendar::-webkit-scrollbar { height: 6px; }
+.atlas-shell .atlas-calendar::-webkit-scrollbar-thumb {
+  background: var(--atlas-paper-edge);
+  border-radius: 999px;
+}
+.atlas-shell .atlas-cal-card {
+  flex: 0 0 230px;
+  scroll-snap-align: start;
+  background: var(--atlas-paper);
+  border: 1px solid var(--atlas-rule);
+  border-radius: var(--atlas-r-lg);
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+}
+.atlas-shell a.atlas-cal-card:hover { border-color: var(--atlas-oxblood); text-decoration: none; }
+.atlas-shell .atlas-cal-card h4 {
+  margin: 0;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 18, "SOFT" 50, "WONK" 0;
+  font-weight: 450;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+.atlas-shell .atlas-cal-card .atlas-cal-status {
+  margin-top: auto;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Ledger — bottom-of-page stats row. */
+.atlas-shell .atlas-pulse-ledger {
+  margin: 64px 0 28px;
+  padding-top: 28px;
+  border-top: 1px solid var(--atlas-rule);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+.atlas-shell .atlas-pulse-ledger .atlas-pulse-ledger-cell strong {
+  display: block;
+  font-family: var(--atlas-sans);
+  font-weight: 500;
+  font-size: 48px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--atlas-ink);
+  font-variant-numeric: tabular-nums;
+}
+.atlas-shell .atlas-pulse-ledger .atlas-pulse-ledger-cell span {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--atlas-mono);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--atlas-ink-mute);
+}
+
+/* "Not enough activity yet" empty-state card for Pulse changes. */
+.atlas-shell .atlas-empty-state {
+  background: var(--atlas-paper);
+  border: 1px solid var(--atlas-rule);
+  border-left: 3px solid var(--atlas-ink-mute);
+  border-radius: var(--atlas-r-lg);
+  padding: 22px 24px;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--atlas-ink-soft);
+}
+.atlas-shell .atlas-empty-state h3 {
+  margin: 0 0 6px;
+  font-size: 20px;
+  font-weight: 450;
+}
+
+
+/* ============================================================
  * RESPONSIVE — narrow viewport adjustments to shared components.
  * Page-specific responsive rules belong with their page in Phase 2-4.
  * ============================================================ */
 
 @media (max-width: 960px) {
-  .atlas-shell .atlas-topbar {
-    grid-template-columns: 1fr;
-    gap: 14px;
-  }
+  /* On narrow viewports nav wraps to its own row beneath the brand. Left-align
+     it so it sits flush with the wordmark rather than pinned to the right. */
+  .atlas-shell .atlas-topbar { row-gap: 12px; }
   .atlas-shell .atlas-topbar nav {
     justify-content: flex-start;
     flex-wrap: wrap;
+    flex: 1 1 100%;
   }
   .atlas-shell .atlas-facts-strip {
     grid-template-columns: repeat(3, 1fr);
@@ -1001,10 +1405,31 @@
   .atlas-shell .atlas-facts-strip > div:nth-child(-n + 3) { border-top: 0; }
 }
 
+@media (max-width: 960px) {
+  .atlas-shell .atlas-pulse-hero { grid-template-columns: 1fr; }
+  .atlas-shell .atlas-pulse-dateline { text-align: left; }
+  .atlas-shell .atlas-heat-rail { grid-template-columns: repeat(2, 1fr); }
+  .atlas-shell .atlas-pulse-ledger { grid-template-columns: repeat(2, 1fr); }
+  .atlas-shell .atlas-pulse-grid {
+    grid-template-columns: repeat(6, 1fr);
+    grid-auto-rows: 80px;
+  }
+  .atlas-shell .atlas-pulse-grid .atlas-tile--xl { grid-column: span 6; grid-row: span 3; }
+  .atlas-shell .atlas-pulse-grid .atlas-tile--l  { grid-column: span 6; grid-row: span 2; }
+  .atlas-shell .atlas-pulse-grid .atlas-tile--m  { grid-column: span 3; grid-row: span 2; }
+  .atlas-shell .atlas-pulse-grid .atlas-tile--s  { grid-column: span 3; grid-row: span 1; }
+}
+
 @media (max-width: 720px) {
   .atlas-shell .atlas-facts-strip { grid-template-columns: repeat(2, 1fr); }
   .atlas-shell .atlas-facts-strip > div:nth-child(3n) { border-right: 1px solid var(--atlas-rule); }
   .atlas-shell .atlas-facts-strip > div:nth-child(2n) { border-right: 0; }
   .atlas-shell .atlas-date--lg .atlas-date-day { font-size: 64px; }
   .atlas-shell .atlas-footer { flex-direction: column; align-items: flex-start; }
+  .atlas-shell .atlas-session-row {
+    grid-template-columns: 64px 1fr;
+  }
+  .atlas-shell .atlas-session-row .atlas-session-summary { grid-column: 2; }
+  .atlas-shell .atlas-session-num { font-size: 44px; }
+  .atlas-shell .atlas-heat-rail { grid-template-columns: 1fr; }
 }
