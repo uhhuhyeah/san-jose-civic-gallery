@@ -10,6 +10,9 @@ module Public
 
     THEME_MOMENTUM_LIMIT = 5
     QUIET_MONTH_THRESHOLD = 3
+    # Cap on introductions surfaced in the roundup. Keeps the digest focused and
+    # the prompt input bounded even in a heavy month (April had 60 themed intros).
+    INTRODUCED_LIMIT = 40
 
     def initialize(jurisdiction:, period_start:, period_end:)
       @jurisdiction = jurisdiction
@@ -38,7 +41,11 @@ module Public
       end
     end
 
-    # Matters introduced during the period, newest first.
+    # Substantive matters introduced during the period, newest first, capped.
+    # Restricted to matters that received a primary (rank-1) theme: ClassifyMatterThemes
+    # deliberately leaves procedural and ceremonial matters untagged, so a primary
+    # theme is the substantive-vs-procedural signal. This keeps the roundup an
+    # editorial digest rather than a raw dump of every agenda item.
     def introduced
       @introduced ||= begin
         matters = Civic::Matter
@@ -46,7 +53,9 @@ module Public
                   .includes(:themes)
                   .where(intro_date: @period_start..@period_end)
                   .where.not(intro_date: nil)
+                  .where(id: Civic::MatterTheme.primary.select(:civic_matter_id))
                   .order(intro_date: :desc, id: :desc)
+                  .limit(INTRODUCED_LIMIT)
                   .to_a
 
         matters.map do |matter|

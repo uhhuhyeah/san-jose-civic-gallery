@@ -109,19 +109,41 @@ module Public
 
     # --- introduced ---------------------------------------------------------
 
-    test "includes matters with intro_date inside the window" do
+    test "includes themed matters with intro_date inside the window" do
       matter = Civic::Matter.create!(
         legistar_matter_id: 70_300,
         matter_file: "26-400",
         intro_date: Date.new(2026, 5, 12),
         source_system: "legistar.sanjose",
       )
+      matter.themes.create!(theme_slug: "housing", rank: 1)
 
       result = build_activity.introduced
 
       assert_equal 1, result.size
       assert_equal matter, result.first.matter
       assert_equal Date.new(2026, 5, 12), result.first.intro_date
+    end
+
+    test "excludes introductions without a primary theme" do
+      themed = Civic::Matter.create!(
+        legistar_matter_id: 70_350,
+        matter_file: "26-450",
+        intro_date: Date.new(2026, 5, 12),
+        source_system: "legistar.sanjose",
+      )
+      themed.themes.create!(theme_slug: "housing", rank: 1)
+      # Procedural matter: no theme assigned, must be excluded.
+      Civic::Matter.create!(
+        legistar_matter_id: 70_351,
+        matter_file: "26-451",
+        intro_date: Date.new(2026, 5, 13),
+        source_system: "legistar.sanjose",
+      )
+
+      result = build_activity.introduced
+
+      assert_equal [ themed ], result.map(&:matter)
     end
 
     test "introduced ordered newest intro_date first" do
@@ -131,18 +153,35 @@ module Public
         intro_date: Date.new(2026, 5, 3),
         source_system: "legistar.sanjose",
       )
+      matter_earlier.themes.create!(theme_slug: "housing", rank: 1)
       matter_later = Civic::Matter.create!(
         legistar_matter_id: 70_401,
         matter_file: "26-501",
         intro_date: Date.new(2026, 5, 25),
         source_system: "legistar.sanjose",
       )
+      matter_later.themes.create!(theme_slug: "transportation", rank: 1)
 
       result = build_activity.introduced
 
       assert_equal 2, result.size
       assert_equal matter_later, result.first.matter
       assert_equal matter_earlier, result.second.matter
+    end
+
+    test "introduced is capped at INTRODUCED_LIMIT" do
+      (MonthlyActivity::INTRODUCED_LIMIT + 3).times do |i|
+        # All intro_dates stay within the May window; ordering ties break on id.
+        matter = Civic::Matter.create!(
+          legistar_matter_id: 72_000 + i,
+          matter_file: "26-CAP#{i}",
+          intro_date: Date.new(2026, 5, 1) + (i % 28).days,
+          source_system: "legistar.sanjose",
+        )
+        matter.themes.create!(theme_slug: "housing", rank: 1)
+      end
+
+      assert_equal MonthlyActivity::INTRODUCED_LIMIT, build_activity.introduced.size
     end
 
     test "introduced primary_theme_label reflects rank-1 theme" do
