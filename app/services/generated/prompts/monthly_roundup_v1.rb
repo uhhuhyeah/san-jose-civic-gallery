@@ -12,7 +12,7 @@ module Generated
     # actually happened. The model is permitted to state that a matter passed or was
     # introduced, but must not invent anything beyond the supplied facts.
     class MonthlyRoundupV1
-      VERSION = "monthly_roundup_v2"
+      VERSION = "monthly_roundup_v3"
       DEFAULT_MAX_INPUT_CHARS = 18_000
       TRUNCATION_MARKER = "\n\n…[truncated]"
 
@@ -107,6 +107,11 @@ module Generated
           Return ONLY valid JSON with exactly these keys:
             headline   : a short, specific string (the recap headline; not clickbait)
             intro      : one short paragraph string introducing the month
+            highlights : an array of 3 to 5 short bullet strings, each a single
+                         scannable takeaway from the month (a notable introduction,
+                         theme, or meeting). One sentence or fragment each, no leading
+                         bullet characters, using ONLY the supplied facts. Use an empty
+                         array only when the month is genuinely empty.
             storyline  : one to three short paragraphs (a single string) connecting
                          the month's themes to the specific named decisions and
                          introductions in the data
@@ -119,7 +124,7 @@ module Generated
                          decision. Omit a decision rather than guess about it. Use an
                          empty array when there are no decisions. Never invent a
                          matter_file that does not appear in the facts.
-          No keys other than these four may be returned.
+          No keys other than these five may be returned.
         PROMPT
       end
 

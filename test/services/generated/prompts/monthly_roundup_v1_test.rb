@@ -79,6 +79,7 @@ module Generated
 
         assert_includes sp, "headline"
         assert_includes sp, "intro"
+        assert_includes sp, "highlights"
         assert_includes sp, "storyline"
         assert_includes sp, "decision_blurbs"
         assert_includes sp, "matter_file"
