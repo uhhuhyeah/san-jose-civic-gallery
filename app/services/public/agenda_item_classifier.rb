@@ -8,10 +8,13 @@ module Public
   # The decision tree is deterministic from columns already on civic_event_items.
   # No ML needed. See docs/redesign-data-spike.md section 5.
   #
-  # Substantive ratio on production (2026-05-28): ~27.7% of event items carry a
-  # civic_matter_id. A representative meeting sample should land in 25-30%; a
-  # body shape that lands wildly outside that range usually means the source
-  # data uses a marker pattern the classifier doesn't recognize.
+  # Substantive ratio on the San Jose corpus (2026-05-28): ~27.7% of event
+  # items carry a civic_matter_id. Per-meeting ratios vary widely with body
+  # type — committee meetings dilute substantive items with procedural
+  # bookends and run 15-25%, council meetings cluster nearer 30-40%. A body
+  # shape that lands well outside its expected band usually means the source
+  # data uses a marker pattern the classifier doesn't recognize, not that the
+  # classifier is wrong.
   module AgendaItemClassifier
     # An agenda_number is a section marker when it matches "(a)" through "(z)"
     # or a bullet "•". Substantive items use digit markers like "1." or "3.4".

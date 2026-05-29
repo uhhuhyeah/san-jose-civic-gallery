@@ -33,14 +33,16 @@ module Public
     end
 
     # List of { theme:, count: } for primary themes of substantive items on
-    # this agenda, sorted by count descending.
+    # this agenda, sorted by count descending. Label is `.to_s`-coerced in
+    # the secondary sort key so a stray nil label (data error) doesn't raise
+    # `ArgumentError: comparison of Array with Array failed`.
     def aggregate_themes_on_agenda(items)
       primary_themes = items.filter_map { |item| item.matter&.themes&.detect { |t| t.rank == 1 } }
       primary_themes
         .group_by(&:theme_slug)
         .values
         .map { |group| { theme: group.first, count: group.length } }
-        .sort_by { |entry| [ -entry[:count], entry[:theme].label ] }
+        .sort_by { |entry| [ -entry[:count], entry[:theme].label.to_s ] }
     end
 
     def cached_adjacent_event(direction)

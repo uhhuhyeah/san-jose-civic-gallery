@@ -74,7 +74,10 @@
   <div class="atlas-matter-grid">
 
     <%# ===== MAIN: THE PAPERS ===== %>
-    <main>
+    <%# <section> not <main> — the page-level <main id="main"> above carries
+        the landmark; nesting a second <main> would be a HTML5 violation and
+        break skip-to-content semantics for screen readers. %>
+    <section class="atlas-matter-papers">
       <%= render "public/shared/atlas_section_heading",
                  title: "The",
                  em: "papers",
@@ -204,7 +207,7 @@
       <% else %>
         <p class="atlas-paper-status-note">No current attachments have been ingested for this matter.</p>
       <% end %>
-    </main>
+    </section>
 
     <%# ===== SIDE RAIL ===== %>
     <aside class="atlas-rail" aria-label="About this matter">
@@ -263,7 +266,11 @@
         </dl>
       </div>
 
-      <% if @sibling_matters.any? %>
+      <%# Pair the guard: @sibling_matters and @latest_event are cached
+          independently, so it's possible for the sibling-id cache to be warm
+          while the latest event has been removed. Render the card only when
+          both are present. %>
+      <% if @sibling_matters.any? && @latest_event %>
         <div class="atlas-rail-card atlas-rail-adjacent">
           <h4>Adjacent at <%= @latest_event.event_date.strftime("%d %b %Y") %></h4>
           <% @sibling_matters.each do |sib| %>

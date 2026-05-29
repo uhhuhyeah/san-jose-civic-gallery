@@ -67,7 +67,7 @@ module Public
       assert_equal [ a, b, c ], tagged.map(&:last)
     end
 
-    test "real T&E-style mix lands in the 25-30% substantive ratio band" do
+    test "committee-style mix (T&E shape) lands in the 15-21% substantive ratio band" do
       matter1 = Civic::Matter.create!(legistar_matter_id: 50_021, matter_file: "26-A")
       matter2 = Civic::Matter.create!(legistar_matter_id: 50_022, matter_file: "26-B")
       matter3 = Civic::Matter.create!(legistar_matter_id: 50_023, matter_file: "26-C")
@@ -96,6 +96,9 @@ module Public
       tagged = AgendaItemClassifier.tag(items)
       ratio = tagged.count { |kind, _| kind == :substantive }.to_f / tagged.length
 
+      # Committee meetings cluster lower than council meetings; the T&E shape
+      # below has 4 substantive items in 24 total = ~16.7%, well inside the
+      # 15-21% band documented on AgendaItemClassifier.
       assert_in_delta 0.18, ratio, 0.03,
                       "T&E-style agenda landed at #{(ratio * 100).round(1)}%, outside the expected band"
     end

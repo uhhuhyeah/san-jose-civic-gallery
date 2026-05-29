@@ -1,7 +1,7 @@
 <% content_for(:title) { @artifact.content["headline"].presence || "#{@period.label} roundup" } %>
 <% content_for(:description) { "#{current_jurisdiction.short_name} civic activity recap for #{@period.label}: decisions, new business, and meeting highlights." } %>
 
-<main class="page-shell">
+<main class="page-shell" id="main">
   <%= render "public/shared/topbar" %>
 
   <p class="breadcrumb"><%= link_to "All monthly roundups", roundups_path %></p>

@@ -29,7 +29,16 @@ module Civic
     has_many :matters, class_name: "Civic::Matter", foreign_key: :civic_jurisdiction_id, inverse_of: :civic_jurisdiction, dependent: :restrict_with_exception
     has_many :matter_attachments, class_name: "Civic::MatterAttachment", foreign_key: :civic_jurisdiction_id, inverse_of: :civic_jurisdiction, dependent: :restrict_with_exception
 
-    validates :slug, presence: true, uniqueness: true
+    # Slug shape is constrained because views render jurisdiction-specific
+    # partials by interpolating the slug into a template path (e.g.
+    # `render "public/glossary/#{slug}"`). Path traversal characters or
+    # whitespace would either pick the wrong template or raise an unhelpful
+    # MissingTemplate. The format below allows only lowercase ASCII, digits,
+    # underscores, and hyphens — covers every realistic jurisdiction slug
+    # while making the template lookup safe.
+    SLUG_FORMAT = /\A[a-z0-9][a-z0-9_-]*\z/
+
+    validates :slug, presence: true, uniqueness: true, format: { with: SLUG_FORMAT, message: "must be lowercase letters, digits, underscores, or hyphens" }
     validates :name, presence: true
     validates :kind, presence: true, inclusion: { in: KINDS }
     validates :primary_host, presence: true, uniqueness: true

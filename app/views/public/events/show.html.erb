@@ -10,7 +10,11 @@
   substantive_count = @substantive_items.length
   agenda_total      = @event.event_items.length
   total_attachments = @substantive_items.sum { |item| item.matter&.attachments&.size.to_i }
-  total_summaries   = @event_summary&.content&.fetch("summary", "").to_s.present? ? 1 : 0
+  # Hoist the "has a meaningful summary?" check to one local so the
+  # header counter, the summary section guard, and any future caller use
+  # the same definition.
+  has_event_summary = @event_summary&.content&.dig("summary").to_s.present?
+  total_summaries   = has_event_summary ? 1 : 0
   official_url      = official_source_url(@event.in_site_url)
   matters_on_agenda_label = "#{substantive_count} #{'matter'.pluralize(substantive_count)} on agenda"
 %>
@@ -82,10 +86,13 @@
   <%# ---------- BODY GRID ---------- %>
   <div class="atlas-mtg-grid">
 
-    <main>
+    <%# <section> not <main> — the page-level <main id="main"> above carries
+        the landmark; nesting a second <main> would be a HTML5 violation and
+        break skip-to-content semantics for screen readers. %>
+    <section class="atlas-mtg-main">
 
       <%# ===== AI MEETING SUMMARY ===== %>
-      <% if @event_summary&.content&.fetch("summary", nil).present? %>
+      <% if has_event_summary %>
         <% cache [@event_cache_version, "atlas-ai-summary"] do %>
           <%= render "public/shared/atlas_section_heading",
                      title: "The meeting",
@@ -189,7 +196,7 @@
           </section>
         <% end %>
       <% end %>
-    </main>
+    </section>
 
     <%# ===== SIDE RAIL ===== %>
     <aside class="atlas-rail" aria-label="About this meeting">

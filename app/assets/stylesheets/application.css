@@ -9,6 +9,47 @@
  * Consider organizing styles into separate files for maintainability.
  */
 
+/* Skip-to-main-content link — first focusable element on every page, sr-only
+   by default and revealed in the top-left on keyboard focus. Lives here in
+   the global stylesheet (not atlas.css) so it works on Atlas and non-Atlas
+   pages alike; href target is `id="main"` on the page's <main>. Colours are
+   hard-coded to the oxblood/paper brand pair rather than CSS variables so
+   the rule is fully self-contained. */
+.atlas-skip-link {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  clip: rect(0, 0, 0, 0); /* Safari < 16 fallback */
+  white-space: nowrap;
+  border: 0;
+  z-index: 100;
+}
+.atlas-skip-link:focus,
+.atlas-skip-link:focus-visible {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  width: auto;
+  height: auto;
+  padding: 10px 16px;
+  clip-path: none;
+  clip: auto;
+  background: #7a1f2b;
+  color: #f1ece2;
+  font: 12px/1 "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  text-decoration: none;
+  border-radius: 4px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+  outline: 0;
+}
+
 :root {
   color-scheme: light;
   --ink: #17212b;

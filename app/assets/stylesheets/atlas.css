@@ -183,12 +183,20 @@
   --atlas-paper-edge:   #d6cdb8;
   --atlas-ink:          #1a1a1f;
   --atlas-ink-soft:     #3a3a44;
-  --atlas-ink-mute:     #6a6a72;
+  /* ink-mute darkened from #6a6a72 to pass WCAG AA (4.5:1) on paper-deep
+     when used at mono-caps sizes (~10-11px). Still visibly softer than
+     ink-soft, preserving the three-step ink hierarchy. */
+  --atlas-ink-mute:     #56565d;
   --atlas-rule:         #c9bfa7;
   --atlas-oxblood:      #7a1f2b;
   --atlas-oxblood-deep: #5a161f;
   --atlas-slate:        #455362;
   --atlas-heat:         #d9663f;
+  /* heat-deep is the small-text-safe variant of heat. The flagship heat
+     orange fails AA for body copy <18px on paper; heat-deep passes ~4.8:1
+     on paper. Use heat for borders, fills, icons, and large display;
+     swap to heat-deep when the heat is text under ~16px. */
+  --atlas-heat-deep:    #a64a2c;
   --atlas-heat-soft:    #efb89c;
   --atlas-sage:         #6f8068;
   --atlas-amber:        #b89048;
@@ -258,42 +266,9 @@
   border-radius: 3px;
 }
 
-/* Skip-to-main-content link. sr-only by default, revealed at the top-left
-   corner of the viewport when keyboard-focused. The target `id="main"` lives
-   on each Atlas view's <main> element. */
-.atlas-skip-link {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-  z-index: 100;
-}
-.atlas-shell .atlas-skip-link:focus,
-.atlas-shell .atlas-skip-link:focus-visible {
-  position: fixed;
-  top: 12px;
-  left: 12px;
-  width: auto;
-  height: auto;
-  padding: 10px 16px;
-  clip: auto;
-  background: var(--atlas-oxblood);
-  color: var(--atlas-paper);
-  font-family: var(--atlas-mono);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  text-decoration: none;
-  border-radius: var(--atlas-r-lg);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
-  outline: 0;
-}
+/* Skip-to-main-content link lives in application.css so it works on every
+   page (Atlas and non-Atlas) without depending on atlas.css being loaded.
+   Don't redeclare it here — the global rule is the contract. */
 
 .atlas-shell .atlas-wrap {
   max-width: var(--atlas-content-max);
@@ -422,7 +397,10 @@
   flex: 1;
   border: 0;
   background: transparent;
-  font: 15px/1 var(--atlas-sans);
+  font-family: var(--atlas-sans);
+  font-size: 15px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
   color: var(--atlas-ink);
   outline: none;
   min-width: 0;
@@ -544,7 +522,7 @@
   font-weight: 500;
 }
 .atlas-shell .atlas-summary h5.keys::before  { content: "▣ "; color: var(--atlas-oxblood); }
-.atlas-shell .atlas-summary h5.limits        { color: var(--atlas-heat); }
+.atlas-shell .atlas-summary h5.limits        { color: var(--atlas-heat-deep); }
 .atlas-shell .atlas-summary h5.limits::before { content: "▽ "; }
 .atlas-shell .atlas-summary ul {
   margin: 0 0 4px;
@@ -592,7 +570,7 @@
   border-left: 2px solid var(--atlas-heat);
   font-family: var(--atlas-mono);
   font-size: 11px;
-  color: var(--atlas-heat);
+  color: var(--atlas-heat-deep);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -967,8 +945,26 @@
  * ============================================================ */
 
 .atlas-shell svg.atlas-spark { display: block; }
-.atlas-shell svg.atlas-spark path   { fill: none; stroke: currentColor; stroke-width: 1.6; }
-.atlas-shell svg.atlas-spark circle { fill: currentColor; }
+/* `vector-effect: non-scaling-stroke` keeps the stroke a uniform 1.6px even
+   though `preserveAspectRatio="none"` non-uniformly stretches the viewBox
+   to the tile. Without it, near-vertical segments rendered noticeably thinner
+   than near-horizontal ones. `stroke-linecap: round` also gives the final
+   point a rounded terminator so the trailing dot reads as a uniform circle
+   regardless of the aspect ratio. */
+.atlas-shell svg.atlas-spark path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.atlas-shell svg.atlas-spark circle {
+  fill: currentColor;
+  /* The circle is a fall-through emphasis dot on top of the linecap. Without
+     a vector-effect for fill we can't fully cancel non-uniform scaling, but
+     the linecap dot underneath maintains a uniform appearance. */
+}
 
 
 /* ============================================================
@@ -1268,7 +1264,7 @@
   margin-right: 4px;
 }
 .atlas-shell .atlas-paper-file .atlas-paper-file-v { color: var(--atlas-ink-soft); }
-.atlas-shell .atlas-paper-file .atlas-paper-file-src-missing { color: var(--atlas-heat); }
+.atlas-shell .atlas-paper-file .atlas-paper-file-src-missing { color: var(--atlas-heat-deep); }
 
 /* Manual-import disclosure note inside a paper. */
 .atlas-shell .atlas-paper-manual {
@@ -2034,7 +2030,10 @@
 .atlas-shell .atlas-meetings-filter input[type="search"] {
   flex: 1 1 280px;
   min-width: 0;
-  font: 15px/1.4 var(--atlas-sans);
+  font-family: var(--atlas-sans);
+  font-size: 15px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
   background: var(--atlas-paper-deep);
   border: 1px solid var(--atlas-rule);
   border-radius: var(--atlas-r-lg);
@@ -2047,7 +2046,9 @@
   box-shadow: 0 0 0 2px rgba(122, 31, 43, 0.08);
 }
 .atlas-shell .atlas-meetings-filter select {
-  font: 14px var(--atlas-sans);
+  font-family: var(--atlas-sans);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
   background: var(--atlas-paper-deep);
   border: 1px solid var(--atlas-rule);
   border-radius: var(--atlas-r-lg);
@@ -2354,7 +2355,7 @@
   padding: 44px 0 56px;
   align-items: start;
 }
-.atlas-shell .atlas-mtg-grid > main { min-width: 0; }
+.atlas-shell .atlas-mtg-grid > .atlas-mtg-main { min-width: 0; }
 
 /* Agenda container. */
 .atlas-shell .atlas-agenda {
@@ -2558,7 +2559,7 @@
   font-family: var(--atlas-mono);
   font-size: 11px;
   letter-spacing: 0.06em;
-  color: var(--atlas-heat);
+  color: var(--atlas-heat-deep);
   margin-top: 8px;
   position: relative;
   z-index: 1;
@@ -2802,7 +2803,10 @@
 .atlas-shell .atlas-matters-filter input[type="search"] {
   flex: 1 1 280px;
   min-width: 0;
-  font: 15px/1.4 var(--atlas-sans);
+  font-family: var(--atlas-sans);
+  font-size: 15px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
   background: var(--atlas-paper-deep);
   border: 1px solid var(--atlas-rule);
   border-radius: var(--atlas-r-lg);
@@ -2819,7 +2823,9 @@
   box-shadow: 0 0 0 2px rgba(122, 31, 43, 0.08);
 }
 .atlas-shell .atlas-matters-filter select {
-  font: 14px var(--atlas-sans);
+  font-family: var(--atlas-sans);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
   background: var(--atlas-paper-deep);
   border: 1px solid var(--atlas-rule);
   border-radius: var(--atlas-r-lg);
@@ -3266,7 +3272,7 @@
 .atlas-shell .atlas-heat-card .atlas-heat-delta {
   font-family: var(--atlas-mono);
   font-size: 12px;
-  color: var(--atlas-heat);
+  color: var(--atlas-heat-deep);
   letter-spacing: 0.04em;
 }
 .atlas-shell .atlas-heat-card .atlas-heat-meta {
@@ -3489,9 +3495,10 @@
   .atlas-shell .atlas-facts-strip > div:nth-child(3n) { border-right: 0; }
   .atlas-shell .atlas-facts-strip > div { border-top: 1px solid var(--atlas-rule); }
   .atlas-shell .atlas-facts-strip > div:nth-child(-n + 3) { border-top: 0; }
-}
 
-@media (max-width: 960px) {
+  /* Pulse-page composition collapses on the same breakpoint — merged here
+     from a second 960px block so a future contributor adding a 960px rule
+     has one obvious place to put it. */
   .atlas-shell .atlas-pulse-hero { grid-template-columns: 1fr; }
   .atlas-shell .atlas-pulse-dateline { text-align: left; }
   .atlas-shell .atlas-heat-rail { grid-template-columns: repeat(2, 1fr); }
@@ -3607,8 +3614,7 @@
   .atlas-shell .atlas-tile,
   .atlas-shell .atlas-body-tile,
   .atlas-shell .atlas-rail-themes,
-  .atlas-shell .atlas-data-freshness-source,
-  .atlas-shell .atlas-em::before {
+  .atlas-shell .atlas-data-freshness-source {
     display: none !important;
   }
 

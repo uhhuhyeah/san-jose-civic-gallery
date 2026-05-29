@@ -67,11 +67,26 @@ module Public
 
     # Pulse stat for the matter's primary theme — drives the Atlas-language
     # sidebar tile. Returns nil when the matter has no primary theme yet.
+    #
+    # Reads from a jurisdiction-scoped cache of the full ThemePulse stats
+    # collection rather than rebuilding ThemePulse per matter. Two visits to
+    # different matter pages within the same TTL share one set of aggregation
+    # queries instead of paying for them on every cold matter page.
     def cached_primary_theme_stat
       return nil unless @primary_theme
 
-      Rails.cache.fetch([ @matter_cache_version, "primary-theme-stat", @primary_theme.theme_slug ], expires_in: SHOW_CACHE_TTL) do
-        Public::ThemePulse.new(jurisdiction: current_jurisdiction).stats.find { |stat| stat.slug == @primary_theme.theme_slug }
+      cached_jurisdiction_theme_stats.find { |stat| stat.slug == @primary_theme.theme_slug }
+    end
+
+    # Cached jurisdiction-wide ThemePulse stats keyed by jurisdiction + day +
+    # TTL bucket. Independent of the matter cache version so every matter page
+    # in the jurisdiction shares one cache entry for the day.
+    def cached_jurisdiction_theme_stats
+      Rails.cache.fetch(
+        [ "public/theme-pulse-stats", current_jurisdiction.slug, Date.current.iso8601, Time.current.to_i / SHOW_CACHE_TTL.to_i ],
+        expires_in: SHOW_CACHE_TTL
+      ) do
+        Public::ThemePulse.new(jurisdiction: current_jurisdiction).stats
       end
     end
 

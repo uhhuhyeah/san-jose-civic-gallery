@@ -1,9 +1,14 @@
 <%# Atlas topbar — brand wordmark, command-search lozenge, primary nav.
     Locals:
       active: :pulse | :matters | :meetings | :glossary (optional)
+
+    Note: Data Health (:data) is reachable from the footer, not primary nav,
+    so callers pass `active: :data` only to record intent; no nav item will
+    be highlighted. If Data is promoted to primary nav later, add the link
+    below and the active comparison will start matching.
 %>
 <header class="atlas-topbar">
-  <%= link_to root_path, class: "atlas-brand", aria: { label: "#{current_jurisdiction.site_title} — home" } do %>
+  <%= link_to root_path, class: "atlas-brand", aria: { label: "#{current_jurisdiction.site_title}: home" } do %>
     <span class="atlas-brand-mark"><%= current_jurisdiction.site_title %></span>
     <span class="atlas-brand-sub"><%= current_jurisdiction.tagline %></span>
   <% end %>

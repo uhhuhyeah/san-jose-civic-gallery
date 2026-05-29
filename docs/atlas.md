@@ -76,8 +76,26 @@ Type tokens are defined as CSS custom properties:
 ```
 
 Fonts ship with `font-display: swap` so a fallback renders immediately and
-swaps in once the variable font loads. The total cold-load weight is ~250 KB
-for the latin-only subset.
+swaps in once the variable font loads. Cold-load weight for the latin-only
+path is approximately:
+
+| Subset                                | Bytes  |
+|---------------------------------------|--------|
+| `fraunces-roman-latin.woff2`          | 120 KB |
+| `fraunces-italic-latin.woff2`         | 150 KB |
+| `inter-tight-roman-latin.woff2`       | 45 KB  |
+| `jbm-roman-latin.woff2`               | 31 KB  |
+| **Total (latin only, no extended)**   | **~346 KB** |
+
+If a page renders only roman copy (no italic `<em>` or `.atlas-em`) browsers
+defer the italic Fraunces fetch, so an italic-free page lands closer to
+~196 KB. Section headings ship with italic flourishes, though, so most
+Atlas pages will pull the italic file.
+
+There are no `<link rel="preload">` hints for the font subsets today — the
+browser discovers them from the `@font-face` rules in `atlas.css`. If
+first-paint feels slow, preloading the four latin subsets in
+`_atlas_topbar`'s `content_for :head` block is the lever to reach for.
 
 ## Color tokens
 

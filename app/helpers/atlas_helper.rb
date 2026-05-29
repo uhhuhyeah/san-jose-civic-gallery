@@ -33,13 +33,22 @@ module AtlasHelper
   # `atlas-tile--hot`, etc.) drives the stroke color.
   #
   # @param series [Array<Numeric>] Y-values. 4 points is the design spec but
-  #   any length renders. Returns nil for blank / single-value series.
+  #   any length renders. Nil and non-finite values are filtered out
+  #   defensively; returns nil for blank, single-value, or all-invalid input.
   # @param aria_label [String] accessible name on the <svg>.
   #
   # The viewBox is 200x40 with `preserveAspectRatio="none"`, so the tile's
-  # CSS controls the rendered size and the path stretches to fit.
+  # CSS controls the rendered size and the path stretches to fit. The CSS
+  # rule pairs this with `vector-effect: non-scaling-stroke` and
+  # `stroke-linecap: round` so the stretch doesn't taper the stroke.
   def atlas_sparkline_svg(series, aria_label: "Quarterly trend sparkline")
-    return nil if series.blank? || series.length < 2
+    return nil if series.blank?
+
+    # Drop nil and NaN/Infinite values so a stray missing bucket can't poison
+    # `max`/`min` (which would raise on nil) or produce a NaN path string
+    # (which would render as nothing).
+    series = series.select { |v| v.is_a?(Numeric) && (v.respond_to?(:finite?) ? v.finite? : true) }
+    return nil if series.length < 2
 
     width = 200
     height = 40

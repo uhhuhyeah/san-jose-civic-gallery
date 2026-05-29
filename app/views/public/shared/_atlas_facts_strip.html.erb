@@ -1,6 +1,9 @@
 <%# Atlas facts strip — horizontal mono-caps facts header.
-    Locals:
-      facts: Array of Hashes [{ dt:, dd:, class: (optional dd modifier), href: (optional) }, ...]
+    Locals (required):
+      facts: Array of Hashes. Each hash MUST include `dt:` and `dd:`; may also
+             include `class:` (string applied to the <dd>, e.g. "mono" or
+             "unknown") and `href:` (URL — if present, the dd content renders
+             as a link). All values pass through ERB default escaping.
 %>
 <dl class="atlas-facts-strip" style="--cols: <%= facts.length %>">
   <% facts.each do |fact| %>

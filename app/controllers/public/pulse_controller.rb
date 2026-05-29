@@ -24,14 +24,16 @@ module Public
 
     def load_theme_pulse
       @body_options = cached_body_options
-      @theme_stats = cached_theme_stats
+      payload = cached_pulse_payload
+      @theme_stats = payload[:theme_stats]
+      @quarterly_series = payload[:quarterly_series]
       @heating_up = @theme_stats.select(&:eligible).sort_by { |stat| [ stat.surging ? 0 : 1, -(stat.lift || 0) ] }
         .select { |stat| stat.surging || (stat.lift && stat.lift > 1) }
         .first(HEATING_UP_LIMIT)
     end
 
     def load_homepage_context
-      @events = records_in_cached_order(cached_recent_event_ids, Civic::Event.for_jurisdiction(current_jurisdiction).includes(:event_items))
+      @events = records_in_cached_order(cached_recent_event_ids, Civic::Event.for_jurisdiction(current_jurisdiction))
       @stats = cached_stats
       @recent_decisions = records_in_cached_order(
         cached_recent_decision_ids,
@@ -44,7 +46,6 @@ module Public
     # The dense grid layout in the view lets the biggest tile anchor the
     # composition while long-tail tiles fill in around it.
     def load_atlas
-      @quarterly_series = cached_quarterly_series
       @atlas_tiles = @theme_stats
         .sort_by { |stat| [ -stat.current_appearances, stat.label ] }
         .each_with_index
@@ -83,15 +84,17 @@ module Public
       ].join("/")
     end
 
-    def cached_theme_stats
-      Rails.cache.fetch([ cache_version, "theme-stats" ], expires_in: CACHE_TTL) do
-        Public::ThemePulse.new(jurisdiction: current_jurisdiction, as_of: @as_of, body_name: @body_name.presence).stats
-      end
-    end
-
-    def cached_quarterly_series
-      Rails.cache.fetch([ cache_version, "quarterly-series" ], expires_in: CACHE_TTL) do
-        Public::ThemePulse.new(jurisdiction: current_jurisdiction, as_of: @as_of, body_name: @body_name.presence).quarterly_series(buckets: SPARK_BUCKETS)
+    # One cache entry, one ThemePulse instance, both outputs derived from it.
+    # The previous split between cached_theme_stats and cached_quarterly_series
+    # built ThemePulse twice on a cold homepage and re-ran the current-quarter
+    # appearance aggregation. Combining them halves the cold-render query cost.
+    def cached_pulse_payload
+      Rails.cache.fetch([ cache_version, "pulse-payload" ], expires_in: CACHE_TTL) do
+        pulse = Public::ThemePulse.new(jurisdiction: current_jurisdiction, as_of: @as_of, body_name: @body_name.presence)
+        {
+          theme_stats: pulse.stats,
+          quarterly_series: pulse.quarterly_series(buckets: SPARK_BUCKETS)
+        }
       end
     end
 
