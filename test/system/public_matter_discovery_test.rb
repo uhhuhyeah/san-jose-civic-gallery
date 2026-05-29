@@ -72,30 +72,38 @@ class PublicMatterDiscoveryTest < ApplicationSystemTestCase
   test "visitor navigates from meeting to matter and sees document evidence" do
     visit root_path
 
-    within ".topbar-nav" do
+    within ".atlas-topbar-nav" do
       click_on "Meetings"
     end
-    assert_current_path public_meetings_path
-    assert_text "what City Hall is talking about this month"
+    assert_current_path public_meetings_path, ignore_query: true
+    assert_text "Use meeting agendas as an entry point"
     assert_text "Regular meeting"
 
     click_on "Regular meeting"
-    assert_text "Agenda Items"
+    # Atlas meeting detail surfaces the agenda + pending-matter hint.
+    assert_selector ".atlas-section-head h2 .atlas-em", text: "agenda"
     assert_text "Linked matter sync pending"
 
-    click_on "26-575"
-    assert_selector "p.eyebrow", text: /official matter/i
+    # The substantive matter row's title links to the matter detail. The matter
+    # code (26-575) appears as a chip above the title.
+    click_on "Agreement approval"
+    # Atlas matter detail eyebrow + code chip
+    assert_selector ".atlas-matter-eyebrow"
+    assert_selector ".atlas-matter-code", text: "26-575"
     assert_text "Agreement approval"
-    assert_text "Related Meetings"
+    # "Heard at" sidebar shows the originating meeting (label uppercased by CSS).
+    assert_text "HEARD AT"
     assert_text "Regular meeting"
-    assert_text "Official Attachments"
+    # Papers section + attachment metadata
+    assert_selector ".atlas-section-head h2 .atlas-em", text: "papers"
     assert_text "Agreement PDF"
-    assert_text "File imported"
-    assert_text "Extracted text available"
-    assert_text "Extracted Text Preview"
-    assert_text "This agreement authorizes"
-    assert_text "Generated Summary"
-    assert_text "Generated summary available"
+    # Extract-preview summary label is uppercased by CSS.
+    assert_text "EXTRACTED TEXT PREVIEW"
+    # The extracted text itself lives inside a collapsed <details> until the
+    # reader opens it; assert the markup, not visible content.
+    assert_selector ".atlas-paper-extract-body", text: /This agreement authorizes/, visible: :all
+    # Summary card with verbatim AI disclaimer (label uppercased by CSS).
+    assert_selector ".atlas-summary .atlas-summary-label", text: "GENERATED SUMMARY"
     assert_text "This generated summary helps visitors decide whether to review the agreement."
   end
 
@@ -107,7 +115,7 @@ class PublicMatterDiscoveryTest < ApplicationSystemTestCase
     )
 
     visit public_matters_path
-    within ".search-form" do
+    within ".atlas-matters-filter" do
       fill_in "Search matters and extracted document text", with: "26-575"
       click_on "Search"
     end
@@ -118,14 +126,16 @@ class PublicMatterDiscoveryTest < ApplicationSystemTestCase
 
   test "visitor searches extracted document text from the matters index" do
     visit public_matters_path
-    within ".search-form" do
+    within ".atlas-matters-filter" do
       fill_in "Search matters and extracted document text", with: "city service contract"
       click_on "Search"
     end
 
     assert_text "26-575"
-    assert_text "Extracted document text matches"
-    assert_text "Agreement PDF"
+    # Doc-hits label and the attachment link are uppercased via CSS
+    # text-transform; assert against the rendered casing.
+    assert_text "EXTRACTED DOCUMENT TEXT MATCHES"
+    assert_text "AGREEMENT PDF"
     assert_text "city service contract"
   end
 
@@ -155,10 +165,8 @@ class PublicMatterDiscoveryTest < ApplicationSystemTestCase
     visit public_matter_path(@matter)
 
     assert_text not_imported.name
-    assert_text "File not imported yet"
-    assert_text "Text extraction not available"
+    assert_text "The source file has not been imported yet."
     assert_text failed.name
     assert_text "Text extraction failed"
-    assert_text "Generated summary not available"
   end
 end

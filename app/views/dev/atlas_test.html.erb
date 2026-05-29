@@ -1,0 +1,165 @@
+<%# Atlas design-system sandbox.
+    Renders every Phase 1 shared partial with representative sample data so the
+    visual system and accessibility can be verified without a real Pulse / matter
+    / meeting wired up. Available only when Rails.env.local?.
+%>
+
+<% content_for :title, "Atlas test page" %>
+<% content_for :robots, "noindex, nofollow" %>
+<% content_for :body_class, "atlas-shell" %>
+<% content_for :head do %>
+  <%= stylesheet_link_tag "atlas", "data-turbo-track": "reload" %>
+<% end %>
+
+<main class="atlas-wrap" id="main">
+  <%= render "public/shared/atlas_topbar", active: :pulse %>
+
+  <%# ---------- Section heading examples ---------- %>
+  <section style="padding: 44px 0;">
+    <%= render "public/shared/atlas_section_heading",
+               title: "The Atlas",
+               em: "primitives",
+               label: "Phase 1 · Design system" %>
+    <p class="atlas-eyebrow">Every Phase 1 partial rendered with sample data.</p>
+  </section>
+
+  <%# ---------- Date plates ---------- %>
+  <section style="padding: 24px 0;">
+    <%= render "public/shared/atlas_section_heading",
+               title: "Date plates",
+               em: "four sizes",
+               label: "atlas-date" %>
+    <div style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+      <%= render "public/shared/atlas_date_plate",
+                 date: Date.new(2025, 2, 3),
+                 size: :lg,
+                 show_dow: true %>
+      <%= render "public/shared/atlas_date_plate",
+                 date: Date.new(2026, 6, 16),
+                 size: :md %>
+      <%= render "public/shared/atlas_date_plate",
+                 date: Date.new(2026, 7, 9),
+                 size: :sm %>
+      <%= render "public/shared/atlas_date_plate",
+                 date: Date.new(2026, 10, 29),
+                 size: :xs %>
+    </div>
+  </section>
+
+  <%# ---------- Theme tiles ---------- %>
+  <section style="padding: 24px 0;">
+    <%= render "public/shared/atlas_section_heading",
+               title: "Theme tiles",
+               em: "four sizes · four trends",
+               label: "atlas-tile" %>
+    <div style="display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; grid-auto-rows: 84px; grid-auto-flow: dense;">
+      <div style="grid-column: span 5; grid-row: span 3;">
+        <%= render "public/shared/atlas_theme_tile",
+                   name: "Housing",
+                   count: 31,
+                   size: :xl,
+                   trend: :up,
+                   trend_label: "▲ 15% vs Q1",
+                   sparkline: [22, 24, 27, 31],
+                   count_label: "Appearances this quarter",
+                   footer: { label: "Latest", text: "Affordable Housing Investment Plan Mid-Year Update — Housing & Community Development Commission" },
+                   href: "#" %>
+      </div>
+      <div style="grid-column: span 4; grid-row: span 2;">
+        <%= render "public/shared/atlas_theme_tile",
+                   name: "Infrastructure & Public Works",
+                   count: 23,
+                   size: :l,
+                   trend: :up,
+                   trend_label: "▲ 26%",
+                   sparkline: [16, 19, 21, 23],
+                   href: "#" %>
+      </div>
+      <div style="grid-column: span 3; grid-row: span 2;">
+        <%= render "public/shared/atlas_theme_tile",
+                   name: "Public Records & Transparency",
+                   count: 6,
+                   size: :m,
+                   trend: :hot,
+                   trend_label: "▲▲ 391%",
+                   sparkline: [1, 1, 2, 6],
+                   count_label: "Heating up",
+                   href: "#" %>
+      </div>
+      <div style="grid-column: span 3; grid-row: span 1;">
+        <%= render "public/shared/atlas_theme_tile",
+                   name: "Legal & Litigation",
+                   count: 3,
+                   size: :s,
+                   trend: :down,
+                   href: "#" %>
+      </div>
+    </div>
+  </section>
+
+  <%# ---------- Body tile ---------- %>
+  <section style="padding: 24px 0; max-width: 360px;">
+    <%= render "public/shared/atlas_section_heading",
+               title: "Body tile",
+               em: "sidebar variant",
+               label: "atlas-body-tile" %>
+    <%= render "public/shared/atlas_body_tile",
+               name: "Transportation & Environment Committee",
+               acronym: "T&E",
+               count: 14,
+               label: "Meetings on record · since 2022",
+               cta: "See all meetings of this body",
+               href: "#" %>
+  </section>
+
+  <%# ---------- Summary card ---------- %>
+  <section style="padding: 24px 0;">
+    <%= render "public/shared/atlas_section_heading",
+               title: "Summary card",
+               em: "AI summary with key points & limitations",
+               label: "atlas-summary" %>
+    <%= render "public/shared/atlas_summary_card",
+               summary: "The Transportation and Environment Committee meeting covered several key reports related to city infrastructure and environmental sustainability — the City Infrastructure Strategy Quarterly Status Report, the Climate Adaptation and Resilience Plan Status Report, and the Citywide Pavement Conditions report.",
+               ai_pill: "Topics only · does not report outcomes or votes",
+               key_points: [
+                 "Overall pavement condition has improved, achieving a PCI rating of 74.",
+                 "Maintenance backlog has decreased, but Measure T funding expires in 2028.",
+                 "Federal accessibility guidelines become enforceable in 2026."
+               ],
+               limitations: [
+                 "The document contains unresolved placeholders.",
+                 "No specific dollar amounts for future funding."
+               ],
+               ai_note: "Generated for convenience from the published agenda. Review the official agenda before relying." %>
+  </section>
+
+  <%# ---------- Facts strip ---------- %>
+  <section style="padding: 24px 0;">
+    <%= render "public/shared/atlas_section_heading",
+               title: "Facts strip",
+               em: "horizontal meta header",
+               label: "atlas-facts-strip" %>
+    <%= render "public/shared/atlas_facts_strip", facts: [
+      { dt: "Body",        dd: "T&E Committee" },
+      { dt: "Date",        dd: "03 Feb 2025" },
+      { dt: "Agenda",      dd: "Final" },
+      { dt: "Minutes",     dd: "Draft" },
+      { dt: "Legistar ID", dd: "LEGID 7079", class: "mono" },
+      { dt: "Official",    dd: "View on legistar ↗", href: "#" }
+    ] %>
+  </section>
+
+  <%# ---------- Sparkline (standalone helper) ---------- %>
+  <section style="padding: 24px 0; max-width: 320px;">
+    <%= render "public/shared/atlas_section_heading",
+               title: "Sparkline",
+               em: "helper-driven SVG",
+               label: "atlas-sparkline-svg" %>
+    <div style="height: 40px; color: var(--atlas-oxblood);">
+      <%= atlas_sparkline_svg([12, 16, 22, 31], aria_label: "Housing — quarterly appearances") %>
+    </div>
+    <p class="atlas-eyebrow" style="margin-top: 8px;">Color inherits from currentColor.</p>
+  </section>
+
+  <%= render "public/shared/atlas_footer" %>
+</main>

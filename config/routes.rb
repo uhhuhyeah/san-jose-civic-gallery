@@ -41,4 +41,10 @@ Rails.application.routes.draw do
   # Legacy preview path, now the homepage. Permanent-redirect any old shared
   # links to root.
   get "pulse-v2", to: redirect("/", status: 301)
+
+  # Atlas redesign development sandbox. Local-only — see DevController. Phase 1
+  # design-system PR, see docs/redesign-plan.md.
+  if Rails.env.local?
+    get "dev/atlas-test", to: "dev#atlas_test", as: :dev_atlas_test
+  end
 end

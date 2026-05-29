@@ -79,6 +79,61 @@ module Public
       assert_equal 0, pulse.stats.find { |s| s.slug == "land_use_zoning" }.current_appearances
     end
 
+    test "quarterly_series returns a four-bucket array per theme in the taxonomy" do
+      housing = matter_with_primary("housing", 1)
+      transportation = matter_with_primary("transportation", 2)
+      # Spread housing appearances across all 4 quarters so we can verify each
+      # bucket. AS_OF = 2026-05-20; window = 13 weeks. Bucket boundaries:
+      #   bucket 0 (oldest):  ~2025-05-21 .. ~2025-08-19
+      #   bucket 1:           ~2025-08-19 .. ~2025-11-19
+      #   bucket 2:           ~2025-11-19 .. ~2026-02-18
+      #   bucket 3 (current): ~2026-02-18 ..  2026-05-20  (closed)
+      appearance(housing, Date.new(2025, 7, 1))   # bucket 0
+      appearance(housing, Date.new(2025, 7, 15))  # bucket 0
+      appearance(housing, Date.new(2025, 10, 1))  # bucket 1
+      appearance(housing, Date.new(2026, 1, 15))  # bucket 2
+      appearance(housing, CURRENT_DATE)           # bucket 3
+      appearance(housing, CURRENT_DATE_2)         # bucket 3
+      appearance(transportation, CURRENT_DATE)    # only in bucket 3
+
+      pulse = ThemePulse.new(jurisdiction: civic_jurisdictions(:sanjose), as_of: AS_OF)
+      series = pulse.quarterly_series
+
+      assert_equal [ 2, 1, 1, 2 ], series.fetch("housing")
+      assert_equal [ 0, 0, 0, 1 ], series.fetch("transportation")
+    end
+
+    test "quarterly_series includes every theme in the taxonomy, even with zero appearances" do
+      pulse = ThemePulse.new(jurisdiction: civic_jurisdictions(:sanjose), as_of: AS_OF)
+      series = pulse.quarterly_series
+
+      taxonomy_slugs = Civic::ThemeTaxonomy.themes_for(civic_jurisdictions(:sanjose)).map { |t| t[:slug] }
+      assert_equal taxonomy_slugs.sort, series.keys.sort
+      series.each_value { |bucket| assert_equal [ 0, 0, 0, 0 ], bucket }
+    end
+
+    test "quarterly_series honors a custom bucket count" do
+      housing = matter_with_primary("housing", 3)
+      appearance(housing, CURRENT_DATE)
+
+      series = ThemePulse.new(jurisdiction: civic_jurisdictions(:sanjose), as_of: AS_OF).quarterly_series(buckets: 8)
+
+      assert_equal 8, series.fetch("housing").length
+      assert_equal 1, series.fetch("housing").last
+    end
+
+    test "quarterly_series last bucket aligns with stats.current_appearances" do
+      housing = matter_with_primary("housing", 4)
+      appearance(housing, CURRENT_DATE)
+      appearance(housing, CURRENT_DATE_2)
+      appearance(housing, AS_OF) # exactly the as_of boundary; closed end keeps it in current
+
+      pulse = ThemePulse.new(jurisdiction: civic_jurisdictions(:sanjose), as_of: AS_OF, min_appearances: 1)
+      housing_stat = pulse.stats.find { |s| s.slug == "housing" }
+
+      assert_equal housing_stat.current_appearances, pulse.quarterly_series.fetch("housing").last
+    end
+
     test "uses the jurisdiction's own theme vocabulary" do
       matter = Civic::Matter.create!(
         source_system: "simbli.sjusd",

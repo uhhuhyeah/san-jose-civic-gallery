@@ -114,5 +114,73 @@ module Public
       assert_response :success
       assert_includes response.body, "+3 more agenda items"
     end
+
+    # ---- Atlas redesign acceptance (Phase 5) ----
+
+    test "meetings index renders the Atlas shell and the Atlas stylesheet" do
+      get public_meetings_url(month: "2026-05")
+
+      assert_response :success
+      assert_select "body.atlas-shell"
+      assert_select "link[rel=stylesheet][href*=atlas]"
+    end
+
+    test "meetings index renders each meeting as an atlas-meeting-row with date plate + title link" do
+      get public_meetings_url(month: "2026-05")
+
+      assert_response :success
+      assert_select "article.atlas-meeting-row" do
+        assert_select ".atlas-date.atlas-date--md .atlas-date-day", text: "12"
+        assert_select "h2 a[href=?]", public_event_path(@may_event), text: "Regular meeting"
+      end
+    end
+
+    test "month nav strip carries the search and body filters" do
+      get public_meetings_url(month: "2026-05", q: "library", body_name: "City Council")
+
+      assert_response :success
+      # Previous and next links must preserve both filters so navigating
+      # months keeps the user's scope.
+      assert_select ".atlas-meetings-monthnav a[href=?]",
+        public_meetings_path(month: "2026-04", q: "library", body_name: "City Council"),
+        text: /Previous month/
+      assert_select ".atlas-meetings-monthnav a[href=?]",
+        public_meetings_path(month: "2026-06", q: "library", body_name: "City Council"),
+        text: /Next month/
+    end
+
+    test "body-filter banner appears when a body is selected" do
+      get public_meetings_url(month: "2026-06", body_name: "Planning Commission")
+
+      assert_response :success
+      assert_select ".atlas-meetings-banner strong", text: "Planning Commission"
+      assert_select ".atlas-meetings-banner a.atlas-meetings-banner-clear[href=?]",
+        public_meetings_path(month: "2026-06"),
+        text: "View all bodies"
+    end
+
+    test "clear link appears when a filter is active and resets to the current month" do
+      get public_meetings_url(month: "2026-05", q: "library")
+
+      assert_response :success
+      assert_select ".atlas-meetings-filter a.atlas-meetings-filter-clear[href=?]",
+        public_meetings_path(month: "2026-05"),
+        text: "Clear"
+    end
+
+    test "empty state uses the Atlas treatment when the month has no meetings" do
+      get public_meetings_url(month: "2026-07")
+
+      assert_response :success
+      assert_select ".atlas-meetings-empty", text: /No meetings have been ingested for July 2026/
+      assert_select "article.atlas-meeting-row", false
+    end
+
+    test "results count line shows how many meetings rendered" do
+      get public_meetings_url(month: "2026-05")
+
+      assert_response :success
+      assert_select ".atlas-meetings-count strong", text: "1"
+    end
   end
 end

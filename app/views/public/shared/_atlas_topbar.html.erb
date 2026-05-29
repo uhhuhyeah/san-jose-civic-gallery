@@ -1,0 +1,32 @@
+<%# Atlas topbar — brand wordmark, command-search lozenge, primary nav.
+    Locals:
+      active: :pulse | :matters | :meetings | :glossary (optional)
+
+    Note: Data Health (:data) is reachable from the footer, not primary nav,
+    so callers pass `active: :data` only to record intent; no nav item will
+    be highlighted. If Data is promoted to primary nav later, add the link
+    below and the active comparison will start matching.
+%>
+<header class="atlas-topbar">
+  <%= link_to root_path, class: "atlas-brand", aria: { label: "#{current_jurisdiction.site_title}: home" } do %>
+    <span class="atlas-brand-mark"><%= current_jurisdiction.site_title %></span>
+    <span class="atlas-brand-sub"><%= current_jurisdiction.tagline %></span>
+  <% end %>
+
+  <%= form_with url: public_matters_path, method: :get, local: true, class: "atlas-cmd", role: "search" do |form| %>
+    <%= form.label :q, "Search agendas, matters, and staff reports", class: "sr-only", for: "atlas-global-search" %>
+    <%= form.search_field :q,
+      id: "atlas-global-search",
+      value: (local_assigns[:active] == :matters ? params[:q] : nil),
+      placeholder: "Search agendas, matters, and documents…",
+      autocomplete: "off" %>
+    <kbd aria-hidden="true">⌘K</kbd>
+  <% end %>
+
+  <nav class="atlas-topbar-nav" aria-label="Primary">
+    <%= link_to "Pulse",    root_path,             aria: { current: local_assigns[:active] == :pulse    ? "page" : nil } %>
+    <%= link_to "Matters",  public_matters_path,   aria: { current: local_assigns[:active] == :matters  ? "page" : nil } %>
+    <%= link_to "Meetings", public_meetings_path,  aria: { current: local_assigns[:active] == :meetings ? "page" : nil } %>
+    <%= link_to "Glossary", glossary_path,         aria: { current: local_assigns[:active] == :glossary ? "page" : nil } %>
+  </nav>
+</header>

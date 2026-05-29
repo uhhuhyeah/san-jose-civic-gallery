@@ -2,11 +2,13 @@ require "test_helper"
 
 module Public
   class PulseControllerTest < ActionDispatch::IntegrationTest
-    test "renders the homepage with the Pulse section" do
+    test "renders the homepage as an Atlas-shelled page with the Pulse section" do
       get root_path
 
       assert_response :success
-      assert_select "h2", "The Civic Gallery Pulse"
+      assert_select "body.atlas-shell"
+      assert_select "link[rel=stylesheet][href*=atlas]"
+      assert_select ".atlas-section-head h2 .atlas-em", text: "Pulse"
     end
 
     test "is indexable (no robots noindex on the homepage)" do
@@ -50,15 +52,33 @@ module Public
       assert_redirected_to "/"
     end
 
-    test "renders the browse-by-topic bar linking to theme filters" do
+    test "atlas tiles link to theme-filtered matters pages when there is activity" do
+      # Seed at least one substantive appearance so the Atlas renders tiles
+      # rather than the empty-state card.
+      matter = Civic::Matter.create!(legistar_matter_id: 30_001, matter_file: "26-300")
+      matter.themes.create!(theme_slug: "housing", rank: 1)
+      event = Civic::Event.create!(legistar_event_id: 30_100, event_date: Date.current - 1.week, body_name: "City Council")
+      Civic::EventItem.create!(legistar_event_item_id: 30_200, civic_event_id: event.id, civic_matter_id: matter.id)
+
       get root_path
 
       assert_response :success
-      assert_select "nav.topic-bar a.pill[href=?]", public_matters_path(theme: "housing"), text: "Housing"
-      assert_select "nav.topic-bar a.pill[href=?]", public_matters_path(theme: "transportation"), text: "Transportation"
+      # Every theme in the taxonomy gets a tile, regardless of count
+      assert_select ".atlas-pulse-grid a.atlas-tile[href=?]", public_matters_path(theme: "housing")
+      assert_select ".atlas-pulse-grid a.atlas-tile[href=?]", public_matters_path(theme: "transportation")
+      # Atlas legend renders when tiles do
+      assert_select ".atlas-pulse-legend"
     end
 
-    test "surfaces recent decisions with their generated summary" do
+    test "falls back to the empty-state card when no theme has activity yet" do
+      get root_path
+
+      assert_response :success
+      assert_select ".atlas-empty-state h3", text: "Not enough activity yet"
+      assert_select ".atlas-pulse-grid", false
+    end
+
+    test "surfaces recent decisions with their generated summary in the 'In session' rail" do
       matter = Civic::Matter.create!(
         legistar_matter_id: 42_001,
         matter_file: "26-700",
@@ -87,23 +107,24 @@ module Public
       get root_path
 
       assert_response :success
-      assert_includes response.body, "What's being decided"
+      assert_select ".atlas-session-list"
+      assert_select ".atlas-section-head h2 .atlas-em", text: "session"
       assert_includes response.body, "26-700"
       assert_includes response.body, "Authorizes a $2.4M affordable-housing services contract."
       assert_select "a[href=?]", public_matter_path(matter)
     end
 
-    test "omits the recent-decisions module when no matter has a summary" do
+    test "omits the In session rail when no matter has a summary" do
       matter = Civic::Matter.create!(legistar_matter_id: 42_002, matter_file: "26-701", agenda_date: Date.current)
       matter.all_attachments.create!(legistar_matter_attachment_id: 42_101, name: "Unsummarized report")
 
       get root_path
 
       assert_response :success
-      assert_not_includes response.body, "What's being decided"
+      assert_select ".atlas-session-list", false
     end
 
-    test "shows a heating-up theme and offers the body filter" do
+    test "shows a heating-up theme card and offers the body filter" do
       matter = Civic::Matter.create!(legistar_matter_id: 99_001, matter_file: "26-991")
       matter.themes.create!(theme_slug: "housing", rank: 1)
       3.times do |i|
@@ -119,7 +140,39 @@ module Public
 
       assert_response :success
       assert_match(/Housing/, response.body)
+      assert_select ".atlas-heat-rail .atlas-heat-card h3", text: "Housing"
       assert_select "select#pulse-body-name option", text: "City Council"
+    end
+
+    test "ledger reports the four headline stats with 'matters heard' replacing 'agenda items'" do
+      get root_path
+
+      assert_response :success
+      assert_select ".atlas-pulse-ledger .atlas-pulse-ledger-cell span", text: "Meetings ingested"
+      assert_select ".atlas-pulse-ledger .atlas-pulse-ledger-cell span", text: "Matters heard"
+      assert_select ".atlas-pulse-ledger .atlas-pulse-ledger-cell span", text: "Distinct matters"
+      assert_select ".atlas-pulse-ledger .atlas-pulse-ledger-cell span", text: "Document extractions"
+      # The 'agenda items' headline from the pre-Atlas design no longer appears.
+      assert_select ".atlas-pulse-ledger .atlas-pulse-ledger-cell span", text: "Agenda items", count: 0
+    end
+
+    test "matters_heard counts substantive event items, not total agenda rows" do
+      matter = Civic::Matter.create!(legistar_matter_id: 60_001, matter_file: "26-600")
+      event = Civic::Event.create!(legistar_event_id: 60_100, event_date: Date.current - 1.week, body_name: "City Council")
+      # Two substantive items (with civic_matter_id) and one procedural (no matter)
+      Civic::EventItem.create!(legistar_event_item_id: 60_201, civic_event_id: event.id, civic_matter_id: matter.id)
+      Civic::EventItem.create!(legistar_event_item_id: 60_202, civic_event_id: event.id, civic_matter_id: matter.id)
+      Civic::EventItem.create!(legistar_event_item_id: 60_203, civic_event_id: event.id, civic_matter_id: nil, title: "Call to Order")
+
+      get root_path
+
+      assert_response :success
+      # Find the "Matters heard" cell and its strong value
+      assert_select ".atlas-pulse-ledger .atlas-pulse-ledger-cell" do
+        assert_select "span", text: "Matters heard"
+      end
+      # The strong value should be 2, not 3 — procedural items are excluded
+      assert_select ".atlas-pulse-ledger .atlas-pulse-ledger-cell strong", text: "2"
     end
   end
 end

@@ -1,161 +1,277 @@
 <% content_for(:title) { @event.display_name } %>
 <% content_for(:description) { "View the #{@event.display_name} meeting record, agenda items, linked matters, attachments, and official #{current_jurisdiction.short_name} source links." } %>
+<% content_for :body_class, "atlas-shell" %>
+<% content_for :head do %>
+  <%= stylesheet_link_tag "atlas", "data-turbo-track": "reload" %>
+<% end %>
 
-<main class="page-shell">
-  <%= render "public/shared/topbar", active: :meetings %>
+<%
+  body_name        = @event.body_name.presence
+  substantive_count = @substantive_items.length
+  agenda_total      = @event.event_items.length
+  total_attachments = @substantive_items.sum { |item| item.matter&.attachments&.size.to_i }
+  # Hoist the "has a meaningful summary?" check to one local so the
+  # header counter, the summary section guard, and any future caller use
+  # the same definition.
+  has_event_summary = @event_summary&.content&.dig("summary").to_s.present?
+  total_summaries   = has_event_summary ? 1 : 0
+  official_url      = official_source_url(@event.in_site_url)
+  matters_on_agenda_label = "#{substantive_count} #{'matter'.pluralize(substantive_count)} on agenda"
+%>
 
-  <p class="breadcrumb"><%= link_to "All meetings", public_meetings_path(month: @event.event_date.strftime("%Y-%m")) %></p>
+<main class="atlas-wrap" id="main">
+  <%= render "public/shared/atlas_topbar", active: :meetings %>
 
-  <header class="page-header inset-header">
-    <p class="eyebrow">Official Meeting</p>
-    <h1><%= @event.display_name %></h1>
+  <nav class="atlas-crumbs" aria-label="Breadcrumb">
+    <%= link_to "All meetings", public_meetings_path(month: @event.event_date.strftime("%Y-%m")) %>
+    <span class="atlas-crumbs-sep">/</span>
+    <span><%= @event.event_date.strftime("%B %Y") %></span>
+    <% if body_name %>
+      <span class="atlas-crumbs-sep">/</span>
+      <span><%= body_name %></span>
+    <% end %>
+  </nav>
+
+  <%# ---------- MEETING HEADER ---------- %>
+  <header class="atlas-mtg-header">
+    <div class="atlas-mtg-headline">
+      <%= render "public/shared/atlas_date_plate",
+                 date: @event.event_date,
+                 size: :lg,
+                 show_dow: true %>
+      <div>
+        <p class="atlas-mtg-eyebrow">Meeting · Official record</p>
+        <h1 class="atlas-mtg-title"><%= @event.display_name %></h1>
+        <div class="atlas-mtg-meta">
+          <% if body_name %>
+            <span class="atlas-chip"><%= body_name %></span>
+          <% end %>
+          <% agenda_status = @event.agenda_status_name.presence %>
+          <% if agenda_status %>
+            <% variant = agenda_status.downcase == "final" ? "sage" : "heat" %>
+            <span class="atlas-chip atlas-chip--<%= variant %>">Agenda · <%= agenda_status %></span>
+          <% end %>
+          <% minutes_status = @event.minutes_status_name.presence %>
+          <% if minutes_status %>
+            <% variant = minutes_status.downcase == "final" ? "sage" : "heat" %>
+            <span class="atlas-chip atlas-chip--<%= variant %>">Minutes · <%= minutes_status %></span>
+          <% end %>
+          <% if agenda_total.positive? %>
+            <span><%= matters_on_agenda_label %> · <%= pluralize(agenda_total - substantive_count, 'procedural item') %></span>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    <div class="atlas-mtg-side">
+      <span class="atlas-mtg-matters-count"><%= substantive_count %></span>
+      <span><%= matters_on_agenda_label %></span>
+      <span>
+        <%= pluralize(total_attachments, "attachment") %><% if total_summaries.positive? %> · AI summary<% end %>
+      </span>
+    </div>
   </header>
 
-  <% cache [@event_cache_version, "meeting-record"] do %>
-    <section class="section-band">
-      <h2>Meeting Record</h2>
-      <dl class="detail-grid">
-        <div>
-          <dt>Body</dt>
-          <dd><%= @event.body_name.presence || "Unknown" %></dd>
-        </div>
-
-        <div>
-          <dt>Date</dt>
-          <dd><%= @event.event_date %></dd>
-        </div>
-
-        <div>
-          <dt>Agenda status</dt>
-          <dd><%= @event.agenda_status_name.presence || "Unknown" %></dd>
-        </div>
-
-        <div>
-          <dt>Minutes status</dt>
-          <dd><%= @event.minutes_status_name.presence || "Unknown" %></dd>
-        </div>
-
-        <div>
-          <dt>Official page</dt>
-          <dd>
-            <% if (official_page_url = official_source_url(@event.in_site_url)) %>
-              <%= link_to "Open official meeting page", official_page_url, target: "_blank", rel: "noopener" %>
-            <% else %>
-              No official URL recorded
-            <% end %>
-          </dd>
-        </div>
-      </dl>
-    </section>
+  <%# ---------- FACTS STRIP ---------- %>
+  <% cache [@event_cache_version, "atlas-facts-strip"] do %>
+    <%= render "public/shared/atlas_facts_strip", facts: [
+      { dt: "Body",        dd: body_name || "Unknown",                                   class: (body_name ? nil : "unknown") },
+      { dt: "Date",        dd: @event.event_date.strftime("%d %b %Y") },
+      { dt: "Agenda",      dd: @event.agenda_status_name.presence || "Unknown",         class: (@event.agenda_status_name.blank? ? "unknown" : nil) },
+      { dt: "Minutes",     dd: @event.minutes_status_name.presence || "Unknown",        class: (@event.minutes_status_name.blank? ? "unknown" : nil) },
+      { dt: "Legistar ID", dd: @event.legistar_event_id ? "LEGID #{@event.legistar_event_id}" : "Unknown", class: "mono" },
+      { dt: "Official",    dd: (official_url ? "Open on legistar ↗" : "Unavailable"),   href: official_url, class: (official_url ? nil : "unknown") }
+    ] %>
   <% end %>
 
-  <% if @event_summary&.content&.fetch("summary", nil).present? %>
-    <% cache [@event_cache_version, "ai-summary"] do %>
-      <section class="section-band">
-        <div class="event-summary" aria-label="AI meeting summary">
-          <header class="event-summary-header">
-            <span class="event-summary-eyebrow">AI Summary</span>
-            <h2>Meeting Summary</h2>
-          </header>
+  <%# ---------- BODY GRID ---------- %>
+  <div class="atlas-mtg-grid">
 
-          <%# AI-generated content originates from arbitrary public documents. Always render these fields escaped. %>
-          <% content = @event_summary.content %>
-          <p><%= content["summary"] %></p>
+    <%# <section> not <main> — the page-level <main id="main"> above carries
+        the landmark; nesting a second <main> would be a HTML5 violation and
+        break skip-to-content semantics for screen readers. %>
+    <section class="atlas-mtg-main">
 
-          <% if content["key_topics"].present? %>
-            <h3>Key topics</h3>
-            <ul>
-              <% content["key_topics"].each do |topic| %>
-                <li><%= topic %></li>
-              <% end %>
-            </ul>
-          <% end %>
+      <%# ===== AI MEETING SUMMARY ===== %>
+      <% if has_event_summary %>
+        <% cache [@event_cache_version, "atlas-ai-summary"] do %>
+          <%= render "public/shared/atlas_section_heading",
+                     title: "The meeting",
+                     em: "in brief",
+                     label: "AI summary" %>
+          <%
+            content = @event_summary.content
+          %>
+          <%= render "public/shared/atlas_summary_card",
+                     summary: content["summary"],
+                     label: "Generated from agenda",
+                     ai_pill: "Topics only · does not report outcomes or votes",
+                     key_points: content["key_topics"],
+                     limitations: content["limitations"],
+                     ai_note: "Generated for convenience from the published agenda using AI. It describes the topics the meeting is set to take up and does not report outcomes or votes. Review the official agenda before relying on this summary.",
+                     aria_label: "AI meeting summary" %>
+        <% end %>
+      <% end %>
 
-          <% if content["limitations"].present? %>
-            <h3>Limitations</h3>
-            <ul>
-              <% content["limitations"].each do |limitation| %>
-                <li><%= limitation %></li>
-              <% end %>
-            </ul>
-          <% end %>
-
-          <p class="generated-summary-note">
-            <span class="generated-summary-note-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="16" height="16" focusable="false">
-                <path d="M12 3 2 21h20L12 3Z" fill="none" stroke="currentColor" stroke-width="2" />
-                <path d="M12 9v5" stroke="currentColor" stroke-width="2" />
-                <circle cx="12" cy="17" r="1" fill="currentColor" />
-              </svg>
-            </span>
-            <em>
-              Generated for convenience from the published agenda using AI. It
-              describes the topics the meeting is set to take up and does not
-              report outcomes or votes. Review the official agenda before relying
-              on this summary.
-            </em>
-          </p>
+      <%# ===== THE AGENDA ===== %>
+      <% cache [@event_cache_version, "atlas-agenda"] do %>
+        <div style="padding-top: 44px;">
+          <%= render "public/shared/atlas_section_heading",
+                     title: "The",
+                     em: "agenda",
+                     label: "#{agenda_total} items · #{substantive_count} substantive" %>
         </div>
-      </section>
-    <% end %>
-  <% end %>
 
-  <% cache [@event_cache_version, "agenda-items"] do %>
-    <section class="section-band">
-      <h2>Agenda Items</h2>
-
-      <% if @event.event_items.any? %>
-        <ol class="agenda-list">
-          <% @event.event_items.each do |item| %>
-            <% cache Public::CacheVersion.event_agenda_item_fragment(item) do %>
-              <li>
-                <header>
-                  <strong><%= item.display_name %></strong>
-                  <% if item.matter %>
-                    <%= link_to item.matter.display_name, public_matter_path(item.matter), class: "matter-link" %>
-                  <% end %>
-                </header>
-                <% if item.title.present? && item.title != item.display_name %>
-                  <p><%= item.title %></p>
-                <% end %>
-                <% if item.matter_file.present? || item.matter_name.present? %>
-                  <p class="record-meta">
-                    <%= [item.matter_file, item.matter_name].compact.join(" - ") %>
-                  </p>
-                <% end %>
-                <% if item.matter %>
-                  <% if item.matter.title.present? %>
-                    <p><%= item.matter.title %></p>
-                  <% end %>
-                  <% if item.matter.attachments.any? %>
-                    <div class="inline-attachments">
-                      <span>Attachments</span>
-                      <ul>
-                        <% item.matter.attachments.each do |attachment| %>
-                          <li><%= link_to attachment.name, public_matter_path(item.matter, anchor: "attachment-#{attachment.id}") %></li>
-                        <% end %>
-                      </ul>
-                    </div>
-                  <% end %>
-                <% elsif item.matter_id.present? %>
-                  <p class="matter-pending">
-                    Linked matter sync pending (<%= item.matter_file.presence || item.matter_id %>)
-                  </p>
-                <% end %>
-                <% if item.action_name.present? || item.passed_flag_name.present? %>
-                  <p class="record-meta">
-                    <%= [item.action_name, item.passed_flag_name].compact.join(" / ") %>
-                  </p>
-                <% end %>
-              </li>
+        <% if @event.event_items.any? %>
+          <div class="atlas-agenda">
+            <% substantive_seq = 0 %>
+            <% @tagged_items.each do |kind, item| %>
+              <% case kind %>
+              <% when :section %>
+                <div class="atlas-ag-section">
+                  <span class="atlas-ag-marker"><%= item.agenda_number %></span>
+                  <div>
+                    <h3><%= item.title.presence || item.display_name %></h3>
+                  </div>
+                </div>
+              <% when :substantive %>
+                <% substantive_seq += 1 %>
+                <article class="atlas-ag-matter" id="agenda-item-<%= item.id %>">
+                  <div class="atlas-ag-item-num">
+                    <%= format("%02d", substantive_seq) %><small>Item</small>
+                  </div>
+                  <div class="atlas-ag-item-body">
+                    <% if item.matter %>
+                      <% primary_theme = item.matter.themes.detect { |t| t.rank == 1 } %>
+                      <span class="atlas-ag-item-code"><%= item.matter.display_name %></span>
+                      <h4>
+                        <%= link_to (item.matter.descriptive_title.presence || item.title.presence || item.matter.display_name), public_matter_path(item.matter) %>
+                      </h4>
+                      <% if primary_theme %>
+                        <span class="atlas-ag-item-theme"><%= primary_theme.label %></span>
+                      <% end %>
+                      <% if item.matter.attachments.any? %>
+                        <div class="atlas-ag-att-line">
+                          <span class="atlas-ag-att-count"><%= pluralize(item.matter.attachments.size, "attachment") %></span>
+                          <% item.matter.attachments.each do |attachment| %>
+                            <%= link_to attachment.name, public_matter_path(item.matter, anchor: "attachment-#{attachment.id}"), class: "atlas-ag-att" %>
+                          <% end %>
+                        </div>
+                      <% end %>
+                    <% elsif item.matter_id.present? %>
+                      <% if item.matter_file.present? %>
+                        <span class="atlas-ag-item-code"><%= item.matter_file %></span>
+                      <% end %>
+                      <h4><%= item.title.presence || item.display_name %></h4>
+                      <p class="atlas-ag-matter-pending">Linked matter sync pending (<%= item.matter_file.presence || item.matter_id %>)</p>
+                    <% end %>
+                  </div>
+                  <div class="atlas-ag-arrow" aria-hidden="true">→</div>
+                </article>
+              <% end %>
             <% end %>
-          <% end %>
-        </ol>
-      <% else %>
-        <p>No event items have been ingested yet.</p>
+          </div>
+        <% else %>
+          <p class="atlas-paper-status-note">No agenda items have been ingested for this meeting yet.</p>
+        <% end %>
+
+        <%# ===== NOTICES PANEL ===== %>
+        <% if @notice_items.any? %>
+          <section class="atlas-notices" id="notices" aria-label="Meeting notices">
+            <div class="atlas-notices-head">
+              <h3>How to <span class="atlas-em">watch &amp; participate</span></h3>
+              <span class="atlas-notices-src"><%= pluralize(@notice_items.length, "item") %> from the official agenda</span>
+            </div>
+            <% @notice_items.each do |notice| %>
+              <% raw_text = notice.title.to_s.squish %>
+              <% summary_text = raw_text.split(/(?<=[.:!])\s/).first.presence || raw_text %>
+              <% summary_text = truncate(summary_text, length: 90, separator: " ") %>
+              <details class="atlas-notice">
+                <summary>
+                  <span><%= summary_text %></span>
+                  <span class="atlas-notice-icn" aria-hidden="true"></span>
+                </summary>
+                <div class="atlas-notice-body"><%= notice.title %></div>
+              </details>
+            <% end %>
+          </section>
+        <% end %>
       <% end %>
     </section>
-  <% end %>
 
-  <%= render "public/shared/footer" %>
+    <%# ===== SIDE RAIL ===== %>
+    <aside class="atlas-rail" aria-label="About this meeting">
+
+      <% if body_name %>
+        <div class="atlas-rail-card">
+          <h4>Body</h4>
+          <%= render "public/shared/atlas_body_tile",
+                     name: body_name,
+                     count: @body_meeting_count,
+                     label: "Meetings on record",
+                     cta: "See all meetings of this body",
+                     href: public_meetings_path(body_name: body_name) %>
+        </div>
+      <% end %>
+
+      <% if @previous_event || @next_event %>
+        <div class="atlas-rail-card">
+          <h4>Adjacent meetings</h4>
+          <% if @previous_event %>
+            <%= link_to public_event_path(@previous_event), class: "atlas-rail-sibling" do %>
+              <%= render "public/shared/atlas_date_plate", date: @previous_event.event_date, size: :xs %>
+              <div class="atlas-rail-sibling-where">
+                Previous · <%= body_name || @previous_event.display_name %>
+                <small><%= pluralize(@previous_event.event_items.size, "item") %></small>
+              </div>
+              <div class="atlas-rail-sibling-arrow">←</div>
+            <% end %>
+          <% end %>
+          <% if @next_event %>
+            <%= link_to public_event_path(@next_event), class: "atlas-rail-sibling" do %>
+              <%= render "public/shared/atlas_date_plate", date: @next_event.event_date, size: :xs %>
+              <div class="atlas-rail-sibling-where">
+                Next · <%= body_name || @next_event.display_name %>
+                <small><%= pluralize(@next_event.event_items.size, "item") %></small>
+              </div>
+              <div class="atlas-rail-sibling-arrow">→</div>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+
+      <% if @themes_on_agenda.any? %>
+        <div class="atlas-rail-card">
+          <h4>Themes on this agenda</h4>
+          <div class="atlas-rail-themes">
+            <% @themes_on_agenda.each do |entry| %>
+              <%= link_to public_matters_path(theme: entry[:theme].theme_slug) do %>
+                <span><%= entry[:theme].label %></span>
+                <span class="atlas-rail-themes-count"><%= pluralize(entry[:count], "item") %></span>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <div class="atlas-rail-card atlas-rail-source">
+        <h4>Source record</h4>
+        <dl>
+          <dt>Mirror</dt><dd><%= current_jurisdiction.source_host %></dd>
+          <% if @event.legistar_event_id %>
+            <dt>Legistar</dt><dd class="atlas-mono">LEGID <%= @event.legistar_event_id %></dd>
+          <% end %>
+          <dt>Date</dt><dd><%= @event.event_date.strftime("%d %b %Y") %></dd>
+          <% if @event.last_synced_at %>
+            <dt>Last sync</dt><dd><%= @event.last_synced_at.strftime("%d %b %Y") %></dd>
+          <% end %>
+        </dl>
+        <% if official_url %>
+          <%= link_to "Open official meeting page", official_url, target: "_blank", rel: "noopener", class: "atlas-rail-source-link" %>
+        <% end %>
+      </div>
+
+    </aside>
+  </div>
+
+  <%= render "public/shared/atlas_footer" %>
 </main>

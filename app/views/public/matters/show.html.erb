@@ -1,220 +1,294 @@
 <% content_for(:title) { @matter.display_name } %>
 <% content_for(:description) { "View #{current_jurisdiction.short_name} matter #{@matter.display_name}, related meetings, official attachments, extracted text, generated summaries, and source links." } %>
+<% content_for :body_class, "atlas-shell" %>
+<% content_for :head do %>
+  <%= stylesheet_link_tag "atlas", "data-turbo-track": "reload" %>
+<% end %>
 
-<main class="page-shell">
-  <%= render "public/shared/topbar", active: :matters %>
+<%
+  docs_count = @matter.attachments.length
+  total_size = @matter.attachments.sum { |a| a.source_file_byte_size.to_i }
+  extracted_count = @matter.attachments.count { |a| a.latest_extracted_text&.status == "ok" }
+  summary_count = @matter.attachments.count { |a| attachment_summary_artifact(a) }
+%>
 
-  <p class="breadcrumb"><%= link_to "All matters", public_matters_path %></p>
+<main class="atlas-wrap" id="main">
+  <%= render "public/shared/atlas_topbar", active: :matters %>
 
-  <header class="page-header inset-header">
-    <p class="eyebrow">Official Matter</p>
-    <h1><%= @matter.display_name %></h1>
-    <% if @matter.descriptive_title.present? %>
-      <p><%= @matter.descriptive_title %></p>
-    <% end %>
+  <nav class="atlas-crumbs" aria-label="Breadcrumb">
+    <%= link_to "All matters", public_matters_path %>
     <% if @primary_theme %>
-      <div class="tags">
-        <%= link_to @primary_theme.label, public_matters_path(theme: @primary_theme.theme_slug), class: "pill green" %>
+      <span class="atlas-crumbs-sep">/</span>
+      <%= link_to @primary_theme.label, public_matters_path(theme: @primary_theme.theme_slug) %>
+    <% end %>
+    <span class="atlas-crumbs-sep">/</span>
+    <span><%= @matter.display_name %></span>
+  </nav>
+
+  <%# ---------- MATTER HEADER ---------- %>
+  <header class="atlas-matter-header">
+    <div>
+      <p class="atlas-matter-eyebrow">Matter <span class="atlas-matter-code"><%= @matter.display_name %></span></p>
+      <h1 class="atlas-matter-title"><%= @matter.descriptive_title.presence || @matter.display_name %></h1>
+      <div class="atlas-matter-meta">
+        <% if @primary_theme %>
+          <%= link_to @primary_theme.label, public_matters_path(theme: @primary_theme.theme_slug), class: "atlas-matter-theme-tag" %>
+        <% end %>
+        <% if @matter.body_name.present? %>
+          <span class="atlas-matter-body-name"><%= @matter.body_name %></span>
+        <% end %>
+        <% if @matter.matter_status_name.present? %>
+          <% status = @matter.matter_status_name.to_s %>
+          <% status_variant = (status.downcase.include?("ready") || status.downcase.include?("passed") || status.downcase.include?("approved")) ? "sage" : "mute" %>
+          <span class="atlas-chip atlas-chip--<%= status_variant %>"><%= status %></span>
+        <% end %>
+        <% if @matter.intro_date %>
+          <span>Introduced <%= @matter.intro_date.strftime("%d %b %Y") %></span>
+        <% end %>
+      </div>
+    </div>
+    <% if docs_count.positive? %>
+      <div class="atlas-matter-side">
+        <span class="atlas-matter-docs-count"><%= docs_count %></span>
+        <span><%= "Document".pluralize(docs_count) %> on file</span>
+        <span>
+          <%= number_to_human_size(total_size) %><% if extracted_count.positive? %> · <%= extracted_count %> extracted<% end %><% if summary_count.positive? %> · <%= summary_count %> AI <%= "summary".pluralize(summary_count) %><% end %>
+        </span>
       </div>
     <% end %>
   </header>
 
-  <% cache [@matter_cache_version, "official-record"] do %>
-    <section class="section-band">
-      <h2>Official Record</h2>
-      <dl class="detail-grid">
-        <div>
-          <dt>File</dt>
-          <dd><%= @matter.matter_file %></dd>
-        </div>
-        <div>
-          <dt>Type</dt>
-          <dd><%= @matter.matter_type_name.presence || "Unknown" %></dd>
-        </div>
-        <div>
-          <dt>Status</dt>
-          <dd><%= @matter.matter_status_name.presence || "Unknown" %></dd>
-        </div>
-        <div>
-          <dt>Body</dt>
-          <dd><%= @matter.body_name.presence || "Unknown" %></dd>
-        </div>
-        <div>
-          <dt>Requester</dt>
-          <dd><%= @matter.requester.presence || "Unknown" %></dd>
-        </div>
-        <div>
-          <dt>Last synced</dt>
-          <dd><%= @matter.last_synced_at&.to_fs(:long) || "Unknown" %></dd>
-        </div>
-        <div>
-          <dt>Introduced</dt>
-          <dd><%= @matter.intro_date || "Unknown" %></dd>
-        </div>
-        <div>
-          <dt>Agenda date</dt>
-          <dd><%= @matter.agenda_date || "Unknown" %></dd>
-        </div>
-      </dl>
-    </section>
+  <%# ---------- FACTS STRIP ---------- %>
+  <% cache [@matter_cache_version, "atlas-facts-strip"] do %>
+    <%= render "public/shared/atlas_facts_strip", facts: [
+      { dt: "File",        dd: @matter.matter_file, class: "mono" },
+      { dt: "Type",        dd: @matter.matter_type_name.presence || "Unknown", class: (@matter.matter_type_name.blank? ? "unknown" : nil) },
+      { dt: "Status",      dd: @matter.matter_status_name.presence || "Unknown", class: (@matter.matter_status_name.blank? ? "unknown" : nil) },
+      { dt: "Requester",   dd: @matter.requester.presence || "Unknown", class: (@matter.requester.blank? ? "unknown" : nil) },
+      { dt: "Introduced",  dd: @matter.intro_date&.strftime("%d %b %Y") || "Unknown", class: (@matter.intro_date.blank? ? "unknown" : nil) },
+      { dt: "Last synced", dd: @matter.last_synced_at&.strftime("%d %b %Y · %H:%M") || "Unknown", class: (@matter.last_synced_at.blank? ? "unknown" : nil) }
+    ] %>
   <% end %>
 
-  <% cache [@matter_cache_version, "related-meetings"] do %>
-    <section class="section-band">
-      <h2>Related Meetings</h2>
-      <% if @event_items.any? %>
-        <ul class="linked-list">
-          <% @event_items.each do |item| %>
-            <li>
-              <%= link_to item.event.display_name, public_event_path(item.event) %>
-              <span><%= item.event.event_date %></span>
-              <strong><%= item.display_name %></strong>
-              <% if item.title.present? && item.title != item.display_name %>
-                <p><%= item.title %></p>
-              <% end %>
-            </li>
-          <% end %>
-        </ul>
-      <% else %>
-        <p>No related meeting items have been linked yet.</p>
-      <% end %>
-    </section>
-  <% end %>
+  <%# ---------- BODY GRID ---------- %>
+  <div class="atlas-matter-grid">
 
-  <section class="section-band">
-    <h2>Official Attachments</h2>
-    <% if @matter.attachments.any? %>
-      <div class="attachment-list">
-        <% @matter.attachments.each do |attachment| %>
+    <%# ===== MAIN: THE PAPERS ===== %>
+    <%# <section> not <main> — the page-level <main id="main"> above carries
+        the landmark; nesting a second <main> would be a HTML5 violation and
+        break skip-to-content semantics for screen readers. %>
+    <section class="atlas-matter-papers">
+      <%= render "public/shared/atlas_section_heading",
+                 title: "The",
+                 em: "papers",
+                 label: "#{docs_count} #{'document'.pluralize(docs_count)} · #{number_to_human_size(total_size)}" %>
+
+      <% if @matter.attachments.any? %>
+        <% if @matter.attachments.length > 1 %>
+          <nav class="atlas-papers-toc" aria-label="Jump to paper">
+            <% @matter.attachments.each_with_index do |attachment, i| %>
+              <a href="#attachment-<%= attachment.id %>">
+                <span class="atlas-papers-toc-num"><%= format("%02d", i + 1) %></span>
+                <%= attachment.name %>
+              </a>
+            <% end %>
+          </nav>
+        <% end %>
+
+        <% @matter.attachments.each_with_index do |attachment, i| %>
           <% latest_text = attachment.latest_extracted_text %>
           <% summary_artifact = attachment_summary_artifact(attachment) %>
           <% cache Public::CacheVersion.matter_attachment_fragment(attachment, latest_text:, summary_artifact:) do %>
-            <article class="attachment-row" id="attachment-<%= attachment.id %>">
-              <header>
-                <h3><%= attachment.name %></h3>
-                <p>
-                  <%= attachment_import_status(attachment) %>
-                  <span aria-hidden="true">/</span>
-                  <%= attachment_extraction_status(attachment) %>
-                  <span aria-hidden="true">/</span>
-                  <%= attachment_summary_status_text(attachment, summary_artifact) %>
-                </p>
-              </header>
-
-            <% if attachment.manually_imported? %>
-              <aside class="manual-import-notice" aria-label="Manual upload disclosure">
-                <p>
-                  <strong>This file was uploaded manually by a site admin</strong>
-                  on <%= attachment.manually_imported_at.to_date.iso8601 %>
-                  because the original source URL is not directly retrievable
-                  by our automated importer.
-                  <% if attachment.manual_import_reason.present? %>
-                    Reason given: <em><%= attachment.manual_import_reason %></em>.
-                  <% end %>
-                  The original official source link is preserved below for verification.
-                </p>
-              </aside>
-            <% end %>
-
-            <dl class="record-facts">
-              <div>
-                <dt>Filename</dt>
-                <dd><%= attachment.file_name.presence || "Unknown" %></dd>
-              </div>
-              <div>
-                <dt>Checksum</dt>
-                <dd><%= attachment.source_file_checksum_sha256&.first(12) || "Unavailable" %></dd>
-              </div>
-              <div>
-                <dt>Official source link</dt>
-                <dd>
-                  <% if (source_url = official_source_url(attachment.hyperlink)) %>
-                    <%= link_to "Open source document", source_url, target: "_blank", rel: "noopener" %>
-                  <% elsif attachment.imported? %>
-                    Official source link unavailable. The file was imported, but the current source metadata does not include a public document URL.
-                  <% else %>
-                    Official source link unavailable. The current source metadata does not include a public document URL.
-                  <% end %>
-                </dd>
-              </div>
-            </dl>
-
-            <% if latest_text&.status == "ok" && latest_text.content.present? %>
-              <section class="extracted-text-preview">
-                <h4>Extracted Text Preview</h4>
-                <p><%= extracted_text_preview(latest_text) %></p>
-              </section>
-            <% elsif latest_text&.status == "error" %>
-              <p class="status-note">Text extraction failed. The official attachment remains available through the source link when present.</p>
-            <% elsif latest_text&.status == "empty" %>
-              <p class="status-note">Extraction completed, but no embedded text was found.</p>
-            <% else %>
-              <p class="status-note">No extracted text has been stored for this attachment yet.</p>
-            <% end %>
-
-            <section class="generated-summary">
-              <header>
-                <h4>Generated Summary</h4>
-                <span><%= attachment_summary_status_text(attachment, summary_artifact) %></span>
-              </header>
-
-              <% if summary_artifact %>
-                <% content = summary_artifact.content %>
-                <% if content["document_status"] == "draft" %>
-                  <p class="status-note">The source text indicates this attachment appears to be a draft document.</p>
+            <article class="atlas-paper" id="attachment-<%= attachment.id %>">
+              <div class="atlas-paper-num">
+                <%= format("%02d", i + 1) %>
+                <% if attachment.source_file_byte_size %>
+                  <small><%= number_to_human_size(attachment.source_file_byte_size) %></small>
                 <% end %>
-                <%# AI-generated content originates from arbitrary public PDFs. Always render these fields escaped. %>
-                <% if content["summary"].present? %>
-                  <p><%= content["summary"] %></p>
-                <% else %>
-                  <p class="status-note">The model returned an empty summary; review the official source document.</p>
-                <% end %>
-
-                <% if content["key_points"].present? %>
-                  <h5>Key points</h5>
-                  <ul>
-                    <% content["key_points"].each do |point| %>
-                      <li><%= point %></li>
+              </div>
+              <div>
+                <div class="atlas-paper-head">
+                  <h3><%= attachment.name %></h3>
+                  <div class="atlas-paper-chips">
+                    <% if attachment.imported? %>
+                      <span class="atlas-chip">
+                        <%= attachment.source_file_byte_size ? number_to_human_size(attachment.source_file_byte_size) : "Imported" %>
+                      </span>
                     <% end %>
-                  </ul>
-                <% end %>
-
-                <% if content["limitations"].present? %>
-                  <h5>Limitations</h5>
-                  <ul>
-                    <% content["limitations"].each do |limitation| %>
-                      <li><%= limitation %></li>
+                    <% if latest_text&.status == "ok" && latest_text.content.present? %>
+                      <span class="atlas-chip atlas-chip--slate">Extracted</span>
                     <% end %>
-                  </ul>
-                <% end %>
+                    <% if summary_artifact %>
+                      <span class="atlas-chip atlas-chip--oxblood">AI Summary</span>
+                    <% end %>
+                  </div>
+                </div>
 
-                <p class="generated-summary-note">
-                  <span class="generated-summary-note-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" width="16" height="16" focusable="false">
-                      <path d="M12 3 2 21h20L12 3Z" fill="none" stroke="currentColor" stroke-width="2" />
-                      <path d="M12 9v5" stroke="currentColor" stroke-width="2" />
-                      <circle cx="12" cy="17" r="1" fill="currentColor" />
-                    </svg>
+                <% source_url = official_source_url(attachment.hyperlink) %>
+                <div class="atlas-paper-file">
+                  <span>
+                    <span class="atlas-paper-file-k">file</span>
+                    <span class="atlas-paper-file-v"><%= attachment.file_name.presence || "Unknown" %></span>
                   </span>
-                  <em>
-                    Generated for convenience from extracted text using AI.
-                    Review the official source document before relying on this summary.
-                  </em>
-                </p>
-              <% elsif attachment_summary_state(attachment, summary_artifact) == :pending %>
-                <p class="status-note">This attachment has extracted text, but a generated summary has not been added yet.</p>
-              <% else %>
-                <p class="status-note"><%= attachment_summary_not_available_reason(attachment) %></p>
-              <% end %>
-              </section>
+                  <% if attachment.source_file_checksum_sha256.present? %>
+                    <span>
+                      <span class="atlas-paper-file-k">sha</span>
+                      <span class="atlas-paper-file-v"><%= attachment.source_file_checksum_sha256.first(12) %></span>
+                    </span>
+                  <% end %>
+                  <span>
+                    <span class="atlas-paper-file-k">source</span>
+                    <% if source_url %>
+                      <%= link_to "Open source document ↗", source_url, target: "_blank", rel: "noopener", class: "atlas-paper-file-v" %>
+                    <% else %>
+                      <span class="atlas-paper-file-src-missing">unavailable</span>
+                    <% end %>
+                  </span>
+                </div>
+
+                <% unless source_url %>
+                  <p class="atlas-paper-status-note">
+                    Official source link unavailable.
+                    <% if attachment.imported? %>
+                      The file was imported, but the current source metadata does not include a public document URL.
+                    <% else %>
+                      The current source metadata does not include a public document URL.
+                    <% end %>
+                  </p>
+                <% end %>
+
+                <% if attachment.manually_imported? %>
+                  <aside class="atlas-paper-manual" aria-label="Manual upload disclosure">
+                    <strong>This file was uploaded manually by a site admin</strong>
+                    on <%= attachment.manually_imported_at.to_date.iso8601 %>
+                    because the original source URL is not directly retrievable by our automated importer.
+                    <% if attachment.manual_import_reason.present? %>
+                      Reason given: <em><%= attachment.manual_import_reason %></em>.
+                    <% end %>
+                    The original official source link is preserved above for verification.
+                  </aside>
+                <% end %>
+
+                <%# Generated summary card — primary content for each paper. %>
+                <% if summary_artifact %>
+                  <% content = summary_artifact.content %>
+                  <%= render "public/shared/atlas_summary_card",
+                             summary: (content["summary"].presence || "The model returned an empty summary; review the official source document."),
+                             label: "Generated summary",
+                             ai_pill: "AI-assisted",
+                             key_points: content["key_points"],
+                             limitations: content["limitations"],
+                             status_note: (content["document_status"] == "draft" ? "The source text indicates this attachment appears to be a draft document." : nil),
+                             ai_note: "Generated for convenience from extracted text using AI. Review the official source document before relying on this summary.",
+                             aria_label: "Generated summary for #{attachment.name}" %>
+                <% elsif attachment_summary_state(attachment, summary_artifact) == :pending %>
+                  <p class="atlas-paper-status-note">This attachment has extracted text, but a generated summary has not been added yet.</p>
+                <% else %>
+                  <p class="atlas-paper-status-note"><%= attachment_summary_not_available_reason(attachment) %></p>
+                <% end %>
+
+                <%# Extracted text preview — collapsible secondary content. %>
+                <% if latest_text&.status == "ok" && latest_text.content.present? %>
+                  <details class="atlas-paper-extract">
+                    <summary>
+                      Extracted text preview<% if latest_text.character_count %> · <%= number_with_delimiter(latest_text.character_count) %> chars<% end %>
+                    </summary>
+                    <div class="atlas-paper-extract-body"><%= extracted_text_preview(latest_text) %></div>
+                  </details>
+                <% elsif latest_text&.status == "error" %>
+                  <p class="atlas-paper-status-note">Text extraction failed. The official attachment remains available through the source link when present.</p>
+                <% elsif latest_text&.status == "empty" %>
+                  <p class="atlas-paper-status-note">Extraction completed, but no embedded text was found.</p>
+                <% end %>
+              </div>
             </article>
           <% end %>
         <% end %>
-      </div>
-    <% else %>
-      <p>No current attachments have been ingested for this matter.</p>
-    <% end %>
-  </section>
+      <% else %>
+        <p class="atlas-paper-status-note">No current attachments have been ingested for this matter.</p>
+      <% end %>
+    </section>
 
-  <%= render "public/shared/footer" %>
+    <%# ===== SIDE RAIL ===== %>
+    <aside class="atlas-rail" aria-label="About this matter">
+
+      <% if @event_items.any? %>
+        <div class="atlas-rail-card">
+          <h4>Heard at</h4>
+          <% @event_items.sort_by { |item| item.event.event_date || Date.new(1900) }.reverse.first(3).each do |item| %>
+            <div class="atlas-rail-mtg">
+              <%= render "public/shared/atlas_date_plate",
+                         date: item.event.event_date,
+                         size: :sm,
+                         href: public_event_path(item.event) %>
+              <div>
+                <p class="atlas-rail-mtg-body"><%= link_to item.event.display_name, public_event_path(item.event) %></p>
+                <% if item.agenda_number.present? %>
+                  <p class="atlas-rail-mtg-pos"><b>Item <%= item.agenda_number %></b> on agenda</p>
+                <% elsif item.title.present? && item.title != item.display_name %>
+                  <p class="atlas-rail-mtg-pos"><%= truncate(item.title, length: 60) %></p>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <% if @primary_theme %>
+        <div class="atlas-rail-card">
+          <h4>Theme</h4>
+          <% if @primary_theme_stat %>
+            <%= render "public/shared/atlas_theme_tile",
+                       name: @primary_theme.label,
+                       count: @primary_theme_stat.current_appearances,
+                       trend: atlas_trend_for(@primary_theme_stat),
+                       trend_label: atlas_trend_label(@primary_theme_stat),
+                       size: :m,
+                       count_label: "Appearances this quarter",
+                       href: public_matters_path(theme: @primary_theme.theme_slug) %>
+          <% else %>
+            <%= link_to @primary_theme.label, public_matters_path(theme: @primary_theme.theme_slug), class: "atlas-rail-source-link" %>
+          <% end %>
+        </div>
+      <% end %>
+
+      <div class="atlas-rail-card atlas-rail-source">
+        <h4>Source record</h4>
+        <dl>
+          <dt>Mirror</dt><dd><%= current_jurisdiction.source_host %></dd>
+          <dt>File</dt><dd class="atlas-mono"><%= @matter.matter_file %></dd>
+          <% if @matter.intro_date %>
+            <dt>Introduced</dt><dd><%= @matter.intro_date.strftime("%d %b %Y") %></dd>
+          <% end %>
+          <% if @matter.last_synced_at %>
+            <dt>Last sync</dt><dd><%= @matter.last_synced_at.strftime("%d %b %Y") %></dd>
+          <% end %>
+        </dl>
+      </div>
+
+      <%# Pair the guard: @sibling_matters and @latest_event are cached
+          independently, so it's possible for the sibling-id cache to be warm
+          while the latest event has been removed. Render the card only when
+          both are present. %>
+      <% if @sibling_matters.any? && @latest_event %>
+        <div class="atlas-rail-card atlas-rail-adjacent">
+          <h4>Adjacent at <%= @latest_event.event_date.strftime("%d %b %Y") %></h4>
+          <% @sibling_matters.each do |sib| %>
+            <% sib_primary = sib.themes.detect { |t| t.rank == 1 } %>
+            <%= link_to public_matter_path(sib), class: "atlas-rail-adjacent-row" do %>
+              <span class="atlas-rail-adjacent-title">
+                <%= sib.display_name %><% if sib.descriptive_title.present? %> · <%= truncate(sib.descriptive_title, length: 80, separator: " ") %><% end %>
+              </span>
+              <span class="atlas-rail-adjacent-meta">
+                Same meeting<% if sib_primary %> · <%= sib_primary.label %><% end %>
+              </span>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+
+    </aside>
+  </div>
+
+  <%= render "public/shared/atlas_footer" %>
 </main>

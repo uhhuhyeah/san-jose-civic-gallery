@@ -1,17 +1,21 @@
 <% content_for(:title) { "Data Health" } %>
 <% content_for(:description) { "Review #{current_jurisdiction.site_title} ingestion freshness, record counts, attachment processing, extraction coverage, and source-data reliability." } %>
+<% content_for :body_class, "atlas-shell" %>
+<% content_for :head do %>
+  <%= stylesheet_link_tag "atlas", "data-turbo-track": "reload" %>
+<% end %>
 
-<main class="newspaper-shell">
-  <%= render "public/shared/topbar", active: :data %>
+<main class="atlas-wrap" id="main">
+  <%= render "public/shared/atlas_topbar", active: :data %>
 
-  <header class="page-header inset-header">
-    <p class="eyebrow">Transparency</p>
+  <header class="atlas-data-header">
+    <p class="atlas-eyebrow">Transparency</p>
     <h1>Data Health</h1>
     <p>What we've ingested from <%= current_jurisdiction.ingestion_source_label %> and how reliable the processing pipeline has been.</p>
   </header>
 
   <% if @snapshot.empty? %>
-    <section class="inset-panel data-empty">
+    <section class="atlas-data-empty">
       <h2>No data ingested yet</h2>
       <p>
         Once an operator runs ingestion (for example,
@@ -21,30 +25,36 @@
       </p>
     </section>
   <% else %>
-    <section class="inset-panel data-summary">
-      <p class="data-freshness">
-        <% case @snapshot.freshness_level %>
-        <% when :green %>
-          <span class="data-freshness-dot green" aria-hidden="true"></span>
-          Synced <%= time_ago_in_words(@snapshot.last_synced_at) %> ago
-        <% when :amber %>
-          <span class="data-freshness-dot amber" aria-hidden="true"></span>
-          Synced <%= time_ago_in_words(@snapshot.last_synced_at) %> ago
-        <% when :red %>
-          <span class="data-freshness-dot red" aria-hidden="true"></span>
+    <%# ---------- FRESHNESS BANNER ---------- %>
+    <%
+      freshness_variant = case @snapshot.freshness_level
+                         when :green then nil
+                         when :amber then "amber"
+                         when :red then "red"
+                         else "unknown"
+                         end
+      freshness_classes = [ "atlas-data-freshness", ("atlas-data-freshness--#{freshness_variant}" if freshness_variant) ].compact.join(" ")
+    %>
+    <section class="<%= freshness_classes %>" aria-label="Ingestion freshness">
+      <span class="atlas-data-freshness-dot" aria-hidden="true"></span>
+      <span class="atlas-data-freshness-status">
+        <% if @snapshot.last_synced_at %>
           Synced <%= time_ago_in_words(@snapshot.last_synced_at) %> ago
         <% else %>
-          <span class="data-freshness-dot unknown" aria-hidden="true"></span>
           Last sync unknown
         <% end %>
-        <span class="data-source">Source: <%= current_jurisdiction.ingestion_source_label %></span>
-      </p>
+      </span>
+      <span class="atlas-data-freshness-source">Source: <%= current_jurisdiction.ingestion_source_label %></span>
     </section>
 
-    <section class="inset-panel data-section">
-      <h2>What we have</h2>
-      <dl class="data-stats">
-        <div>
+    <%# ---------- WHAT WE HAVE ---------- %>
+    <section class="atlas-data-section">
+      <%= render "public/shared/atlas_section_heading",
+                 title: "What",
+                 em: "we have",
+                 label: "Record counts" %>
+      <dl class="atlas-data-stats">
+        <div class="atlas-data-stat">
           <dt>Matters</dt>
           <dd>
             <strong><%= number_with_delimiter(@snapshot.matter_count) %></strong>
@@ -53,7 +63,7 @@
             <% end %>
           </dd>
         </div>
-        <div>
+        <div class="atlas-data-stat">
           <dt>Events</dt>
           <dd>
             <strong><%= number_with_delimiter(@snapshot.event_count) %></strong>
@@ -66,14 +76,14 @@
             <% end %>
           </dd>
         </div>
-        <div>
+        <div class="atlas-data-stat">
           <dt>Attachments</dt>
           <dd>
             <strong><%= number_with_delimiter(@snapshot.attachment_count) %></strong>
           </dd>
         </div>
         <% if (matter = @snapshot.most_recent_matter) %>
-          <div>
+          <div class="atlas-data-stat">
             <dt>Most recent matter</dt>
             <dd>
               <strong><%= matter.matter_file %></strong>
@@ -84,10 +94,14 @@
       </dl>
     </section>
 
-    <section class="inset-panel data-section">
-      <h2>Freshness</h2>
-      <dl class="data-stats">
-        <div>
+    <%# ---------- FRESHNESS DETAIL ---------- %>
+    <section class="atlas-data-section">
+      <%= render "public/shared/atlas_section_heading",
+                 title: "How",
+                 em: "fresh",
+                 label: "Sync recency" %>
+      <dl class="atlas-data-stats">
+        <div class="atlas-data-stat">
           <dt>Last sync</dt>
           <dd>
             <% if @snapshot.last_synced_at %>
@@ -98,26 +112,32 @@
             <% end %>
           </dd>
         </div>
-        <div>
+        <div class="atlas-data-stat">
           <dt>Synced in the last 24 hours</dt>
           <dd>
-            <strong><%= pluralize(@snapshot.matters_synced_since(1.day.ago), "matter") %></strong>|
+            <strong><%= pluralize(@snapshot.matters_synced_since(1.day.ago), "matter") %></strong>
+            <span class="atlas-data-stat-sep">·</span>
             <strong><%= pluralize(@snapshot.events_synced_since(1.day.ago), "event") %></strong>
           </dd>
         </div>
-        <div>
+        <div class="atlas-data-stat">
           <dt>Synced in the last 7 days</dt>
           <dd>
-            <strong><%= pluralize(@snapshot.matters_synced_since(7.days.ago), "matter") %></strong>|
+            <strong><%= pluralize(@snapshot.matters_synced_since(7.days.ago), "matter") %></strong>
+            <span class="atlas-data-stat-sep">·</span>
             <strong><%= pluralize(@snapshot.events_synced_since(7.days.ago), "event") %></strong>
           </dd>
         </div>
       </dl>
     </section>
 
-    <section class="inset-panel data-section">
-      <h2>Reliability</h2>
-      <p class="data-section-note">
+    <%# ---------- RELIABILITY (RATE METERS) ---------- %>
+    <section class="atlas-data-section">
+      <%= render "public/shared/atlas_section_heading",
+                 title: "How",
+                 em: "reliable",
+                 label: "Pipeline coverage" %>
+      <p class="atlas-data-section-note">
         The attachment rates are out of <%= number_with_delimiter(@snapshot.import_eligible_count) %>
         current attachments with a source link, so they reflect end-to-end
         pipeline coverage rather than per-stage success. Theme classification is
@@ -147,23 +167,28 @@
         denominator: @snapshot.event_summary_eligible_count %>
     </section>
 
-    <section class="inset-panel data-section">
-      <h2>Reconciliation</h2>
-      <dl class="data-stats">
-        <div>
-          <dt>Events removed by source in the last 30 days</dt>
+    <%# ---------- RECONCILIATION ---------- %>
+    <section class="atlas-data-section">
+      <%= render "public/shared/atlas_section_heading",
+                 title: "What",
+                 em: "fell out",
+                 label: "Removed by source · last 30 days" %>
+      <dl class="atlas-data-stats">
+        <div class="atlas-data-stat">
+          <dt>Events removed by source</dt>
           <dd><strong><%= number_with_delimiter(@snapshot.events_removed_since(30.days.ago)) %></strong></dd>
         </div>
-        <div>
-          <dt>Attachments removed by source in the last 30 days</dt>
+        <div class="atlas-data-stat">
+          <dt>Attachments removed by source</dt>
           <dd><strong><%= number_with_delimiter(@snapshot.attachments_removed_since(30.days.ago)) %></strong></dd>
         </div>
       </dl>
     </section>
   <% end %>
 
-  <section class="inset-panel data-about">
-    <h2>About this page</h2>
+  <%# ---------- ABOUT + SOURCES ---------- %>
+  <section class="atlas-data-about" aria-label="About this page">
+    <h3>About this page</h3>
     <p>
       This page reports what's been ingested from <%= current_jurisdiction.ingestion_source_label %> and how
       complete the processing pipeline has been.
@@ -171,25 +196,21 @@
     <%= render "public/data/sources_#{current_jurisdiction.slug}" %>
     <p>
       Read more about the project:
-      <a href="https://github.com/uhhuhyeah/san-jose-civic-gallery/blob/main/docs/architecture.md">architecture</a>
+      <a href="https://github.com/uhhuhyeah/san-jose-civic-gallery/blob/main/docs/architecture.md" rel="noopener">architecture</a>
       and
-      <a href="https://github.com/uhhuhyeah/san-jose-civic-gallery/blob/main/docs/generated-summaries.md">generated summaries</a>
+      <a href="https://github.com/uhhuhyeah/san-jose-civic-gallery/blob/main/docs/generated-summaries.md" rel="noopener">generated summaries</a>
       documentation.
     </p>
   </section>
-  <section class="inset-panel data-about">  
-    <p>
-      <span class="generated-summary-note-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="16" height="16" focusable="false">
-          <path d="M12 3 2 21h20L12 3Z" fill="none" stroke="currentColor" stroke-width="2" />
-          <path d="M12 9v5" stroke="currentColor" stroke-width="2" />
-          <circle cx="12" cy="17" r="1" fill="currentColor" />
-        </svg>
-      </span>         
-      Generated summaries are AI-produced and may contain errors. Always review the official
-      source document before relying on them.
-    </p>
-  </section>
 
-  <%= render "public/shared/footer" %>
+  <p class="atlas-data-ai-note">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M12 3 2 21h20L12 3Z"></path>
+      <path d="M12 9v5"></path>
+      <circle cx="12" cy="17" r="1" fill="currentColor"></circle>
+    </svg>
+    Generated summaries are AI-produced and may contain errors. Always review the official source document before relying on them.
+  </p>
+
+  <%= render "public/shared/atlas_footer" %>
 </main>

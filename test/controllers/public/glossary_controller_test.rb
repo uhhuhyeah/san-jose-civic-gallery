@@ -44,5 +44,16 @@ module Public
       assert_includes response.body, glossary_path
       assert_includes response.body, "Glossary"
     end
+
+    test "glossary page renders inside the Atlas shell" do
+      get glossary_url
+
+      assert_response :success
+      assert_select "body.atlas-shell"
+      assert_select "link[rel=stylesheet][href*=atlas]"
+      assert_select "header.atlas-glossary-header h1"
+      assert_select "section.atlas-glossary-section"
+      assert_select "article.atlas-glossary-term", minimum: 5
+    end
   end
 end

@@ -27,7 +27,8 @@ class EventSummaryDisplayTest < ActionDispatch::IntegrationTest
     get public_event_url(@event)
 
     assert_response :success
-    assert_includes response.body, "Meeting Summary"
+    # New Atlas section heading: "The meeting in brief"
+    assert_select ".atlas-section-head h2 .atlas-em", text: "in brief"
     assert_includes response.body, "affordable housing agreement"
     assert_includes response.body, "Affordable housing agreement"
     assert_includes response.body, "Based on the published minutes."
@@ -39,7 +40,7 @@ class EventSummaryDisplayTest < ActionDispatch::IntegrationTest
     get public_event_url(@event)
 
     assert_response :success
-    assert_not_includes response.body, "Meeting Summary"
+    assert_select ".atlas-summary", false
   end
 
   test "does not render a failed summary artifact" do
@@ -58,7 +59,7 @@ class EventSummaryDisplayTest < ActionDispatch::IntegrationTest
     get public_event_url(@event)
 
     assert_response :success
-    assert_not_includes response.body, "Meeting Summary"
+    assert_select ".atlas-summary", false
   end
 
   private

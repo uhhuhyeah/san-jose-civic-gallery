@@ -1,60 +1,103 @@
 <% content_for(:title) { "Matters" } %>
 <% content_for(:description) { "Browse #{current_jurisdiction.short_name} legislative matters, agenda files, official attachments, extracted document text, and source links." } %>
 <% content_for(:robots) { "noindex,follow" } if @query.present? %>
+<% content_for :body_class, "atlas-shell" %>
+<% content_for :head do %>
+  <%= stylesheet_link_tag "atlas", "data-turbo-track": "reload" %>
+<% end %>
 
-<main class="newspaper-shell">
-  <%= render "public/shared/topbar", active: :matters %>
+<%
+  theme_options = Civic::ThemeTaxonomy.themes_for(current_jurisdiction).map { |theme| [ theme[:label], theme[:slug] ] }.sort_by(&:first)
+  filter_active = @query.present? || @theme
+%>
 
-  <header class="page-header inset-header">
-    <p class="eyebrow">Official Records</p>
+<main class="atlas-wrap" id="main">
+  <%= render "public/shared/atlas_topbar", active: :matters %>
+
+  <nav class="atlas-crumbs" aria-label="Breadcrumb">
+    <span>All matters</span>
+    <% if @theme %>
+      <span class="atlas-crumbs-sep">/</span>
+      <span><%= @theme_label %></span>
+    <% end %>
+    <% if @query.present? %>
+      <span class="atlas-crumbs-sep">/</span>
+      <span>"<%= @query %>"</span>
+    <% end %>
+  </nav>
+
+  <%# ---------- PAGE HEADER ---------- %>
+  <header class="atlas-matters-header">
+    <p class="atlas-eyebrow">Official Records</p>
     <h1>Matters</h1>
-    <p>Browse legislative files linked from recent <%= current_jurisdiction.short_name %> meetings.</p>
+    <p class="atlas-matters-header-lede">Browse legislative files linked from recent <%= current_jurisdiction.short_name %> meetings.</p>
   </header>
 
   <% if @theme %>
-    <p class="breadcrumb inset-panel">
+    <p class="atlas-matters-banner">
       Showing matters tagged <strong><%= @theme_label %></strong>, primary-theme matters first.
-      <%= link_to "View all matters", public_matters_path, class: "source-link" %>
+      <%= link_to "View all matters", public_matters_path, class: "atlas-matters-banner-clear" %>
     </p>
   <% end %>
 
-  <%= form_with url: public_matters_path, method: :get, local: true, class: "search-form inset-panel" do |form| %>
+  <%# ---------- FILTER FORM ---------- %>
+  <%= form_with url: public_matters_path, method: :get, local: true, class: "atlas-matters-filter", role: "search" do |form| %>
     <%= form.label :q, "Search matters and extracted document text", for: "matter-filter-q" %>
-    <div class="search-row">
-      <%= form.search_field :q, id: "matter-filter-q", value: @query, placeholder: "Matter file, title, name, or document text" %>
+    <div class="atlas-matters-filter-row">
+      <%= form.search_field :q,
+        id: "matter-filter-q",
+        value: @query,
+        placeholder: "Matter file, title, name, or document text",
+        autocomplete: "off" %>
       <%= form.label :theme, "Theme", for: "matter-filter-theme", class: "sr-only" %>
       <%= form.select :theme,
-            options_for_select(Civic::ThemeTaxonomy.themes_for(current_jurisdiction).map { |theme| [ theme[:label], theme[:slug] ] }.sort_by(&:first), @theme),
-            { include_blank: "Any theme" },
-            id: "matter-filter-theme" %>
+        options_for_select(theme_options, @theme),
+        { include_blank: "Any theme" },
+        id: "matter-filter-theme" %>
       <%= form.submit "Search" %>
-      <% if @query.present? || @theme %>
-        <%= link_to "Clear", public_matters_path, class: "button-secondary" %>
+      <% if filter_active %>
+        <%= link_to "Clear", public_matters_path, class: "atlas-matters-filter-clear" %>
       <% end %>
     </div>
   <% end %>
 
+  <%# ---------- RESULTS ---------- %>
   <% if @matters.any? %>
-    <section class="record-list inset-panel" aria-label="Matters">
+    <p class="atlas-matters-count">
+      <strong><%= number_with_delimiter(@matters.length) %></strong> <%= "matter".pluralize(@matters.length) %>
+      <% if @theme %>tagged <%= @theme_label %><% end %>
+      <% if @query.present? %>matching "<%= @query %>"<% end %>
+    </p>
+    <section class="atlas-matters-results" aria-label="Matters">
       <% @matters.each do |matter| %>
-        <article class="record-row">
-          <div>
-            <h2><%= link_to matter.display_name, public_matter_path(matter) %></h2>
-            <% if matter.descriptive_title.present? %>
-              <p><%= matter.descriptive_title %></p>
-            <% end %>
-            <p class="record-meta">
-              <%= [matter.matter_type_name, matter.matter_status_name, matter.body_name].compact_blank.join(" / ") %>
-            </p>
-            <% primary_theme = matter.themes.detect { |theme| theme.rank == 1 } %>
-            <% if primary_theme %>
-              <div class="tags">
-                <%= link_to primary_theme.label, public_matters_path(theme: primary_theme.theme_slug), class: "pill green" %>
-              </div>
-            <% end %>
-            <% if (document_matches = @document_matches_by_matter_id[matter.id]).present? %>
-              <div class="document-search-hits">
-                <p>Extracted document text matches</p>
+        <% primary_theme = matter.themes.detect { |t| t.rank == 1 } %>
+        <% document_matches = @document_matches_by_matter_id[matter.id] %>
+        <% attachment_count = matter.attachments.size %>
+        <article class="atlas-matter-row">
+          <% if matter.agenda_date %>
+            <%= render "public/shared/atlas_date_plate",
+                       date: matter.agenda_date,
+                       size: :sm,
+                       aria_label: "Agenda date #{matter.agenda_date.strftime('%-d %B %Y')}" %>
+          <% else %>
+            <div></div>
+          <% end %>
+
+          <div class="atlas-matter-row-body">
+            <span class="atlas-matter-row-code"><%= matter.display_name %></span>
+            <h2><%= link_to matter.descriptive_title.presence || matter.display_name, public_matter_path(matter) %></h2>
+            <div class="atlas-matter-row-meta">
+              <% if primary_theme %>
+                <%= link_to primary_theme.label, public_matters_path(theme: primary_theme.theme_slug), class: "atlas-matter-row-tag" %>
+              <% end %>
+              <% if matter.matter_type_name.present? %><span><%= matter.matter_type_name %></span><% end %>
+              <% if matter.matter_status_name.present? %><span><%= matter.matter_status_name %></span><% end %>
+              <% if matter.body_name.present? %><span class="atlas-matter-row-body-name"><%= matter.body_name %></span><% end %>
+            </div>
+
+            <% if document_matches.present? %>
+              <div class="atlas-matter-row-doc-hits">
+                <p class="atlas-matter-row-doc-hits-label">Extracted document text matches</p>
                 <ul>
                   <% document_matches.first(2).each do |match| %>
                     <li>
@@ -66,24 +109,25 @@
               </div>
             <% end %>
           </div>
-          <dl class="record-facts">
+
+          <dl class="atlas-matter-row-facts">
             <div>
               <dt>Agenda date</dt>
-              <dd><%= matter.agenda_date || "Unknown" %></dd>
+              <dd class="<%= 'unknown' unless matter.agenda_date %>"><%= matter.agenda_date&.strftime("%d %b %Y") || "Unknown" %></dd>
             </div>
             <div>
               <dt>Attachments</dt>
-              <dd><%= matter.attachments.size %></dd>
+              <dd><%= attachment_count %></dd>
             </div>
           </dl>
         </article>
       <% end %>
     </section>
   <% elsif @query.present? %>
-    <p class="empty-state inset-panel">No matters matched "<%= @query %>".</p>
+    <p class="atlas-matters-empty">No matters matched "<%= @query %>".</p>
   <% else %>
-    <p class="empty-state inset-panel">No matters have been ingested yet.</p>
+    <p class="atlas-matters-empty">No matters have been ingested yet.</p>
   <% end %>
 
-  <%= render "public/shared/footer" %>
+  <%= render "public/shared/atlas_footer" %>
 </main>

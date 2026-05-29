@@ -1,7 +1,12 @@
-<main class="page-shell">
-  <%= render "public/shared/topbar", active: :glossary %>
+<% content_for :body_class, "atlas-shell" %>
+<% content_for :head do %>
+  <%= stylesheet_link_tag "atlas", "data-turbo-track": "reload" %>
+<% end %>
+
+<main class="atlas-wrap" id="main">
+  <%= render "public/shared/atlas_topbar", active: :glossary %>
 
   <%= render "public/glossary/#{current_jurisdiction.slug}" %>
 
-  <%= render "public/shared/footer" %>
+  <%= render "public/shared/atlas_footer" %>
 </main>

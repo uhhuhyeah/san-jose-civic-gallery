@@ -154,7 +154,7 @@ module Public
       get public_matters_url(q: "agreement", theme: "housing")
 
       assert_response :success
-      assert_select ".search-form a.button-secondary[href=?]", public_matters_path, text: "Clear"
+      assert_select ".atlas-matters-filter a.atlas-matters-filter-clear[href=?]", public_matters_path, text: "Clear"
     end
 
     test "shows clear for a theme-only filter" do
@@ -163,32 +163,32 @@ module Public
       get public_matters_url(theme: "housing")
 
       assert_response :success
-      assert_select ".search-form a.button-secondary[href=?]", public_matters_path, text: "Clear"
+      assert_select ".atlas-matters-filter a.atlas-matters-filter-clear[href=?]", public_matters_path, text: "Clear"
     end
 
     test "omits clear when no query or theme filter is active" do
       get public_matters_url
 
       assert_response :success
-      assert_select ".search-form a.button-secondary", text: "Clear", count: 0
+      assert_select ".atlas-matters-filter a.atlas-matters-filter-clear", text: "Clear", count: 0
     end
 
-    test "shows the primary theme as a pill linking to the theme filter" do
+    test "shows the primary theme as a tag linking to the theme filter" do
       @matter.themes.create!(theme_slug: "housing", rank: 1)
 
       get public_matter_url(@matter)
 
       assert_response :success
-      assert_select "a.pill[href=?]", public_matters_path(theme: "housing"), text: "Housing"
+      assert_select "a.atlas-matter-theme-tag[href=?]", public_matters_path(theme: "housing"), text: "Housing"
     end
 
-    test "shows a primary theme pill on each matter row in the index" do
+    test "shows a primary theme tag on each matter row in the index" do
       @matter.themes.create!(theme_slug: "housing", rank: 1)
 
       get public_matters_url
 
       assert_response :success
-      assert_select ".record-row a.pill[href=?]", public_matters_path(theme: "housing"), text: "Housing"
+      assert_select ".atlas-matter-row a.atlas-matter-row-tag[href=?]", public_matters_path(theme: "housing"), text: "Housing"
     end
 
     test "finds matters by successful extracted document text" do
@@ -311,15 +311,18 @@ module Public
       get public_matter_url(@matter)
 
       assert_response :success
-      assert_includes response.body, "Official Matter"
-      assert_includes response.body, "26-575"
+      # Eyebrow + code
+      assert_select ".atlas-matter-eyebrow"
+      assert_select ".atlas-matter-code", text: "26-575"
+      # Meeting reachable in the "Heard at" sidebar
       assert_includes response.body, "Regular meeting"
-      assert_includes response.body, "Agreement PDF"
-      assert_includes response.body, "File imported"
-      assert_includes response.body, "Extracted Text Preview"
+      # Attachment renders as a numbered "paper" with its name
+      assert_select ".atlas-paper h3", text: "Agreement PDF"
+      # Extracted text body and summary content
+      assert_includes response.body, "Extracted text preview"
       assert_includes response.body, "This agreement authorizes"
-      assert_includes response.body, "Generated Summary"
-      assert_includes response.body, "Generated summary available"
+      # Summary card label + draft note + AI disclosure (verbatim)
+      assert_select ".atlas-summary .atlas-summary-label", text: "Generated summary"
       assert_includes response.body, "This appears to be a draft agreement summary."
       assert_includes response.body, "The source text indicates this attachment appears to be a draft document."
       assert_includes response.body, "Review the official source document before relying on this summary."
@@ -354,7 +357,6 @@ module Public
       get public_matter_url(@matter)
 
       assert_response :success
-      assert_includes response.body, "Generated summary pending"
       assert_includes response.body, "This attachment has extracted text, but a generated summary has not been added yet."
     end
 
@@ -362,7 +364,6 @@ module Public
       get public_matter_url(@matter)
 
       assert_response :success
-      assert_includes response.body, "Generated summary not available"
       assert_includes response.body, "The source file has not been imported yet."
     end
 
@@ -427,6 +428,121 @@ module Public
       assert_response :success
       assert_includes response.body, "Open source document"
       assert_not_includes response.body, "Official source link unavailable"
+    end
+
+    # ---- Atlas-redesign acceptance tests (Phase 3) ----
+
+    test "matter show renders the Atlas shell and loads the Atlas stylesheet" do
+      get public_matter_url(@matter)
+
+      assert_response :success
+      assert_select "body.atlas-shell"
+      assert_select "link[rel=stylesheet][href*=atlas]"
+    end
+
+    test "matter sidebar shows sibling matters from the most recent meeting" do
+      sibling = Civic::Matter.create!(
+        legistar_matter_id: 88_001,
+        matter_file: "26-880",
+        title: "Sibling agreement"
+      )
+      sibling.themes.create!(theme_slug: "housing", rank: 1)
+      @event.event_items.create!(
+        legistar_event_item_id: 129_900,
+        civic_matter_id: sibling.id,
+        agenda_sequence: 2,
+        agenda_number: "3.5",
+        title: "Approve sibling agreement"
+      )
+
+      get public_matter_url(@matter)
+
+      assert_response :success
+      assert_select ".atlas-rail-adjacent .atlas-rail-adjacent-title", text: /26-880/
+      assert_select ".atlas-rail-adjacent a.atlas-rail-adjacent-row[href=?]", public_matter_path(sibling)
+    end
+
+    test "matter sidebar shows the primary theme tile linking to the theme filter" do
+      @matter.themes.create!(theme_slug: "housing", rank: 1)
+
+      get public_matter_url(@matter)
+
+      assert_response :success
+      assert_select ".atlas-rail a.atlas-tile[href=?]", public_matters_path(theme: "housing")
+      assert_select ".atlas-rail a.atlas-tile .atlas-tile-name", text: "Housing"
+    end
+
+    test "matter header reports the number of documents on file" do
+      get public_matter_url(@matter)
+
+      assert_response :success
+      # One attachment in the test fixture.
+      assert_select ".atlas-matter-side .atlas-matter-docs-count", text: "1"
+      assert_select ".atlas-matter-side", text: /Document on file/
+    end
+
+    test "matter view omits the Adjacent rail when the matter has never been heard" do
+      orphan = Civic::Matter.create!(
+        legistar_matter_id: 88_002,
+        matter_file: "26-881",
+        title: "Never heard"
+      )
+
+      get public_matter_url(orphan)
+
+      assert_response :success
+      assert_select ".atlas-rail-adjacent", false
+      # "Heard at" card is also skipped when there are no event items.
+      assert_select ".atlas-rail-card h4", text: /Heard at/i, count: 0
+    end
+
+    # ---- Atlas matters index acceptance ----
+
+    test "matters index renders the Atlas shell and the Atlas stylesheet" do
+      get public_matters_url
+
+      assert_response :success
+      assert_select "body.atlas-shell"
+      assert_select "link[rel=stylesheet][href*=atlas]"
+    end
+
+    test "matters index renders each matter as an atlas-matter-row with code chip and title" do
+      get public_matters_url
+
+      assert_response :success
+      assert_select "article.atlas-matter-row" do
+        assert_select ".atlas-matter-row-code", text: "26-575"
+        assert_select "h2 a[href=?]", public_matter_path(@matter), text: "Agreement approval"
+      end
+    end
+
+    test "matters index reports a results count above the list" do
+      get public_matters_url
+
+      assert_response :success
+      assert_select ".atlas-matters-count strong", text: /\A\d+\z/
+    end
+
+    test "matters index empty state renders when no matters exist" do
+      Civic::EventItem.delete_all
+      Civic::MatterAttachment.delete_all
+      Civic::Matter.delete_all
+
+      get public_matters_url
+
+      assert_response :success
+      assert_select ".atlas-matters-empty"
+      assert_select "article.atlas-matter-row", false
+    end
+
+    test "matters index theme banner appears when a theme filter is active" do
+      @matter.themes.create!(theme_slug: "housing", rank: 1)
+
+      get public_matters_url(theme: "housing")
+
+      assert_response :success
+      assert_select ".atlas-matters-banner strong", text: "Housing"
+      assert_select ".atlas-matters-banner a.atlas-matters-banner-clear[href=?]", public_matters_path, text: "View all matters"
     end
   end
 end
