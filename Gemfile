@@ -44,7 +44,7 @@ gem "kamal", require: false
 gem "thruster", require: false
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
-gem "image_processing", "~> 1.2"
+gem "image_processing", "~> 2.0"
 
 # S3-compatible storage backend for Active Storage (Cloudflare R2 in production).
 # Pinned to [1.208.0, 1.218.0): >= 1.208 fixes CVE-2025-14762 (S3 Encryption Client
