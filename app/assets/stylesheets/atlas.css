@@ -1817,7 +1817,6 @@
   font-size: 18px;
   line-height: 1.5;
   color: var(--atlas-ink-soft);
-  max-width: 70ch;
 }
 
 /* Index — grid of past months. */
