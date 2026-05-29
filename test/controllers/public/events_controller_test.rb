@@ -30,6 +30,25 @@ module Public
       assert_includes response.body, "Public Comment"
     end
 
+    test "event with no ingested agenda items is noindex'd to avoid soft 404 clustering" do
+      empty_event = Civic::Event.create!(
+        legistar_event_id: 7622,
+        body_name: "Arts Commission",
+        title: "Pending ingestion",
+        event_date: Date.new(2026, 5, 18)
+      )
+
+      get public_event_url(empty_event)
+
+      assert_response :success
+      assert_select "meta[name='robots'][content='noindex,follow']"
+      # The populated event in setup must stay indexable; this is the regression
+      # guard for "we noindex'd too broadly" if the predicate ever drifts.
+      get public_event_url(@event)
+      assert_response :success
+      assert_select "meta[name='robots']", false
+    end
+
     test "event detail returns 304 when client ETag matches" do
       get public_event_url(@event)
       assert_response :success

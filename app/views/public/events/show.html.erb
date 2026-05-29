@@ -19,6 +19,16 @@
   matters_on_agenda_label = "#{substantive_count} #{'matter'.pluralize(substantive_count)} on agenda"
 %>
 
+<%# Meetings with no ingested agenda items render only template scaffolding plus
+    a "no items yet" message, which Google classifies as a soft 404 and clusters
+    as a near-duplicate of every other empty meeting. Suppress indexing until
+    ingestion fills the page; `follow` keeps the adjacent-meeting links useful
+    for crawl discovery. Predicate reuses agenda_total (already-loaded
+    association) instead of calling agenda_items? to avoid an extra COUNT query.
+    The robots tag flips back on automatically because
+    Public::CacheVersion.event_show includes event_items count + max(updated_at). %>
+<% content_for(:robots) { "noindex,follow" } if agenda_total.zero? %>
+
 <main class="atlas-wrap" id="main">
   <%= render "public/shared/atlas_topbar", active: :meetings %>
 
