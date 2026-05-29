@@ -133,6 +133,13 @@ module Civic
       city? ? "City Hall" : "the district"
     end
 
+    # Bare jurisdiction noun for editorial copy, e.g. "What the <kind_noun> is
+    # paying attention to." Pair with a leading article in the surrounding
+    # sentence. Returns lowercase; suitable for mid-sentence use.
+    def kind_noun
+      city? ? "city" : "district"
+    end
+
     # Public source host this jurisdiction's records are mirrored from.
     def source_host
       SOURCE_HOSTS[source_system_default]

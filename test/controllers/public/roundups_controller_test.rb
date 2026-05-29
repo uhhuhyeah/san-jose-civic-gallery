@@ -67,5 +67,41 @@ module Public
       assert_response :success
       assert_select "a[href=?]", roundups_path
     end
+
+    # ---- Atlas redesign acceptance ----
+
+    test "roundups index renders inside the Atlas shell" do
+      get roundups_path
+
+      assert_response :success
+      assert_select "body.atlas-shell"
+      assert_select "link[rel=stylesheet][href*=atlas]"
+      assert_select "header.atlas-roundups-header h1"
+      assert_select "a.atlas-roundup-period-card[href=?]", roundup_path(@period) do
+        assert_select ".atlas-roundup-period-label", text: /May 2026/
+      end
+    end
+
+    test "roundup show renders the Atlas storyline and decision list" do
+      @matter.themes.create!(theme_slug: "housing", rank: 1) if @matter.themes.empty?
+      Civic::Event.create!(legistar_event_id: 991_001, body_name: "City Council", event_date: Date.new(2026, 5, 14)).event_items.create!(
+        legistar_event_item_id: 991_500,
+        civic_matter_id: @matter.id,
+        matter_id: @matter.legistar_matter_id,
+        agenda_sequence: 1,
+        agenda_number: "1.",
+        title: "Approve housing agreement"
+      )
+
+      get roundup_path(@period)
+
+      assert_response :success
+      assert_select "body.atlas-shell"
+      assert_select "header.atlas-roundup-hero h1", text: "May in San Jose"
+      assert_select "section.atlas-roundup-storyline"
+      # The matter shows up in the "Decisions made" list — code chip + linked title.
+      assert_select ".atlas-roundup-item .atlas-roundup-item-code", text: "26-950"
+      assert_select ".atlas-roundup-item-title a[href=?]", public_matter_path(@matter)
+    end
   end
 end

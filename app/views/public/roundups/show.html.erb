@@ -1,84 +1,126 @@
 <% content_for(:title) { @artifact.content["headline"].presence || "#{@period.label} roundup" } %>
 <% content_for(:description) { "#{current_jurisdiction.short_name} civic activity recap for #{@period.label}: decisions, new business, and meeting highlights." } %>
+<% content_for :body_class, "atlas-shell" %>
+<% content_for :head do %>
+  <%= stylesheet_link_tag "atlas", "data-turbo-track": "reload" %>
+<% end %>
 
-<main class="page-shell" id="main">
-  <%= render "public/shared/topbar" %>
+<%
+  highlights = Array(@artifact.content["highlights"]).reject(&:blank?)
+%>
 
-  <p class="breadcrumb"><%= link_to "All monthly roundups", roundups_path %></p>
+<main class="atlas-wrap" id="main">
+  <%= render "public/shared/atlas_topbar" %>
 
-  <header class="page-header inset-header">
-    <p class="eyebrow">The month in <%= current_jurisdiction.short_name %> · <%= @period.label %></p>
+  <nav class="atlas-crumbs" aria-label="Breadcrumb">
+    <%= link_to "All monthly roundups", roundups_path %>
+    <span class="atlas-crumbs-sep">/</span>
+    <span><%= @period.label %></span>
+  </nav>
+
+  <%# ---------- HERO ---------- %>
+  <header class="atlas-roundup-hero">
+    <p class="atlas-eyebrow">The month in <%= current_jurisdiction.short_name %> · <%= @period.label %></p>
     <h1><%= @artifact.content["headline"] %></h1>
     <% if @artifact.content["intro"].present? %>
-      <p><%= @artifact.content["intro"] %></p>
+      <p class="atlas-roundup-intro"><%= @artifact.content["intro"] %></p>
     <% end %>
   </header>
 
-  <section class="section-band roundup-storyline">
-    <p class="eyebrow">Automated recap</p>
-    <% highlights = Array(@artifact.content["highlights"]).reject(&:blank?) %>
+  <%# ---------- STORYLINE ---------- %>
+  <section class="atlas-roundup-storyline" aria-label="Storyline">
+    <p class="atlas-eyebrow">Automated recap</p>
     <% if highlights.any? %>
-      <ul class="roundup-highlights">
+      <ul class="atlas-roundup-highlights">
         <% highlights.each do |highlight| %>
           <li><%= highlight %></li>
         <% end %>
       </ul>
     <% end %>
-    <%= simple_format(@artifact.content["storyline"].to_s) %>
+    <%= simple_format(@artifact.content["storyline"].to_s, {}, wrapper_tag: "p") %>
   </section>
 
+  <%# ---------- DECISIONS MADE ---------- %>
   <% if @activity.decisions.any? %>
-    <section class="section-band">
-      <h2>Decisions made</h2>
-      <ul class="roundup-items">
-        <% @activity.decisions.each do |decision| %>
-          <li>
-            <%= link_to decision.matter.display_name, public_matter_path(decision.matter) %>
-            <% if decision.matter.descriptive_title.present? %>
-              <span class="roundup-item-title"><%= decision.matter.descriptive_title %></span>
-            <% end %>
-            <span class="roundup-item-meta">
-              passed <%= decision.passed_date %><% if decision.primary_theme_label.present? %> · <%= decision.primary_theme_label %><% end %>
-            </span>
-            <% if (blurb = @decision_blurbs[decision.matter.matter_file]&.fetch("blurb", nil)).present? %>
-              <p class="roundup-item-blurb"><%= blurb %></p>
-            <% end %>
+    <section class="atlas-roundup-section">
+      <%= render "public/shared/atlas_section_heading",
+                 title: "Decisions",
+                 em: "made",
+                 label: "Passed this month" %>
+      <ol class="atlas-roundup-items">
+        <% @activity.decisions.each_with_index do |decision, i| %>
+          <% blurb = @decision_blurbs[decision.matter.matter_file]&.fetch("blurb", nil) %>
+          <li class="atlas-roundup-item">
+            <span class="atlas-roundup-item-num"><%= format("%02d", i + 1) %></span>
+            <div class="atlas-roundup-item-body">
+              <span class="atlas-roundup-item-code"><%= decision.matter.display_name %></span>
+              <h3 class="atlas-roundup-item-title">
+                <%= link_to (decision.matter.descriptive_title.presence || decision.matter.display_name),
+                            public_matter_path(decision.matter) %>
+              </h3>
+              <span class="atlas-roundup-item-meta">
+                Passed <%= decision.passed_date %><% if decision.primary_theme_label.present? %> · <%= decision.primary_theme_label %><% end %>
+              </span>
+              <% if blurb.present? %>
+                <p class="atlas-roundup-item-blurb"><%= blurb %></p>
+              <% end %>
+            </div>
           </li>
         <% end %>
-      </ul>
+      </ol>
     </section>
   <% end %>
 
+  <%# ---------- INTRODUCED ---------- %>
   <% if @activity.introduced.any? %>
-    <section class="section-band">
-      <h2>Introduced</h2>
-      <ul class="roundup-items">
-        <% @activity.introduced.each do |intro| %>
-          <li>
-            <%= link_to intro.matter.display_name, public_matter_path(intro.matter) %>
-            <% if intro.matter.descriptive_title.present? %>
-              <span class="roundup-item-title"><%= intro.matter.descriptive_title %></span>
-            <% end %>
-            <span class="roundup-item-meta">
-              introduced <%= intro.intro_date %><% if intro.primary_theme_label.present? %> · <%= intro.primary_theme_label %><% end %>
-            </span>
+    <section class="atlas-roundup-section">
+      <%= render "public/shared/atlas_section_heading",
+                 title: "New",
+                 em: "business",
+                 label: "Introduced this month" %>
+      <ol class="atlas-roundup-items">
+        <% @activity.introduced.each_with_index do |intro, i| %>
+          <li class="atlas-roundup-item">
+            <span class="atlas-roundup-item-num"><%= format("%02d", i + 1) %></span>
+            <div class="atlas-roundup-item-body">
+              <span class="atlas-roundup-item-code"><%= intro.matter.display_name %></span>
+              <h3 class="atlas-roundup-item-title">
+                <%= link_to (intro.matter.descriptive_title.presence || intro.matter.display_name),
+                            public_matter_path(intro.matter) %>
+              </h3>
+              <span class="atlas-roundup-item-meta">
+                Introduced <%= intro.intro_date %><% if intro.primary_theme_label.present? %> · <%= intro.primary_theme_label %><% end %>
+              </span>
+            </div>
           </li>
         <% end %>
-      </ul>
+      </ol>
     </section>
   <% end %>
 
+  <%# ---------- MEETING HIGHLIGHTS ---------- %>
   <% if @activity.meetings.any? %>
-    <section class="section-band">
-      <h2>Meeting highlights</h2>
-      <ul class="roundup-items">
-        <% @activity.meetings.each do |meeting| %>
-          <li>
-            <%= link_to (meeting.event.body_name.presence || meeting.event.title.presence || "Meeting"), public_event_path(meeting.event) %>
-            <p class="roundup-item-blurb"><%= meeting.summary %></p>
+    <section class="atlas-roundup-section">
+      <%= render "public/shared/atlas_section_heading",
+                 title: "Meeting",
+                 em: "highlights",
+                 label: "What the bodies took up" %>
+      <ol class="atlas-roundup-items">
+        <% @activity.meetings.each_with_index do |meeting, i| %>
+          <li class="atlas-roundup-item">
+            <span class="atlas-roundup-item-num"><%= format("%02d", i + 1) %></span>
+            <div class="atlas-roundup-item-body">
+              <h3 class="atlas-roundup-item-title">
+                <%= link_to (meeting.event.body_name.presence || meeting.event.title.presence || "Meeting"),
+                            public_event_path(meeting.event) %>
+              </h3>
+              <p class="atlas-roundup-item-blurb"><%= meeting.summary %></p>
+            </div>
           </li>
         <% end %>
-      </ul>
+      </ol>
     </section>
   <% end %>
+
+  <%= render "public/shared/atlas_footer" %>
 </main>

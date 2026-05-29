@@ -18,7 +18,7 @@
   <%# ---------- HERO ---------- %>
   <section class="atlas-pulse-hero">
     <div>
-      <h1>What the city<br><em>is paying attention to.</em></h1>
+      <h1>What the <%= current_jurisdiction.kind_noun %><br><em>is paying attention to.</em></h1>
     </div>
     <div class="atlas-pulse-dateline" aria-label="Pulse window">
       <div><strong>Q<%= current_quarter %> · <%= @as_of.year %></strong></div>
