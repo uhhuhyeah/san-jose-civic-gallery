@@ -325,7 +325,10 @@
 
 .atlas-shell .atlas-topbar .atlas-brand-mark {
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 1;
+  /* WONK 0: sober terminals on the non-italic wordmark. The italic flourishes
+     elsewhere (.atlas-em, brand-sub, hero italics) still ride WONK 1 — the
+     playful J/g/a only feel right in italic. */
+  font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 0;
   font-weight: 600;
   font-size: 30px;
   letter-spacing: -0.02em;
