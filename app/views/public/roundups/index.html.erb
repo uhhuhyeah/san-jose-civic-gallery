@@ -1,28 +1,37 @@
 <% content_for(:title) { "Monthly roundups" } %>
 <% content_for(:description) { "Monthly recaps of #{current_jurisdiction.short_name} civic activity: decisions made, new business introduced, and meeting highlights." } %>
+<% content_for :body_class, "atlas-shell" %>
+<% content_for :head do %>
+  <%= stylesheet_link_tag "atlas", "data-turbo-track": "reload" %>
+<% end %>
 
-<main class="page-shell" id="main">
-  <%= render "public/shared/topbar" %>
+<main class="atlas-wrap" id="main">
+  <%= render "public/shared/atlas_topbar" %>
 
-  <p class="breadcrumb"><%= link_to "Pulse", root_path %></p>
+  <nav class="atlas-crumbs" aria-label="Breadcrumb">
+    <%= link_to "Pulse", root_path %>
+    <span class="atlas-crumbs-sep">/</span>
+    <span>Monthly roundups</span>
+  </nav>
 
-  <header class="page-header inset-header">
-    <p class="eyebrow">Monthly Roundups</p>
+  <header class="atlas-roundups-header">
+    <p class="atlas-eyebrow">Monthly Roundups</p>
     <h1>The month in <%= current_jurisdiction.short_name %></h1>
     <p>Automated monthly recaps of what <%= current_jurisdiction.civic_subject %> took up: decisions made, new business introduced, and meeting highlights.</p>
   </header>
 
   <% if @periods.empty? %>
-    <section class="section-band">
-      <p>No roundups have been published yet.</p>
-    </section>
+    <p class="atlas-roundups-empty">No roundups have been published yet.</p>
   <% else %>
-    <section class="section-band">
-      <ul class="roundup-list">
-        <% @periods.each do |period| %>
-          <li><%= link_to period.label, roundup_path(period) %></li>
+    <div class="atlas-roundups-grid" role="list" aria-label="Past monthly roundups">
+      <% @periods.each do |period| %>
+        <%= link_to roundup_path(period), class: "atlas-roundup-period-card", role: "listitem" do %>
+          <span class="atlas-roundup-period-label"><%= period.label %></span>
+          <span class="atlas-roundup-period-cta">Read the recap</span>
         <% end %>
-      </ul>
-    </section>
+      <% end %>
+    </div>
   <% end %>
+
+  <%= render "public/shared/atlas_footer" %>
 </main>

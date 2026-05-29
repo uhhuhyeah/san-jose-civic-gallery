@@ -1787,6 +1787,250 @@
 
 
 /* ============================================================
+ * ROUNDUPS — monthly recap index (/roundups) and show
+ * (/roundups/:period). Index is a grid of period cards. Show
+ * is an editorial article: hero + storyline + numbered lists
+ * of decisions / introductions / meeting highlights.
+ * ============================================================ */
+
+.atlas-shell .atlas-roundups-header {
+  padding: 28px 0 16px;
+  border-bottom: 1px solid var(--atlas-rule);
+}
+.atlas-shell .atlas-roundups-header .atlas-eyebrow {
+  color: var(--atlas-oxblood);
+}
+.atlas-shell .atlas-roundups-header h1 {
+  margin: 8px 0 12px;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 144, "SOFT" 50, "WONK" 0;
+  font-weight: 400;
+  font-size: clamp(36px, 5vw, 60px);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.atlas-shell .atlas-roundups-header p {
+  margin: 0;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 18, "SOFT" 50, "WONK" 0;
+  font-weight: 350;
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--atlas-ink-soft);
+  max-width: 70ch;
+}
+
+/* Index — grid of past months. */
+.atlas-shell .atlas-roundups-grid {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+.atlas-shell .atlas-roundup-period-card {
+  background: var(--atlas-paper);
+  border: 1px solid var(--atlas-rule);
+  border-radius: var(--atlas-r-lg);
+  padding: 18px 22px 16px;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.atlas-shell .atlas-roundup-period-card:hover {
+  border-color: var(--atlas-oxblood);
+  box-shadow: inset 3px 0 0 var(--atlas-oxblood);
+  text-decoration: none;
+}
+.atlas-shell .atlas-roundup-period-label {
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 72, "SOFT" 50, "WONK" 0;
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--atlas-ink);
+}
+.atlas-shell .atlas-roundup-period-cta {
+  margin-top: 6px;
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--atlas-oxblood);
+}
+.atlas-shell .atlas-roundup-period-cta::after { content: " →"; }
+
+/* Show — editorial hero. */
+.atlas-shell .atlas-roundup-hero {
+  padding: 28px 0 24px;
+  border-bottom: 1px solid var(--atlas-rule);
+}
+.atlas-shell .atlas-roundup-hero .atlas-eyebrow {
+  color: var(--atlas-oxblood);
+}
+.atlas-shell .atlas-roundup-hero h1 {
+  margin: 8px 0 14px;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 144, "SOFT" 50, "WONK" 0;
+  font-weight: 400;
+  font-size: clamp(40px, 6vw, 72px);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--atlas-ink);
+}
+.atlas-shell .atlas-roundup-intro {
+  margin: 0;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 20, "SOFT" 50, "WONK" 0;
+  font-weight: 350;
+  font-size: 19px;
+  line-height: 1.5;
+  color: var(--atlas-ink-soft);
+  max-width: 70ch;
+}
+
+/* Storyline — paper-on-paper card with oxblood left rule. */
+.atlas-shell .atlas-roundup-storyline {
+  margin-top: 32px;
+  padding: 24px 28px 22px;
+  background: var(--atlas-paper);
+  border: 1px solid var(--atlas-rule);
+  border-left: 3px solid var(--atlas-oxblood);
+  border-radius: var(--atlas-r-lg);
+}
+.atlas-shell .atlas-roundup-storyline > .atlas-eyebrow {
+  color: var(--atlas-oxblood);
+}
+.atlas-shell .atlas-roundup-storyline > .atlas-eyebrow::before { content: "◇ "; }
+.atlas-shell .atlas-roundup-highlights {
+  margin: 14px 0 18px;
+  padding: 0;
+  list-style: none;
+}
+.atlas-shell .atlas-roundup-highlights li {
+  position: relative;
+  padding: 6px 0 6px 24px;
+  border-top: 1px dashed var(--atlas-paper-edge);
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 16, "SOFT" 50, "WONK" 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--atlas-ink-soft);
+}
+.atlas-shell .atlas-roundup-highlights li:first-child { border-top: 0; }
+.atlas-shell .atlas-roundup-highlights li::before {
+  content: "";
+  position: absolute;
+  left: 4px; top: 16px;
+  width: 10px; height: 1px;
+  background: var(--atlas-oxblood);
+}
+.atlas-shell .atlas-roundup-storyline p {
+  margin: 0 0 12px;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 16, "SOFT" 50, "WONK" 0;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--atlas-ink-soft);
+}
+.atlas-shell .atlas-roundup-storyline p:last-child { margin-bottom: 0; }
+
+/* Numbered item lists (decisions / introduced / meetings). */
+.atlas-shell .atlas-roundup-section { padding: 44px 0 0; }
+.atlas-shell .atlas-roundup-items {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--atlas-rule);
+}
+.atlas-shell .atlas-roundup-item {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 18px;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--atlas-rule);
+  align-items: start;
+}
+.atlas-shell .atlas-roundup-item-num {
+  font-family: var(--atlas-sans);
+  font-weight: 500;
+  font-size: 32px;
+  line-height: 1;
+  color: var(--atlas-oxblood);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.atlas-shell .atlas-roundup-item-body { min-width: 0; }
+.atlas-shell .atlas-roundup-item-code {
+  display: inline-block;
+  font-family: var(--atlas-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--atlas-oxblood);
+  border: 1px solid var(--atlas-oxblood);
+  border-radius: var(--atlas-r);
+  padding: 2px 7px 1px;
+  background: rgba(122, 31, 43, 0.04);
+  margin-bottom: 8px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.atlas-shell .atlas-roundup-item-title {
+  display: block;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 30, "SOFT" 50, "WONK" 0;
+  font-weight: 450;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  color: var(--atlas-ink);
+  margin: 0 0 6px;
+}
+.atlas-shell .atlas-roundup-item-title a {
+  color: inherit;
+  text-decoration: none;
+}
+.atlas-shell .atlas-roundup-item-title a:hover {
+  color: var(--atlas-oxblood);
+  text-decoration: none;
+  border-bottom: 1px solid var(--atlas-oxblood);
+}
+.atlas-shell .atlas-roundup-item-meta {
+  display: block;
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--atlas-ink-mute);
+  margin-bottom: 6px;
+}
+.atlas-shell .atlas-roundup-item-blurb {
+  margin: 8px 0 0;
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--atlas-ink-soft);
+}
+
+/* Empty state on the index. */
+.atlas-shell .atlas-roundups-empty {
+  margin-top: 28px;
+  padding: 36px 28px;
+  background: var(--atlas-paper);
+  border: 1px dashed var(--atlas-rule);
+  border-radius: var(--atlas-r-lg);
+  font-family: var(--atlas-serif);
+  font-variation-settings: "opsz" 18, "SOFT" 50, "WONK" 0;
+  font-size: 18px;
+  color: var(--atlas-ink-soft);
+  text-align: center;
+}
+
+
+/* ============================================================
  * GLOSSARY — plain-language reference page at /glossary.
  * Header + intro note + grouped grids of term cards + sources block.
  * ============================================================ */
