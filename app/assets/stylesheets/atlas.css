@@ -3514,6 +3514,22 @@
 }
 
 @media (max-width: 720px) {
+  /* Brand stacks below 720px. At its desktop size the brand-mark
+     ("Jurisdiction Civic Gallery") plus brand-sub tagline render around
+     ~500px wide and atlas-brand carries flex-shrink: 0, so without this
+     override the brand busts a sub-500px viewport — confirmed by the
+     narrow-viewport system test at 375px. Stacking the mark above the
+     tagline and dropping their type sizes lets the topbar fit. */
+  .atlas-shell .atlas-topbar .atlas-brand {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    flex-shrink: 1;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .atlas-shell .atlas-topbar .atlas-brand-mark { font-size: 22px; }
+  .atlas-shell .atlas-topbar .atlas-brand-sub  { font-size: 14px; }
   .atlas-shell .atlas-facts-strip { grid-template-columns: repeat(2, 1fr); }
   .atlas-shell .atlas-facts-strip > div:nth-child(3n) { border-right: 1px solid var(--atlas-rule); }
   .atlas-shell .atlas-facts-strip > div:nth-child(2n) { border-right: 0; }
