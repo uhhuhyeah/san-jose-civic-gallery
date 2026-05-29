@@ -42,11 +42,19 @@ module Generated
     attr_reader :limit, :dry_run, :client, :force
 
     def candidate_attachments
+      # Rewritten from a JOIN + DISTINCT to a semi-join via IN-subquery. The
+      # previous shape multiplied attachment rows by re-extraction history
+      # (document_extracted_texts keeps one row per extraction attempt; see
+      # idx_document_extracted_texts_attachment_history) and then deduped with
+      # DISTINCT over ~30 attachment columns, dragging the extracted `content`
+      # text column through the join filter. Sentry flagged it at ~1.7s on a
+      # 3.1s job. The IN-subquery form lets Postgres plan a true semi-join
+      # using index_document_extracted_texts_on_civic_matter_attachment_id, with
+      # no row multiplication, no DISTINCT, and no need to touch `content` from
+      # the outer query.
       scope = Civic::MatterAttachment
-        .joins(:extracted_texts)
-        .merge(Documents::ExtractedText.successful.with_content)
+        .where(id: Documents::ExtractedText.successful.with_content.select(:civic_matter_attachment_id))
         .includes(:matter)
-        .distinct
         .order(:id)
 
       scope = scope.where.not(id: already_succeeded_target_ids) unless force
