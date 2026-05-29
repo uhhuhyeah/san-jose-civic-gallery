@@ -14,7 +14,11 @@ module Public
     end
 
     def sitemap
-      events = Civic::Event.current_from_source.for_jurisdiction(current_jurisdiction)
+      # Events with no ingested agenda items render only template scaffolding
+      # and are noindex'd at the page level; advertising them in the sitemap
+      # would just send crawlers to URLs we're telling them to skip. Once
+      # ingestion fills an event, it re-enters the sitemap on the next render.
+      events = Civic::Event.current_from_source.with_agenda_items.for_jurisdiction(current_jurisdiction)
       matters = Civic::Matter.for_jurisdiction(current_jurisdiction)
 
       # Crawlers poll this endpoint repeatedly. Serve a Last-Modified so an

@@ -40,12 +40,23 @@ module Public
         title: "San Jose Council Meeting",
         event_date: Date.current
       )
+      sanjose_event.event_items.create!(
+        legistar_event_item_id: 970_010,
+        agenda_sequence: 1,
+        title: "Roll call"
+      )
       sjusd_event = Civic::Event.create!(
         source_system: "simbli.sjusd",
         source_event_id: "sjusd-evt-sitemap",
         body_name: "Board of Education",
         title: "SJUSD Board Meeting",
         event_date: Date.current
+      )
+      sjusd_event.event_items.create!(
+        source_system: "simbli.sjusd",
+        source_event_item_id: "sjusd-evt-sitemap-item-1",
+        agenda_sequence: 1,
+        title: "Roll call"
       )
       sanjose_matter = Civic::Matter.create!(legistar_matter_id: 97_101, matter_file: "26-971")
       sjusd_matter = Civic::Matter.create!(
@@ -91,6 +102,33 @@ module Public
       assert_select "link[rel='canonical'][href='https://#{SANJOSE_HOST}/public/matters']"
       assert_select "meta[property='og:url'][content='https://#{SANJOSE_HOST}/public/matters']"
       assert_select "meta[property='og:image'][content='https://#{SANJOSE_HOST}/icon.png']"
+    end
+
+    test "sitemap.xml excludes events that have no ingested agenda items" do
+      populated = Civic::Event.create!(
+        legistar_event_id: 97_201,
+        body_name: "City Council",
+        title: "Populated meeting",
+        event_date: Date.current
+      )
+      populated.event_items.create!(
+        legistar_event_item_id: 972_010,
+        agenda_sequence: 1,
+        title: "Roll call"
+      )
+      empty = Civic::Event.create!(
+        legistar_event_id: 97_202,
+        body_name: "Arts Commission",
+        title: "Empty meeting",
+        event_date: Date.current
+      )
+
+      host! SANJOSE_HOST
+      get "/sitemap.xml"
+
+      assert_response :success
+      assert_includes response.body, public_event_url(populated)
+      assert_not_includes response.body, public_event_url(empty)
     end
 
     test "noindex result variants suppress the canonical link" do
