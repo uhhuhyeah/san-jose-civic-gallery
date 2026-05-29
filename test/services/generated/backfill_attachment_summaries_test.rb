@@ -43,6 +43,26 @@ module Generated
       assert_equal 1, Artifact.succeeded.count
     end
 
+    test "deduplicates attachments that have multiple successful extracted texts" do
+      candidate = attachment(30_005, "Multi-extraction attachment")
+      2.times do |i|
+        candidate.extracted_texts.create!(
+          extractor_name: "pdftotext",
+          extractor_version: "v#{i}",
+          status: "ok",
+          content: "Text revision #{i}",
+          character_count: 16
+        )
+      end
+
+      result = BackfillAttachmentSummaries.call(limit: 10, dry_run: true, client: @client)
+
+      # The semi-join form returns one attachment row regardless of how many
+      # extraction-history rows it has. Guards against a regression to the
+      # JOIN+DISTINCT shape, whose wide-row dedup cost was the Sentry hotspot.
+      assert_equal [ candidate.id ], result.candidates.map(&:id)
+    end
+
     test "skips already generated attachments unless forced" do
       candidate = attachment(30_004, "Candidate")
       candidate.extracted_texts.create!(
