@@ -28,6 +28,7 @@
 #   OPERATOR=ops@example.com bin/manual_upload 1 ~/Downloads/budget.pdf
 
 require "csv"
+require "erb"
 require "shellwords"
 require "yaml"
 
@@ -80,7 +81,10 @@ end
 
 def deploy_host
   deploy_config_path = File.expand_path("../config/deploy.yml", __dir__)
-  deploy_config = YAML.load_file(deploy_config_path)
+  # config/deploy.yml is ERB-templated (Kamal preprocesses it the same way),
+  # so YAML.load_file on the raw bytes trips over the <% %> tag at the top.
+  # Render through ERB first, then safe_load with aliases to match Kamal.
+  deploy_config = YAML.safe_load(ERB.new(File.read(deploy_config_path)).result, aliases: true)
   host = deploy_config.dig("servers", "web", "hosts")&.first
   abort_with "Could not read servers.web.hosts from #{deploy_config_path}" if host.to_s.empty?
   host
