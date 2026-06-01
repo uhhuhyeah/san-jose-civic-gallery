@@ -2,6 +2,8 @@ require "application_system_test_case"
 
 class PublicMatterDiscoveryTest < ApplicationSystemTestCase
   setup do
+    travel_to Time.zone.local(2026, 5, 20, 12, 0, 0)
+
     @event = Civic::Event.create!(
       legistar_event_id: 7622,
       body_name: "City Council",
@@ -67,6 +69,10 @@ class PublicMatterDiscoveryTest < ApplicationSystemTestCase
         "document_status" => "unknown"
       }
     )
+  end
+
+  teardown do
+    travel_back
   end
 
   test "visitor navigates from meeting to matter and sees document evidence" do
