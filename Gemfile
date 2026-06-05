@@ -50,7 +50,7 @@ gem "image_processing", "~> 2.0"
 # Pinned to [1.208.0, 1.218.0): >= 1.208 fixes CVE-2025-14762 (S3 Encryption Client
 # key commitment — unused by this app but flagged by bundler-audit), < 1.218 avoids
 # the modern S3 checksum behavior that Cloudflare R2 rejects with InvalidRequest / 401.
-gem "aws-sdk-s3", "~> 1.224.0", require: false
+gem "aws-sdk-s3", "~> 1.225.0", require: false
 
 # Web UI for inspecting Solid Queue (and other Active Job backends). Mounted at /jobs.
 gem "mission_control-jobs"
