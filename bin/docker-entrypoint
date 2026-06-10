@@ -1,7 +1,11 @@
 #!/bin/bash -e
 
-# If running the rails server then create or migrate existing database
-if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
+# If running the rails server or the jobs supervisor then create or migrate
+# existing databases. The jobs container needs this too: the Solid Cache
+# database is a local SQLite file on the container's storage volume, so each
+# role must be able to create it on first boot rather than relying on the web
+# container having booted first.
+if { [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; } || [ "${@: -1:1}" == "./bin/jobs" ]; then
   ./bin/rails db:prepare
 fi
 
