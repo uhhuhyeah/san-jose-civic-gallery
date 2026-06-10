@@ -12,8 +12,8 @@ module Public
         jurisdiction:
       )
 
-      assert_includes matters_key, "public/matters-index/v1/sanjose"
-      assert_includes meetings_key, "public/meetings/month-v1/sanjose/2026-05"
+      assert_includes matters_key, "public/matters-index/v2/sanjose"
+      assert_includes meetings_key, "public/meetings/month-v2/sanjose/2026-05"
       assert_no_match(/Library Outreach|City Council/, matters_key)
       assert_no_match(/Library Outreach|City Council/, meetings_key)
     end
@@ -28,6 +28,20 @@ module Public
         CacheVersion.matters_index(query: "", jurisdiction: sjusd)
     end
 
+    test "version computation runs no count or max queries" do
+      jurisdiction = civic_jurisdictions(:sanjose)
+
+      queries = []
+      callback = ->(_name, _start, _finish, _id, payload) { queries << payload[:sql] }
+      ActiveSupport::Notifications.subscribed(callback, "sql.active_record") do
+        CacheVersion.events_index(jurisdiction:)
+        CacheVersion.matters_index(query: "library", jurisdiction:)
+        CacheVersion.meetings_index(month: Date.new(2026, 5, 1), query: "", body_name: "", jurisdiction:)
+      end
+
+      assert_empty queries
+    end
+
     test "event index version changes when source records change" do
       jurisdiction = civic_jurisdictions(:sanjose)
       first_key = CacheVersion.events_index(jurisdiction:)
@@ -40,7 +54,7 @@ module Public
         )
       end
 
-      assert_not_equal first_key, CacheVersion.events_index(jurisdiction:)
+      assert_not_equal first_key, CacheVersion.events_index(jurisdiction: jurisdiction.reload)
     end
 
     test "matter detail version changes when generated summary changes" do
@@ -52,8 +66,9 @@ module Public
         content: "Agreement body",
         character_count: 14
       )
+      jurisdiction = matter.civic_jurisdiction
 
-      first_key = CacheVersion.matter_show(matter)
+      first_key = CacheVersion.matter_show(matter, jurisdiction: jurisdiction.reload)
 
       travel 1.second do
         attachment.generated_artifacts.create!(
@@ -67,7 +82,25 @@ module Public
         )
       end
 
-      assert_not_equal first_key, CacheVersion.matter_show(matter)
+      assert_not_equal first_key, CacheVersion.matter_show(matter, jurisdiction: jurisdiction.reload)
+    end
+
+    test "writes scoped to one jurisdiction do not bump the other" do
+      sanjose = civic_jurisdictions(:sanjose)
+      sjusd = civic_jurisdictions(:sjusd)
+      sanjose_key = CacheVersion.events_index(jurisdiction: sanjose)
+      sjusd_key = CacheVersion.events_index(jurisdiction: sjusd)
+
+      travel 1.second do
+        Civic::Event.create!(
+          legistar_event_id: 7622,
+          body_name: "City Council",
+          event_date: Date.new(2026, 5, 20)
+        )
+      end
+
+      assert_not_equal sanjose_key, CacheVersion.events_index(jurisdiction: sanjose.reload)
+      assert_equal sjusd_key, CacheVersion.events_index(jurisdiction: sjusd.reload)
     end
   end
 end

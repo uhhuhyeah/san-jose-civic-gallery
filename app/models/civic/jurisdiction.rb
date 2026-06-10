@@ -66,6 +66,29 @@ module Civic
       slug
     end
 
+    # --- Data version -------------------------------------------------------
+    # A single timestamp that advances whenever any public-facing record in
+    # this jurisdiction changes (see BumpsJurisdictionDataVersion). It is the
+    # one freshness input Public::CacheVersion needs, replacing the COUNT/MAX
+    # aggregate queries that used to run on every request.
+
+    # Advance the data version. update_all keeps this to one cheap UPDATE with
+    # no callbacks and leaves updated_at alone. A nil id bumps every
+    # jurisdiction (safe over-invalidation when ownership is unknown).
+    def self.bump_data_version!(jurisdiction_id = nil)
+      scope = jurisdiction_id ? where(id: jurisdiction_id) : all
+      scope.update_all(data_updated_at: Time.current)
+    end
+
+    # Opaque component for ETags and cache keys. Reads the attribute as loaded;
+    # callers that need to observe a bump made after this record was loaded
+    # must reload (controllers are fine: current_jurisdiction is fetched fresh
+    # on every request).
+    def data_version
+      timestamp = data_updated_at || updated_at
+      timestamp&.utc&.iso8601(6) || "none"
+    end
+
     # --- Presentation -------------------------------------------------------
     # Jurisdiction-aware copy used across the public UI so a non-default host
     # (e.g. sjusd.civicgallery.org) never reads as San Jose city government.

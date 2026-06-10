@@ -4,6 +4,9 @@ module Civic
 
     include JurisdictionScoped
     include SourceIdentified
+    include BumpsJurisdictionDataVersion
+
+    bumps_jurisdiction_data_version
 
     belongs_to :matter, class_name: "Civic::Matter", foreign_key: :civic_matter_id, inverse_of: :attachments
     belongs_to :last_source_snapshot, class_name: "Ingestion::SourceSnapshot", optional: true
