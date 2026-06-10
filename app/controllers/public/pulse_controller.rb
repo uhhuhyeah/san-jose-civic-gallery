@@ -23,8 +23,8 @@ module Public
     private
 
     def load_theme_pulse
-      @body_options = cached_body_options
-      payload = cached_pulse_payload
+      payload = cached_homepage_payload
+      @body_options = payload[:body_options]
       @theme_stats = payload[:theme_stats]
       @quarterly_series = payload[:quarterly_series]
       @heating_up = @theme_stats.select(&:eligible).sort_by { |stat| [ stat.surging ? 0 : 1, -(stat.lift || 0) ] }
@@ -33,10 +33,11 @@ module Public
     end
 
     def load_homepage_context
-      @events = records_in_cached_order(cached_recent_event_ids, Civic::Event.for_jurisdiction(current_jurisdiction))
-      @stats = cached_stats
+      payload = cached_homepage_payload
+      @events = records_in_cached_order(payload[:recent_event_ids], Civic::Event.for_jurisdiction(current_jurisdiction))
+      @stats = payload[:stats]
       @recent_decisions = records_in_cached_order(
-        cached_recent_decision_ids,
+        payload[:recent_decision_ids],
         Civic::Matter.for_jurisdiction(current_jurisdiction).includes(:themes, attachments: :generated_artifacts)
       )
     end
@@ -72,84 +73,84 @@ module Public
       end
     end
 
+    # The data version replaces the wall-clock TTL bucket that used to sit
+    # here: the ETag (and the payload behind it) now changes when ingestion
+    # writes new data or the day rolls over, instead of every ten minutes.
     def cache_version
       @cache_version ||= [
-        "public/pulse-homepage/v3",
+        "public/pulse-homepage/v4",
         current_jurisdiction.slug,
         @as_of.iso8601,
         Public::CacheVersion.query_digest(@body_name),
         WINDOW.to_i,
         SPARK_BUCKETS,
-        Time.current.to_i / CACHE_TTL.to_i
+        current_jurisdiction.data_version
       ].join("/")
     end
 
-    # One cache entry, one ThemePulse instance, both outputs derived from it.
-    # The previous split between cached_theme_stats and cached_quarterly_series
-    # built ThemePulse twice on a cold homepage and re-ran the current-quarter
-    # appearance aggregation. Combining them halves the cold-render query cost.
-    def cached_pulse_payload
-      Rails.cache.fetch([ cache_version, "pulse-payload" ], expires_in: CACHE_TTL) do
+    # Everything the homepage needs from the database, in one cache entry: a
+    # warm render costs a single cache read. This page previously kept five
+    # entries (pulse payload, body options, recent events, recent decisions,
+    # stats); with a database-backed cache store each read was a network
+    # round-trip, so consolidating them mattered as much as caching them.
+    def cached_homepage_payload
+      @cached_homepage_payload ||= Rails.cache.fetch([ cache_version, "homepage-payload" ], expires_in: CACHE_TTL) do
         pulse = Public::ThemePulse.new(jurisdiction: current_jurisdiction, as_of: @as_of, body_name: @body_name.presence)
         {
           theme_stats: pulse.stats,
-          quarterly_series: pulse.quarterly_series(buckets: SPARK_BUCKETS)
+          quarterly_series: pulse.quarterly_series(buckets: SPARK_BUCKETS),
+          body_options: body_options,
+          recent_event_ids: recent_event_ids,
+          recent_decision_ids: recent_decision_ids,
+          stats: stats
         }
       end
     end
 
-    def cached_body_options
-      Rails.cache.fetch([ cache_version, "pulse-body-options" ], expires_in: CACHE_TTL) do
-        Civic::Event.current_from_source.for_jurisdiction(current_jurisdiction).where.not(body_name: [ nil, "" ]).distinct.order(:body_name).pluck(:body_name)
-      end
+    def body_options
+      Civic::Event.current_from_source.for_jurisdiction(current_jurisdiction).where.not(body_name: [ nil, "" ]).distinct.order(:body_name).pluck(:body_name)
     end
 
-    def cached_recent_event_ids
-      Rails.cache.fetch([ cache_version, "recent-event-ids" ], expires_in: CACHE_TTL) do
-        Civic::Event.for_jurisdiction(current_jurisdiction).recent_first.limit(CALENDAR_LIMIT).pluck(:id)
-      end
+    def recent_event_ids
+      Civic::Event.for_jurisdiction(current_jurisdiction).recent_first.limit(CALENDAR_LIMIT).pluck(:id)
     end
 
     # Recent matters that already have a non-empty generated summary on a current
     # attachment, newest agendas first. The summary text itself is read in the
     # view from the preloaded artifacts (see matter_summary_preview).
-    def cached_recent_decision_ids
-      Rails.cache.fetch([ cache_version, "recent-decision-ids" ], expires_in: CACHE_TTL) do
-        summarized_attachment_ids = Generated::Artifact
-          .succeeded
-          .for_kind(Generated::SummarizeMatterAttachment::KIND)
-          .where(prompt_version: Generated::SummarizeMatterAttachment::PROMPT::VERSION)
-          .where(target_type: "Civic::MatterAttachment")
-          .where("content->>'summary' <> ''")
-          .select(:target_id)
+    def recent_decision_ids
+      summarized_attachment_ids = Generated::Artifact
+        .succeeded
+        .for_kind(Generated::SummarizeMatterAttachment::KIND)
+        .where(prompt_version: Generated::SummarizeMatterAttachment::PROMPT::VERSION)
+        .where(target_type: "Civic::MatterAttachment")
+        .where("content->>'summary' <> ''")
+        .select(:target_id)
 
-        matter_ids = Civic::MatterAttachment
-          .current_from_source
-          .for_jurisdiction(current_jurisdiction)
-          .where(id: summarized_attachment_ids)
-          .select(:civic_matter_id)
+      matter_ids = Civic::MatterAttachment
+        .current_from_source
+        .for_jurisdiction(current_jurisdiction)
+        .where(id: summarized_attachment_ids)
+        .select(:civic_matter_id)
 
-        Civic::Matter
-          .for_jurisdiction(current_jurisdiction)
-          .where(id: matter_ids)
-          .recent_first
-          .limit(RECENT_DECISIONS_LIMIT)
-          .pluck(:id)
-      end
+      Civic::Matter
+        .for_jurisdiction(current_jurisdiction)
+        .where(id: matter_ids)
+        .recent_first
+        .limit(RECENT_DECISIONS_LIMIT)
+        .pluck(:id)
     end
 
-    def cached_stats
-      Rails.cache.fetch([ cache_version, "stats" ], expires_in: CACHE_TTL) do
-        {
-          meetings: Civic::Event.current_from_source.for_jurisdiction(current_jurisdiction).count,
-          agenda_items: Civic::EventItem.current_from_source.for_jurisdiction(current_jurisdiction).count,
-          matters_heard: Civic::EventItem.current_from_source.for_jurisdiction(current_jurisdiction).where.not(civic_matter_id: nil).count,
-          matters: Civic::Matter.for_jurisdiction(current_jurisdiction).count,
-          attachments: Civic::MatterAttachment.current_from_source.for_jurisdiction(current_jurisdiction).count,
-          imported_files: Civic::MatterAttachment.imported.for_jurisdiction(current_jurisdiction).count,
-          extracted_texts: Documents::ExtractedText.where(status: "ok").joins(:matter_attachment).merge(Civic::MatterAttachment.for_jurisdiction(current_jurisdiction)).count
-        }
-      end
+    def stats
+      {
+        meetings: Civic::Event.current_from_source.for_jurisdiction(current_jurisdiction).count,
+        agenda_items: Civic::EventItem.current_from_source.for_jurisdiction(current_jurisdiction).count,
+        matters_heard: Civic::EventItem.current_from_source.for_jurisdiction(current_jurisdiction).where.not(civic_matter_id: nil).count,
+        matters: Civic::Matter.for_jurisdiction(current_jurisdiction).count,
+        attachments: Civic::MatterAttachment.current_from_source.for_jurisdiction(current_jurisdiction).count,
+        imported_files: Civic::MatterAttachment.imported.for_jurisdiction(current_jurisdiction).count,
+        extracted_texts: Documents::ExtractedText.where(status: "ok").joins(:matter_attachment).merge(Civic::MatterAttachment.for_jurisdiction(current_jurisdiction)).count
+      }
     end
 
     def records_in_cached_order(ids, scope)

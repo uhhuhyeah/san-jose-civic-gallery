@@ -2,6 +2,10 @@ module Documents
   class ExtractedText < ApplicationRecord
     self.table_name = "document_extracted_texts"
 
+    include BumpsJurisdictionDataVersion
+
+    bumps_jurisdiction_data_version via: :jurisdiction_id_for_data_version
+
     belongs_to :matter_attachment, class_name: "Civic::MatterAttachment", foreign_key: :civic_matter_attachment_id, inverse_of: :extracted_texts
     has_many :generated_artifacts, as: :source_artifact, class_name: "Generated::Artifact", dependent: :nullify
     scope :recent_first, -> { order(created_at: :desc, id: :desc) }
@@ -54,5 +58,11 @@ module Documents
     end
 
     private_class_method :tsquery_sql
+
+    private
+
+    def jurisdiction_id_for_data_version
+      matter_attachment&.civic_jurisdiction_id
+    end
   end
 end

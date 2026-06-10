@@ -6,8 +6,9 @@ module Public
       @body_name = params[:body_name].to_s.strip
       return unless stale?(etag: meetings_index_cache_version, public: true)
 
-      @body_options = cached_body_options
-      @year_options = cached_year_options
+      options = cached_filter_options
+      @body_options = options[:body_options]
+      @year_options = options[:year_options]
 
       @events = records_in_cached_order(cached_event_ids, Civic::Event.for_jurisdiction(current_jurisdiction).includes(event_items: { matter: :attachments }))
     end
@@ -70,15 +71,15 @@ module Public
       years.compact.uniq.sort.reverse
     end
 
-    def cached_year_options
-      Rails.cache.fetch([ public_options_cache_version, "meetings-year-options" ], expires_in: INDEX_CACHE_TTL) do
-        year_options
-      end
-    end
-
-    def cached_body_options
-      Rails.cache.fetch([ public_options_cache_version, "meetings-body-options" ], expires_in: INDEX_CACHE_TTL) do
-        Civic::Event.current_from_source.for_jurisdiction(current_jurisdiction).where.not(body_name: [ nil, "" ]).distinct.order(:body_name).pluck(:body_name)
+    # Body and year filter options cached as one entry: they invalidate
+    # together (any event change) and a warm render does one cache read
+    # instead of two.
+    def cached_filter_options
+      Rails.cache.fetch([ public_options_cache_version, "meetings-filter-options" ], expires_in: INDEX_CACHE_TTL) do
+        {
+          body_options: Civic::Event.current_from_source.for_jurisdiction(current_jurisdiction).where.not(body_name: [ nil, "" ]).distinct.order(:body_name).pluck(:body_name),
+          year_options: year_options
+        }
       end
     end
 

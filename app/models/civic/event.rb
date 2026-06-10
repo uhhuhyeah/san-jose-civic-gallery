@@ -4,6 +4,9 @@ module Civic
 
     include JurisdictionScoped
     include SourceIdentified
+    include BumpsJurisdictionDataVersion
+
+    bumps_jurisdiction_data_version
 
     belongs_to :last_source_snapshot, class_name: "Ingestion::SourceSnapshot", optional: true
 

@@ -6,9 +6,9 @@ module Public
       @theme_label = Civic::ThemeTaxonomy.label_for(@theme, current_jurisdiction) if @theme
       return unless stale?(etag: matters_index_cache_version, public: true)
 
-      @document_matches = document_matches_for(@query)
-      document_matter_ids = @document_matches.map { |match| match.matter_attachment.matter.id }.uniq
-      @matters = records_in_cached_order(cached_matter_ids(@query, document_matter_ids), Civic::Matter.for_jurisdiction(current_jurisdiction).includes(:attachments, :themes))
+      ids = cached_index_ids
+      @document_matches = document_matches_for(ids[:document_match_ids])
+      @matters = records_in_cached_order(ids[:matter_ids], Civic::Matter.for_jurisdiction(current_jurisdiction).includes(:attachments, :themes))
       @document_matches_by_matter_id = @document_matches.group_by { |match| match.matter_attachment.matter.id }
     end
 
@@ -26,7 +26,7 @@ module Public
         .find(params[:id])
       @event_items = @matter.event_items.agenda_order.includes(:event)
       @primary_theme = @matter.themes.detect { |theme| theme.rank == 1 }
-      @matter_cache_version = Public::CacheVersion.matter_show(@matter)
+      @matter_cache_version = Public::CacheVersion.matter_show(@matter, jurisdiction: current_jurisdiction)
       load_matter_atlas_context
       stale?(etag: @matter_cache_version, public: true)
     end
@@ -79,11 +79,12 @@ module Public
     end
 
     # Cached jurisdiction-wide ThemePulse stats keyed by jurisdiction + day +
-    # TTL bucket. Independent of the matter cache version so every matter page
-    # in the jurisdiction shares one cache entry for the day.
+    # data version. Independent of the matter cache version so every matter
+    # page in the jurisdiction shares one cache entry, refreshed when the day
+    # rolls over or ingestion writes new data.
     def cached_jurisdiction_theme_stats
       Rails.cache.fetch(
-        [ "public/theme-pulse-stats", current_jurisdiction.slug, Date.current.iso8601, Time.current.to_i / SHOW_CACHE_TTL.to_i ],
+        [ "public/theme-pulse-stats", current_jurisdiction.slug, Date.current.iso8601, current_jurisdiction.data_version ],
         expires_in: SHOW_CACHE_TTL
       ) do
         Public::ThemePulse.new(jurisdiction: current_jurisdiction).stats
@@ -101,10 +102,33 @@ module Public
       @matters_index_cache_version ||= Public::CacheVersion.matters_index(query: @query, theme: @theme, jurisdiction: current_jurisdiction)
     end
 
-    def document_matches_for(query)
+    # Both id lists for the index page live in one cache entry because the
+    # matter list depends on the document matches: computing them together
+    # keeps a warm render at a single cache read and keeps them consistent
+    # with each other.
+    def cached_index_ids
+      Rails.cache.fetch([ matters_index_cache_version, "index-ids" ], expires_in: INDEX_CACHE_TTL) do
+        matches = document_match_pairs(@query)
+        {
+          document_match_ids: matches.map(&:first),
+          matter_ids: matter_ids_for(@query, matches.map(&:last).uniq)
+        }
+      end
+    end
+
+    # [extracted_text_id, matter_id] pairs for the top document matches. The
+    # matter id rides along in the same pluck so we never load the heavyweight
+    # extracted-text rows just to find their matters.
+    def document_match_pairs(query)
       return [] if query.blank?
 
-      records_in_cached_order(cached_document_match_ids(query), document_match_record_scope(query))
+      document_match_candidate_scope(query).limit(20).pluck(:id, Arel.sql("civic_matters.id"))
+    end
+
+    def document_matches_for(document_match_ids)
+      return [] if document_match_ids.empty?
+
+      records_in_cached_order(document_match_ids, document_match_record_scope(@query))
     end
 
     def matching_matter_ids(query, document_matter_ids)
@@ -112,12 +136,6 @@ module Public
       return metadata_matches.select(:id) if document_matter_ids.empty?
 
       metadata_matches.or(Civic::Matter.for_jurisdiction(current_jurisdiction).where(id: document_matter_ids)).select(:id)
-    end
-
-    def cached_document_match_ids(query)
-      Rails.cache.fetch([ matters_index_cache_version, "document-match-ids" ], expires_in: INDEX_CACHE_TTL) do
-        document_match_candidate_scope(query).limit(20).pluck(:id)
-      end
     end
 
     def document_match_candidate_scope(query)
@@ -136,23 +154,21 @@ module Public
         .includes(matter_attachment: :matter)
     end
 
-    def cached_matter_ids(query, document_matter_ids)
-      Rails.cache.fetch([ matters_index_cache_version, "matter-ids" ], expires_in: INDEX_CACHE_TTL) do
-        scope = Civic::Matter.for_jurisdiction(current_jurisdiction)
-        scope = scope.where(id: matching_matter_ids(query, document_matter_ids)) if query.present?
-        if @theme
-          # Any-rank match (primary or secondary), but surface the matters where
-          # this is the primary theme first.
-          scope
-            .joins(:themes)
-            .where(civic_matter_themes: { theme_slug: @theme })
-            .order(Arel.sql("civic_matter_themes.rank ASC"))
-            .recent_first
-            .limit(50)
-            .pluck(:id)
-        else
-          scope.recent_first.limit(50).pluck(:id)
-        end
+    def matter_ids_for(query, document_matter_ids)
+      scope = Civic::Matter.for_jurisdiction(current_jurisdiction)
+      scope = scope.where(id: matching_matter_ids(query, document_matter_ids)) if query.present?
+      if @theme
+        # Any-rank match (primary or secondary), but surface the matters where
+        # this is the primary theme first.
+        scope
+          .joins(:themes)
+          .where(civic_matter_themes: { theme_slug: @theme })
+          .order(Arel.sql("civic_matter_themes.rank ASC"))
+          .recent_first
+          .limit(50)
+          .pluck(:id)
+      else
+        scope.recent_first.limit(50).pluck(:id)
       end
     end
 

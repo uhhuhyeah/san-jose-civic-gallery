@@ -4,6 +4,9 @@ module Civic
 
     include JurisdictionScoped
     include SourceIdentified
+    include BumpsJurisdictionDataVersion
+
+    bumps_jurisdiction_data_version
 
     belongs_to :event, class_name: "Civic::Event", foreign_key: :civic_event_id, inverse_of: :event_items
     belongs_to :matter, class_name: "Civic::Matter", foreign_key: :civic_matter_id, inverse_of: :event_items, optional: true

@@ -2,6 +2,10 @@ module Civic
   class MatterTheme < ApplicationRecord
     self.table_name = "civic_matter_themes"
 
+    include BumpsJurisdictionDataVersion
+
+    bumps_jurisdiction_data_version via: :jurisdiction_id_for_data_version
+
     belongs_to :matter, class_name: "Civic::Matter", foreign_key: :civic_matter_id, inverse_of: :themes
     belongs_to :source_artifact, class_name: "Generated::Artifact", optional: true
 
@@ -18,6 +22,12 @@ module Civic
 
     def label
       ThemeTaxonomy.label_for(theme_slug, matter&.civic_jurisdiction)
+    end
+
+    private
+
+    def jurisdiction_id_for_data_version
+      matter&.civic_jurisdiction_id
     end
   end
 end

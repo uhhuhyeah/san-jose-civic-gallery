@@ -25,8 +25,8 @@
     ingestion fills the page; `follow` keeps the adjacent-meeting links useful
     for crawl discovery. Predicate reuses agenda_total (already-loaded
     association) instead of calling agenda_items? to avoid an extra COUNT query.
-    The robots tag flips back on automatically because
-    Public::CacheVersion.event_show includes event_items count + max(updated_at). %>
+    The robots tag flips back on automatically: ingesting agenda items bumps the
+    jurisdiction data version, which changes the event_show ETag. %>
 <% content_for(:robots) { "noindex,follow" } if agenda_total.zero? %>
 
 <main class="atlas-wrap" id="main">

@@ -1,80 +1,74 @@
 require "digest"
 
 module Public
+  # Builds the ETag / cache-key strings for the public pages.
+  #
+  # Freshness comes from the jurisdiction's data version: a single timestamp
+  # bumped after every committed write to a public-facing record (see
+  # BumpsJurisdictionDataVersion). Earlier versions of this class derived
+  # freshness from COUNT(*) and MAX(updated_at) over each table involved in a
+  # page, which meant 10-16 sequential aggregate queries per request before
+  # anything rendered. Against a remote database that was most of the page's
+  # response time (Sentry RUBY-RAILS-Z).
+  #
+  # Show-page versions also fold in the record's own id and updated_at; that
+  # costs nothing (the record is already loaded) and keeps keys distinct per
+  # record. The jurisdiction component means any ingestion write re-renders
+  # every page in that jurisdiction on next visit, which is fine: rendering is
+  # cheap once the version check is, and the Rails.cache entries behind the
+  # pages are keyed on these same strings so they refresh together.
+  #
+  # Callers pass the request's current_jurisdiction, which is loaded fresh on
+  # every request, so a bump is visible to the next request without any extra
+  # query here.
   class CacheVersion
     class << self
       def events_index(jurisdiction:)
         compose(
-          "public/events-index/v1",
+          "public/events-index/v2",
           jurisdiction.slug,
-          cache_component_for(Civic::Event.current_from_source.for_jurisdiction(jurisdiction)),
-          cache_component_for(Civic::EventItem.current_from_source.for_jurisdiction(jurisdiction)),
-          cache_component_for(Civic::Matter.for_jurisdiction(jurisdiction)),
-          cache_component_for(Civic::MatterAttachment.current_from_source.for_jurisdiction(jurisdiction)),
-          cache_component_for(Documents::ExtractedText.all),
-          cache_component_for(Generated::Artifact.all)
+          jurisdiction.data_version
         )
       end
 
       def meetings_index(month:, query:, body_name:, jurisdiction:)
         compose(
-          "public/meetings/month-v1",
+          "public/meetings/month-v2",
           jurisdiction.slug,
           month.strftime("%Y-%m"),
           query_digest(query),
           value_digest(body_name),
-          cache_component_for(Civic::Event.current_from_source.for_jurisdiction(jurisdiction)),
-          cache_component_for(Civic::EventItem.current_from_source.for_jurisdiction(jurisdiction)),
-          cache_component_for(Civic::Matter.for_jurisdiction(jurisdiction)),
-          cache_component_for(Civic::MatterAttachment.current_from_source.for_jurisdiction(jurisdiction))
+          jurisdiction.data_version
         )
       end
 
-      def event_show(event)
-        matter_ids = Civic::EventItem
-          .where(civic_event_id: event.id)
-          .where.not(civic_matter_id: nil)
-          .select(:civic_matter_id)
-
+      def event_show(event, jurisdiction:)
         compose(
-          "public/event-show/v1",
+          "public/event-show/v2",
+          jurisdiction.slug,
           event.id,
           timestamp_component(event.updated_at),
-          cache_component_for(Civic::EventItem.where(civic_event_id: event.id)),
-          cache_component_for(Civic::Matter.where(id: matter_ids)),
-          cache_component_for(Civic::MatterAttachment.where(civic_matter_id: matter_ids)),
-          cache_component_for(Generated::Artifact.where(target_type: "Civic::Event", target_id: event.id))
+          jurisdiction.data_version
         )
       end
 
-      def matter_show(matter)
-        attachment_ids = Civic::MatterAttachment.where(civic_matter_id: matter.id).select(:id)
-        related_event_ids = Civic::EventItem.where(civic_matter_id: matter.id).select(:civic_event_id)
-
+      def matter_show(matter, jurisdiction:)
         compose(
-          "public/matter-show/v1",
+          "public/matter-show/v2",
+          jurisdiction.slug,
           matter.id,
           timestamp_component(matter.updated_at),
-          cache_component_for(Civic::EventItem.where(civic_matter_id: matter.id)),
-          cache_component_for(Civic::Event.where(id: related_event_ids)),
-          cache_component_for(Civic::MatterAttachment.where(civic_matter_id: matter.id)),
-          cache_component_for(Documents::ExtractedText.where(civic_matter_attachment_id: attachment_ids)),
-          cache_component_for(Generated::Artifact.where(target_type: "Civic::MatterAttachment", target_id: attachment_ids)),
-          cache_component_for(Civic::MatterTheme.where(civic_matter_id: matter.id))
+          jurisdiction.data_version
         )
       end
 
       def matters_index(query:, jurisdiction:, theme: nil)
         compose(
-          "public/matters-index/v1",
+          "public/matters-index/v2",
           jurisdiction.slug,
           query_digest(query),
           value_digest(theme),
-          cache_component_for(Civic::Matter.for_jurisdiction(jurisdiction)),
-          cache_component_for(Civic::MatterTheme.all),
-          cache_component_for(Civic::MatterAttachment.current_from_source.for_jurisdiction(jurisdiction)),
-          cache_component_for(Documents::ExtractedText.all),
-          cache_component_for(Generated::Artifact.all)
+          jurisdiction.data_version
         )
       end
 
@@ -116,13 +110,6 @@ module Public
         return "blank" if normalized.blank?
 
         Digest::SHA256.hexdigest(normalized).first(16)
-      end
-
-      def cache_component_for(scope)
-        [
-          scope.count,
-          timestamp_component(scope.maximum(:updated_at))
-        ].join(":")
       end
 
       def timestamp_component(timestamp)
