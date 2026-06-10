@@ -65,9 +65,15 @@ production:
   primary: &primary_production
     <<: *default
     url: <%= ENV["DATABASE_URL"] %>
+  # Solid Cache lives on local disk, not in the remote Postgres. The app and
+  # the database are in different datacenters, so a Postgres-backed cache pays
+  # a network round-trip (~40-100ms) per read and write, which is slower than
+  # most of the queries it is meant to avoid (see Sentry RUBY-RAILS-V). The
+  # storage/ directory is a persistent Kamal volume shared by the web and jobs
+  # containers; Rails' SQLite defaults (WAL journal mode) make that safe.
   cache:
-    <<: *primary_production
-    url: <%= ENV.fetch("CACHE_DATABASE_URL", ENV["DATABASE_URL"]) %>
+    adapter: sqlite3
+    database: storage/production_cache.sqlite3
     migrations_paths: db/cache_migrate
   queue:
     <<: *primary_production
