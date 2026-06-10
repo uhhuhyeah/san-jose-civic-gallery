@@ -34,7 +34,7 @@
         keeps atlas.css from auto-loading on non-Atlas pages. %>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= Sentry.get_trace_propagation_meta.html_safe %>
-    <%= tag.script nil, "data-goatcounter": "https://civicgallery.goatcounter.com/count",
+    <%= tag.script nil, "data-goatcounter": "https://#{current_jurisdiction.slug}civicgallery.goatcounter.com/count",
                         async: true, src: "//gc.zgo.at/count.js" if Rails.env.production? %>
   </head>
 
