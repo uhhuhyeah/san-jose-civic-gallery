@@ -1349,6 +1349,11 @@ select#pulse-body-name {
   margin: 0;
 }
 
+.site-footer .footer-credit {
+  margin-top: 12px;
+  text-align: center;
+}
+
 @media (max-width: 720px) {
   .newspaper-shell,
   .page-shell {
