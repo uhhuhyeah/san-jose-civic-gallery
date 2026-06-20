@@ -1005,7 +1005,7 @@
   margin-top: 28px;
   padding: 24px 0 56px;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
   gap: 24px;
   font-family: var(--atlas-mono);
@@ -1013,6 +1013,13 @@
   color: var(--atlas-ink-mute);
   text-transform: uppercase;
   letter-spacing: 0.16em;
+}
+.atlas-shell .atlas-footer .atlas-footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
   flex-wrap: wrap;
 }
 .atlas-shell .atlas-footer .atlas-em {
@@ -1026,6 +1033,13 @@
   flex-wrap: wrap;
 }
 .atlas-shell .atlas-footer a:hover { color: var(--atlas-oxblood); }
+.atlas-shell .atlas-footer .atlas-footer-credit {
+  margin: 0;
+  font-family: var(--atlas-sans);
+  font-size: 13px;
+  text-transform: none;
+  letter-spacing: 0;
+}
 
 
 /* ============================================================
