@@ -118,111 +118,6 @@ a:hover {
   padding-bottom: 40px;
 }
 
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--line);
-  background: #fcfaf6;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 210px;
-  color: var(--ink);
-  text-decoration: none;
-}
-
-.mark {
-  display: grid;
-  width: 36px;
-  height: 36px;
-  place-items: center;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.mark img {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.brand-text {
-  display: grid;
-  gap: 1px;
-}
-
-.brand-text strong {
-  font-size: 16px;
-}
-
-.brand-text span {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.topbar-search {
-  display: flex;
-  align-items: stretch;
-  gap: 8px;
-  flex: 1 1 520px;
-  max-width: 620px;
-}
-
-.topbar-search input[type="search"] {
-  flex: 1 1 auto;
-  min-width: 0;
-  height: 42px;
-  padding: 0 14px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: #ffffff;
-  color: var(--ink);
-  font: inherit;
-  font-size: 14px;
-}
-
-.topbar-search-submit {
-  flex: 0 0 auto;
-  height: 42px;
-  padding: 0 18px;
-  border: 1px solid var(--civic);
-  border-radius: 6px;
-  background: var(--civic);
-  color: #ffffff;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.topbar-search-submit:hover {
-  background: var(--civic-dark);
-  border-color: var(--civic-dark);
-}
-
-.topbar-nav {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.topbar-nav a {
-  color: var(--muted);
-  text-decoration: none;
-}
-
-.topbar-nav a[aria-current="page"] {
-  color: var(--ink);
-  font-weight: 800;
-}
-
 .breadcrumb,
 .inset-header,
 .inset-panel {
@@ -1329,38 +1224,12 @@ select#pulse-body-name {
   font-size: 0.9rem;
 }
 
-.site-footer {
-  margin: 32px 24px 0;
-  padding: 18px 20px;
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.site-footer nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 18px;
-  margin-bottom: 10px;
-  font-weight: 600;
-}
-
-.site-footer p {
-  margin: 0;
-}
-
-.site-footer .footer-credit {
-  margin-top: 12px;
-  text-align: center;
-}
-
 @media (max-width: 720px) {
   .newspaper-shell,
   .page-shell {
     width: 100%;
   }
 
-  .topbar,
   .lead-actions,
   .meeting-row {
     align-items: stretch;
@@ -1375,18 +1244,6 @@ select#pulse-body-name {
     justify-items: start;
   }
 
-  .brand {
-    min-width: 0;
-  }
-
-  .topbar-search {
-    width: 100%;
-    max-width: none;
-  }
-
-  .topbar-nav {
-    flex-wrap: wrap;
-  }
 
   .newspaper-hero,
   .newspaper-body {
@@ -1427,10 +1284,6 @@ select#pulse-body-name {
     grid-template-columns: 1fr;
   }
 
-  .site-footer {
-    margin-right: 12px;
-    margin-left: 12px;
-  }
 }
 
 /* Pulse page (candidate homepage): give the selector box and the stacked
