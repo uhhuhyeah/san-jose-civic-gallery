@@ -33,44 +33,45 @@ these.
    thing on the page. The matter and meeting pages use a numbered "papers" or
    "agenda" pattern that compresses scanning to the leftmost column.
 2. **Serif is voice, sans is data.** Display headings, body copy, editorial
-   flourishes, and AI-generated prose use Fraunces. Numerals at every size, UI
-   labels, and form controls use Inter Tight with `font-variant-numeric:
-   tabular-nums`. Codes, dates, and meta-strings use JetBrains Mono. A reader
-   should be able to tell at a glance what's editorial and what's data.
-3. **One rich accent, one signal color.** Oxblood (`#7a1f2b`) is the rich
-   editorial accent — used for italic flourishes, brand mark, primary links,
-   left rules on important cards. Heat (`#d9663f`) is reserved for *what is
-   rising* — heating-up themes, draft statuses, AI disclaimers, things that
-   should catch the eye. Slate, sage, and amber are quiet signals. Nothing else
-   competes for attention.
-4. **Warm paper, not white.** Background is `#f1ece2` — slightly warm,
-   slightly textured (a low-contrast radial-grain layer). Tiles and date plates
-   add a fine contour pattern so they read as map plates rather than dashboard
-   cards.
-5. **Restrained editorial flourish.** One italic em per heading, one drop-cap
-   shape (a serif chip prefix `◇` on summary labels), one numbered scheme
-   (`01`, `02`, `03`). Add a flourish only when it earns its place; pull one
-   when adding another. The whole system was rewritten from a mockup that
-   leaned harder on serif flourishes; the production version dialled them back
-   on every page.
+   flourishes, and AI-generated prose use Source Serif 4 (roman — no italic in
+   this skin). Numerals at every size, UI labels, and form controls use Inter
+   Tight with `font-variant-numeric: tabular-nums`. Codes, dates, and
+   meta-strings use JetBrains Mono. A reader should be able to tell at a glance
+   what's editorial and what's data.
+3. **One accent, carried by flag gold.** San José flag gold lifted for dark
+   backgrounds (`#ffb733`, vivid `--atlas-accent` for display/fills; `#e6a64b`,
+   `--atlas-accent-deep` for body-size text) is the single accent — used for
+   brand mark, primary links, left rules on important cards, editorial em
+   flourishes, and the "heating up" signal. Slate (`--atlas-down`) marks
+   downward trends; there is deliberately no red/green pair, so trend reading
+   never depends on color-vision semantics alone.
+4. **Dark navy paper, not white.** Background is `#0a0f1a` — very dark navy,
+   not pure black, easier on the eyes. Tiles and date plates sit on a raised
+   `--atlas-paper-deep` (`#111826`); hairline `--atlas-rule` (`#283142`) borders
+   and 1px grid gaps read as a broadsheet plate. No dot-grain, no contour
+   texture, no sepia.
+5. **Restrained editorial flourish.** One roman em per heading (serif bold in
+   accent gold — no italic), one drop-cap shape (a serif chip prefix `◇` on
+   summary labels), one numbered scheme (`01`, `02`, `03`). Add a flourish only
+   when it earns its place; pull one when adding another.
 
 ## Type system
 
 Three families, self-hosted as variable WOFF2 fonts under `app/assets/fonts/`.
-The `@font-face` declarations live at the top of `atlas.css` with full
-unicode-range subsetting (latin, latin-ext, vietnamese, cyrillic, greek), so
-browsers fetch only the subsets they actually render.
+The `@font-face` declarations live at the top of `atlas.css` with
+unicode-range subsetting (latin, latin-ext, vietnamese — matching Source
+Serif 4's coverage), so browsers fetch only the subsets they actually render.
 
 | Family | Role | Notes |
 |---|---|---|
-| Fraunces | Display + italic flourishes | Variable axes: `opsz`, `wght`, `SOFT`, `WONK`. Display weight 350-450 for h1/h2; italic at `opsz 9, SOFT 100, WONK 1` for em flourishes. |
-| Inter Tight | UI sans, all numerals | `font-variant-numeric: tabular-nums` everywhere a number renders. Weight 400-500. |
+| Source Serif 4 | Display + editorial em flourishes | Variable font, `font-weight: 400 700`. Display weight 400 for h1/h2; `.atlas-em` is roman (not italic), weight 700, in `--atlas-accent-deep`; section-head `h2 .em` overrides to vivid `--atlas-accent`. Replaces the prior Fraunces stack (the Fraunces woff2 files are still vendored but unreferenced — remove in a separate cleanup if desired). |
+| Inter Tight | UI sans, all numerals | `font-variant-numeric: tabular-nums` everywhere a number renders. Weight 400-500. The night prototype loads plain "Inter"; the repo keeps Inter Tight (near-identical) to avoid a fourth family. |
 | JetBrains Mono | Codes, dates, meta | Used for matter codes (`CC 25-012`), monogram chips, breadcrumbs, mono-caps labels. |
 
 Type tokens are defined as CSS custom properties:
 
 ```
---atlas-serif: "Fraunces", "Iowan Old Style", Georgia, serif;
+--atlas-serif: "Source Serif 4", "Iowan Old Style", Georgia, serif;
 --atlas-sans:  "Inter Tight", ui-sans-serif, system-ui, sans-serif;
 --atlas-mono:  "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
 ```
@@ -81,20 +82,17 @@ path is approximately:
 
 | Subset                                | Bytes  |
 |---------------------------------------|--------|
-| `fraunces-roman-latin.woff2`          | 120 KB |
-| `fraunces-italic-latin.woff2`         | 150 KB |
+| `source-serif-4-roman-latin.woff2`    | 119 KB |
 | `inter-tight-roman-latin.woff2`       | 45 KB  |
 | `jbm-roman-latin.woff2`               | 31 KB  |
-| **Total (latin only, no extended)**   | **~346 KB** |
+| **Total (latin only, no extended)**   | **~195 KB** |
 
-If a page renders only roman copy (no italic `<em>` or `.atlas-em`) browsers
-defer the italic Fraunces fetch, so an italic-free page lands closer to
-~196 KB. Section headings ship with italic flourishes, though, so most
-Atlas pages will pull the italic file.
+The serif is roman-only in this skin (no italic fetch), so every Atlas page
+lands near ~195 KB rather than pulling a separate italic file.
 
 There are no `<link rel="preload">` hints for the font subsets today — the
 browser discovers them from the `@font-face` rules in `atlas.css`. If
-first-paint feels slow, preloading the four latin subsets in
+first-paint feels slow, preloading the latin subsets in
 `_atlas_topbar`'s `content_for :head` block is the lever to reach for.
 
 ## Color tokens
@@ -104,25 +102,26 @@ The full set:
 
 | Token | Hex | Use |
 |---|---|---|
-| `--atlas-paper` | `#f1ece2` | Page background, the warm paper |
-| `--atlas-paper-deep` | `#e7e0d2` | Recessed surfaces: facts strip, search lozenge, tile backgrounds |
-| `--atlas-paper-edge` | `#d6cdb8` | Tile borders, dashed separators |
-| `--atlas-rule` | `#c9bfa7` | Section rules, card borders |
-| `--atlas-ink` | `#1a1a1f` | Primary text |
-| `--atlas-ink-soft` | `#3a3a44` | Body copy |
-| `--atlas-ink-mute` | `#6a6a72` | Mono-caps labels, eyebrows |
-| `--atlas-oxblood` | `#7a1f2b` | The rich editorial accent — italic flourishes, links, left rules |
-| `--atlas-oxblood-deep` | `#5a161f` | Hover state for oxblood-on-paper buttons |
-| `--atlas-heat` | `#d9663f` | Signal: heating-up, draft, AI disclaimers |
-| `--atlas-heat-soft` | `#efb89c` | Lighter heat for badges |
-| `--atlas-sage` | `#6f8068` | Final / passed status chips |
-| `--atlas-amber` | `#b89048` | Middle-state warning, mid-percentage meter fills |
-| `--atlas-slate` | `#455362` | Neutral chart color, "down" trend |
+| `--atlas-paper` | `#0a0f1a` | Page background, very dark navy (not pure black) |
+| `--atlas-paper-deep` | `#111826` | Raised/recessed surfaces: facts strip, search lozenge, tile hover |
+| `--atlas-ink` | `#eef1f5` | Primary text, soft off-white |
+| `--atlas-ink-soft` | `#c2c9d3` | Body copy / secondary text |
+| `--atlas-ink-mute` | `#8b95a4` | Mono-caps labels, eyebrows, tertiary text |
+| `--atlas-rule` | `#283142` | Hairline rules, card borders, 1px grid gaps |
+| `--atlas-rule-strong` | `#eef1f5` | Masthead + section-head rules (match ink) |
+| `--atlas-accent` | `#ffb733` | San José flag gold lifted for dark — display/fills, h2 em, hot sparklines |
+| `--atlas-accent-deep` | `#e6a64b` | Text-safe gold for body-size accent text, links, left rules |
+| `--atlas-down` | `#7d93ad` | Cool slate for downward trends (no red/green) |
+| `--atlas-oxblood` | alias → `--atlas-accent` | Legacy alias kept for backward compat; new code should use `--atlas-accent` |
+| `--atlas-oxblood-deep` | alias → `--atlas-accent-deep` | Legacy alias; prefer `--atlas-accent-deep` |
+| `--atlas-slate` | alias → `--atlas-down` | Legacy alias; prefer `--atlas-down` |
 
-The whole palette is one accent (oxblood), one signal (heat), three quiet
-status colors (sage, amber, slate), and grayscale on warm paper. Anything
-beyond this set requires a justification — the strength of the system is its
-narrow vocabulary.
+The whole palette is one accent (flag gold, in two steps for display vs.
+text), one downward-trend slate, and grayscale on dark navy. The old
+`--atlas-heat*` / `--atlas-sage` / `--atlas-amber` / `--atlas-paper-edge`
+tokens were removed in the night refresh — their references were remapped
+onto the accent/ink/rule vocabulary. Anything beyond this set requires a
+justification — the strength of the system is its narrow vocabulary.
 
 ## Component vocabulary
 
@@ -131,13 +130,13 @@ each renders one Atlas primitive.
 
 | Partial | Use |
 |---|---|
-| `_atlas_topbar` | Brand wordmark + command-search lozenge + primary nav. Two-row layout so the search has room. |
+| `_atlas_topbar` | Brand wordmark + command-search + primary nav. Single-row masthead with a 2px `--atlas-rule-strong` bottom border. |
 | `_atlas_footer` | Mirror disclaimer + nav. |
-| `_atlas_section_heading` | Three-column `<title> + <em> + <rule> + <label>` pattern. Use this in place of bare `<h2>` whenever a section starts. |
-| `_atlas_date_plate` | Contour-textured calendar plate. Four sizes (`:xs`, `:sm`, `:md`, `:lg`). Pass a Date and optional `href:` to make it a link. |
-| `_atlas_theme_tile` | The treemap tile. Sized (`:xl`, `:l`, `:m`, `:s`), trend-tinted (`:up`, `:hot`, `:flat`, `:down`), optionally with a sparkline. Reusable in any sidebar context. |
-| `_atlas_body_tile` | Same contour-textured shape as the theme tile but with body data (name + acronym chip + count). Used on the meeting page sidebar. |
-| `_atlas_summary_card` | Paper-on-paper AI summary card with the oxblood left rule. Takes summary text, optional key-points list, optional limitations list, optional draft-status note, and the verbatim AI disclaimer. |
+| `_atlas_section_heading` | Three-column `<title> + <em> + <rule> + <label>` pattern with a `--atlas-rule-strong` bottom border. Use this in place of bare `<h2>` whenever a section starts. |
+| `_atlas_date_plate` | Mono date plate on `--atlas-paper-deep` with a serif-bold day number. Four sizes (`:xs`, `:sm`, `:md`, `:lg`). Pass a Date and optional `href:` to make it a link. |
+| `_atlas_theme_tile` | The Pulse grid tile — square corners, 1px `--atlas-rule` border on a 1px-gap hairline grid. Sized (`:xl`, `:l`, `:m`, `:s`), trend-tinted (`:up`, `:hot`, `:flat`, `:down`), optionally with a sparkline. Reusable in any sidebar context. |
+| `_atlas_body_tile` | Same square shape as the theme tile but with body data (name + acronym chip + count). Used on the meeting page sidebar. |
+| `_atlas_summary_card` | Paper-on-paper AI summary card with the accent-deep left rule. Takes summary text, optional key-points list, optional limitations list, optional draft-status note, and the verbatim AI disclaimer. |
 | `_atlas_facts_strip` | Horizontal 6-cell facts header used on matter and meeting detail. Takes an array of `{ dt:, dd:, class:, href: }`. |
 
 Helpers (`app/helpers/atlas_helper.rb`):
@@ -256,10 +255,10 @@ bare `<h2>` — the system depends on the three-column pattern.
 - **Skip link** is the first focusable element on every page. Lives at the top
   of the layout body (`app/views/layouts/application.html.erb`). Styled by
   `.atlas-skip-link` — sr-only until focused, then slides into the top-left as
-  an oxblood pill. Target is `id="main"` on the page's `<main>`.
+  an accent pill. Target is `id="main"` on the page's `<main>`.
 - **Focus rings** use the global selector
   `.atlas-shell a:focus-visible, .atlas-shell button:focus-visible, ...` —
-  2px oxblood outline with 3px offset. Component-specific focus states (the
+  2px gold accent outline with 3px offset. Component-specific focus states (the
   search lozenge, filter inputs) override.
 - **Decorative SVGs** carry `aria-hidden="true"`. Meaningful SVGs (sparklines,
   AI-disclaimer triangle) carry `role="img"` and an `aria-label`. Don't ship
@@ -341,7 +340,7 @@ A few things worth knowing if you write more tests against Atlas pages.
 | Path | Contents |
 |---|---|
 | `app/assets/stylesheets/atlas.css` | The single CSS bundle. Loaded via `content_for :head` on opt-in pages. |
-| `app/assets/fonts/` | Vendored variable WOFF2s for Fraunces, Inter Tight, JetBrains Mono. |
+| `app/assets/fonts/` | Vendored variable WOFF2s for Source Serif 4, Inter Tight, JetBrains Mono (Fraunces files remain but are unreferenced after the night refresh). |
 | `app/views/public/shared/_atlas_*.html.erb` | Shared Atlas partials. |
 | `app/views/layouts/application.html.erb` | Skip link + `body[class]` content_for + `yield :head` injection point. |
 | `app/helpers/atlas_helper.rb` | `atlas_sparkline_svg`, `atlas_trend_for`, `atlas_trend_label`. |
