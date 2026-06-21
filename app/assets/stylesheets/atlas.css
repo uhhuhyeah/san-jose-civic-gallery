@@ -1,11 +1,20 @@
 /*
- * Atlas redesign — design system bundle.
+ * Atlas redesign — night-newsprint design system bundle.
+ *
+ * Very dark navy paper, soft off-white ink, San José flag gold (#ffb733)
+ * lifted for dark backgrounds as the accent. Source Serif 4 for display,
+ * Inter Tight for UI, JetBrains Mono for codes/dates. Hairline rules,
+ * square corners, no italic flourishes, no sepia, no dot grain. Reads
+ * like a night-edition broadsheet public-records site.
  *
  * This file is loaded ONLY on pages that opt in via `<% content_for :body_class, "atlas-shell" %>`
  * in the view. Existing pages render unchanged because every rule below is scoped under
  * `.atlas-shell`. Fonts in app/assets/fonts/ are vendored from Google Fonts (OFL).
  *
- * See docs/redesign-plan.md and docs/redesign/{pulse,matter,meeting}.html.
+ * See docs/redesign/plan.md and docs/redesign/concept-a-newsprint-night.html
+ * for the decision record and visual reference. (The day-mode prototype at
+ * docs/redesign/concept-a-newsprint.html is retained as a future day/night
+ * toggle reference — do not implement the day palette without a toggle.)
  */
 
 
@@ -60,6 +69,32 @@
   font-weight: 300 900;
   font-display: swap;
   src: url("fraunces-roman-latin.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Source Serif 4 — display serif (replaces Fraunces in the night-newsprint skin) */
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("source-serif-4-roman-vietnamese.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("source-serif-4-roman-latin-ext.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("source-serif-4-roman-latin.woff2") format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
@@ -178,35 +213,37 @@
  * ============================================================ */
 
 :root {
-  --atlas-paper:        #f1ece2;
-  --atlas-paper-deep:   #e7e0d2;
-  --atlas-paper-edge:   #d6cdb8;
-  --atlas-ink:          #1a1a1f;
-  --atlas-ink-soft:     #3a3a44;
-  /* ink-mute darkened from #6a6a72 to pass WCAG AA (4.5:1) on paper-deep
-     when used at mono-caps sizes (~10-11px). Still visibly softer than
-     ink-soft, preserving the three-step ink hierarchy. */
-  --atlas-ink-mute:     #56565d;
-  --atlas-rule:         #c9bfa7;
-  --atlas-oxblood:      #7a1f2b;
-  --atlas-oxblood-deep: #5a161f;
-  --atlas-slate:        #455362;
-  --atlas-heat:         #d9663f;
-  /* heat-deep is the small-text-safe variant of heat. The flagship heat
-     orange fails AA for body copy <18px on paper; heat-deep passes ~4.8:1
-     on paper. Use heat for borders, fills, icons, and large display;
-     swap to heat-deep when the heat is text under ~16px. */
-  --atlas-heat-deep:    #a64a2c;
-  --atlas-heat-soft:    #efb89c;
-  --atlas-sage:         #6f8068;
-  --atlas-amber:        #b89048;
+  /* Night-newsprint palette — very dark navy paper, soft off-white ink,
+     San José flag gold (#ffb733) lifted for dark backgrounds as the
+     accent. See docs/redesign/plan.md and
+     docs/redesign/concept-a-newsprint-night.html. */
+  --atlas-paper:        #0a0f1a;
+  --atlas-paper-deep:   #111826;
+  --atlas-ink:          #eef1f5;
+  --atlas-ink-soft:     #c2c9d3;
+  --atlas-ink-mute:     #8b95a4;
+  --atlas-rule:         #283142;
+  --atlas-rule-strong:  #eef1f5;   /* masthead + section-head rules match ink */
 
-  --atlas-serif: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --atlas-accent:       #ffb733;   /* flag gold lifted for dark bg; display/fills */
+  --atlas-accent-deep:  #e6a64b;   /* text-safe gold on dark — body-size accent text */
+  --atlas-down:         #7d93ad;   /* cool slate for downward trends (no red/green) */
+
+  /* Legacy oxblood aliases kept so existing rules keep working; they now
+     resolve to the flag-gold accent. Step 5-6 rewrites view references
+     to the real accent token. */
+  --atlas-oxblood:      var(--atlas-accent);
+  --atlas-oxblood-deep: var(--atlas-accent-deep);
+  /* Slate retained for any existing reference and aliased to --atlas-down. */
+  --atlas-slate:        var(--atlas-down);
+
+  --atlas-serif: "Source Serif 4", "Iowan Old Style", Georgia, serif;
   --atlas-sans:  "Inter Tight", ui-sans-serif, system-ui, sans-serif;
   --atlas-mono:  "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
 
-  --atlas-r:    2px;
-  --atlas-r-lg: 4px;
+  /* Square corners — this is a record, not an app. */
+  --atlas-r:    0px;
+  --atlas-r-lg: 0px;
 
   --atlas-pad: clamp(20px, 3vw, 44px);
   --atlas-content-max: 1320px;
@@ -226,11 +263,6 @@
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  background-image:
-    radial-gradient(rgba(122, 31, 43, 0.025) 1px, transparent 1px),
-    radial-gradient(rgba(26, 26, 31, 0.02) 1px, transparent 1px);
-  background-size: 3px 3px, 7px 7px;
-  background-position: 0 0, 1px 2px;
 }
 
 .atlas-shell *,
@@ -253,7 +285,7 @@
   margin: 0;
 }
 
-/* Global focus-visible — consistent oxblood ring around any keyboard-focused
+/* Global focus-visible — consistent gold accent ring around any keyboard-focused
    interactive element. Component-specific focus rules (search lozenge, filter
    inputs) override below where they need a tighter look. */
 .atlas-shell a:focus-visible,
@@ -276,14 +308,14 @@
   padding: 0 var(--atlas-pad);
 }
 
-/* Editorial flourish helper: italic Fraunces with the wonky/soft variant.
-   Used for "in <em>brief</em>" style accents in headings. */
+/* Editorial flourish helper: roman serif in accent-deep gold, used for
+   "in <em>brief</em>" style accents in headings. Display-size instances
+   (hero h1, section-head h2) override to vivid --atlas-accent. */
 .atlas-shell .atlas-em {
   font-family: var(--atlas-serif);
-  font-style: italic;
-  font-variation-settings: "opsz" 9, "SOFT" 100, "WONK" 1;
-  font-weight: 350;
-  color: var(--atlas-oxblood);
+  font-style: normal;
+  font-weight: 700;
+  color: var(--atlas-accent-deep);
 }
 
 /* Mono caps eyebrow used for section labels / status tags. */
@@ -300,10 +332,8 @@
  * TOPBAR — brand wordmark, command search, primary nav
  * ============================================================ */
 
-/* Two-row layout: row 1 puts brand on the left and nav on the right,
-   row 2 gives the search lozenge the full width so its placeholder isn't
-   truncated. Flex-wrap + `order` keeps the semantic source order
-   (brand → search → nav) while visually rendering brand → nav → search. */
+/* Single-row masthead: brand on the left, search and nav on the right.
+   A 2px rule-strong border closes the masthead like a broadsheet nameplate. */
 .atlas-shell .atlas-topbar {
   display: flex;
   flex-wrap: wrap;
@@ -312,7 +342,7 @@
   column-gap: 28px;
   row-gap: 16px;
   padding: 22px 0 18px;
-  border-bottom: 1px solid var(--atlas-rule);
+  border-bottom: 2px solid var(--atlas-rule-strong);
 }
 
 .atlas-shell .atlas-topbar .atlas-brand {
@@ -325,11 +355,7 @@
 
 .atlas-shell .atlas-topbar .atlas-brand-mark {
   font-family: var(--atlas-serif);
-  /* WONK 0: sober terminals on the non-italic wordmark. The italic flourishes
-     elsewhere (.atlas-em, brand-sub, hero italics) still ride WONK 1 — the
-     playful J/g/a only feel right in italic. */
-  font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 0;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 30px;
   letter-spacing: -0.02em;
   line-height: 1;
@@ -338,15 +364,14 @@
 
 .atlas-shell .atlas-topbar .atlas-brand-sub {
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 9, "SOFT" 100, "WONK" 1;
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
   font-size: 16px;
-  color: var(--atlas-oxblood);
+  color: var(--atlas-accent-deep);
 }
 /* .atlas-shell .atlas-topbar .atlas-brand-sub::before {
   content: "— ";
-  color: var(--atlas-rule);
+  color: var(--atlas-ink-mute);
   margin-right: 2px;
 } */
 
@@ -362,36 +387,35 @@
   flex-shrink: 0;
 }
 .atlas-shell .atlas-topbar nav a[aria-current="page"] {
-  color: var(--atlas-oxblood);
-  border-bottom: 1px solid var(--atlas-oxblood);
+  color: var(--atlas-ink);
+  border-bottom: 1px solid var(--atlas-accent);
   padding-bottom: 4px;
 }
 
 .atlas-shell .atlas-cmd {
-  /* Search sits on its own row beneath the brand/nav row. Full width within
-     the content wrap so the placeholder reads in full. */
-  order: 2;
-  flex: 1 1 100%;
-  width: 100%;
-  max-width: none;
+  /* Search sits inline in the masthead row, growing to fill the space
+     between brand and nav. Square corners — this is a record, not an app. */
+  order: 1;
+  flex: 1 1 auto;
+  min-width: 220px;
+  max-width: 480px;
   position: relative;
   display: flex;
   align-items: center;
   background: var(--atlas-paper-deep);
   border: 1px solid var(--atlas-rule);
-  border-radius: 999px;
+  border-radius: var(--atlas-r);
   padding: 10px 18px 10px 20px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .atlas-shell .atlas-cmd:hover,
 .atlas-shell .atlas-cmd:focus-within {
-  border-color: var(--atlas-oxblood);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 0 0 2px rgba(122, 31, 43, 0.08);
+  border-color: var(--atlas-accent);
+  box-shadow: 0 0 0 2px rgba(255, 183, 51, 0.12);
 }
 .atlas-shell .atlas-cmd::before {
   content: "⌖";
-  color: var(--atlas-oxblood);
+  color: var(--atlas-accent);
   margin-right: 12px;
   font-size: 18px;
   flex: none;
@@ -410,7 +434,7 @@
 }
 .atlas-shell .atlas-cmd input::placeholder { color: var(--atlas-ink-mute); }
 .atlas-shell .atlas-cmd input:focus-visible {
-  outline: 2px solid var(--atlas-oxblood);
+  outline: 2px solid var(--atlas-accent);
   outline-offset: 4px;
   border-radius: 2px;
 }
@@ -420,7 +444,7 @@
   background: var(--atlas-paper);
   border: 1px solid var(--atlas-rule);
   border-bottom-width: 2px;
-  border-radius: 3px;
+  border-radius: var(--atlas-r);
   padding: 2px 6px;
   color: var(--atlas-ink-mute);
 }
@@ -436,11 +460,12 @@
   gap: 20px;
   align-items: baseline;
   margin: 0 0 24px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--atlas-rule-strong);
 }
 .atlas-shell .atlas-section-head h2 {
   margin: 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 72, "SOFT" 50, "WONK" 0;
   font-weight: 400;
   font-size: clamp(28px, 3.4vw, 40px);
   line-height: 1;
@@ -448,10 +473,9 @@
 }
 .atlas-shell .atlas-section-head h2 em,
 .atlas-shell .atlas-section-head h2 .atlas-em {
-  font-style: italic;
-  font-variation-settings: "opsz" 9, "SOFT" 100, "WONK" 1;
-  color: var(--atlas-oxblood);
-  font-weight: 350;
+  font-style: normal;
+  color: var(--atlas-accent);
+  font-weight: 700;
 }
 .atlas-shell .atlas-section-head .atlas-rule {
   height: 1px;
@@ -504,13 +528,12 @@
   text-transform: uppercase;
   color: var(--atlas-ink-mute);
   border: 1px solid var(--atlas-rule);
-  border-radius: 999px;
+  border-radius: var(--atlas-r);
   padding: 2px 8px 1px;
 }
 .atlas-shell .atlas-summary p {
   margin: 0 0 12px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
   font-size: 16px;
   line-height: 1.55;
   color: var(--atlas-ink-soft);
@@ -525,7 +548,7 @@
   font-weight: 500;
 }
 .atlas-shell .atlas-summary h5.keys::before  { content: "▣ "; color: var(--atlas-oxblood); }
-.atlas-shell .atlas-summary h5.limits        { color: var(--atlas-heat-deep); }
+.atlas-shell .atlas-summary h5.limits        { color: var(--atlas-accent-deep); }
 .atlas-shell .atlas-summary h5.limits::before { content: "▽ "; }
 .atlas-shell .atlas-summary ul {
   margin: 0 0 4px;
@@ -535,9 +558,8 @@
 .atlas-shell .atlas-summary ul li {
   position: relative;
   padding: 6px 0 6px 24px;
-  border-top: 1px dashed var(--atlas-paper-edge);
+  border-top: 1px dashed var(--atlas-rule);
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
   font-size: 15px;
   line-height: 1.5;
   color: var(--atlas-ink-soft);
@@ -550,11 +572,11 @@
   width: 10px; height: 1px;
   background: var(--atlas-oxblood);
 }
-.atlas-shell .atlas-summary ul.limits-list li::before { background: var(--atlas-heat); }
+.atlas-shell .atlas-summary ul.limits-list li::before { background: var(--atlas-accent); }
 .atlas-shell .atlas-summary .atlas-ai-note {
   margin-top: 14px;
   padding-top: 12px;
-  border-top: 1px solid var(--atlas-paper-edge);
+  border-top: 1px solid var(--atlas-rule);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -564,16 +586,16 @@
   text-transform: uppercase;
   letter-spacing: 0.14em;
 }
-.atlas-shell .atlas-summary .atlas-ai-note svg { color: var(--atlas-heat); flex: none; }
+.atlas-shell .atlas-summary .atlas-ai-note svg { color: var(--atlas-accent); flex: none; }
 
 .atlas-shell .atlas-summary .atlas-summary-status {
   margin: -4px 0 12px;
   padding: 8px 10px;
-  background: rgba(217, 102, 63, 0.08);
-  border-left: 2px solid var(--atlas-heat);
+  background: rgba(255, 183, 51, 0.08);
+  border-left: 2px solid var(--atlas-accent);
   font-family: var(--atlas-mono);
   font-size: 11px;
-  color: var(--atlas-heat-deep);
+  color: var(--atlas-accent-deep);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -637,24 +659,13 @@
 
 .atlas-shell .atlas-date {
   background: var(--atlas-paper-deep);
-  border: 1px solid var(--atlas-paper-edge);
+  border: 1px solid var(--atlas-rule);
   border-radius: var(--atlas-r-lg);
   text-align: center;
   line-height: 1;
   position: relative;
-  overflow: hidden;
   display: inline-block;
   text-decoration: none;
-}
-.atlas-shell .atlas-date::after {
-  content: "";
-  position: absolute; inset: 0;
-  pointer-events: none;
-  background-image:
-    repeating-linear-gradient( 32deg, rgba(122, 31, 43, 0.05) 0 1px, transparent 1px 14px),
-    repeating-linear-gradient(-32deg, rgba(69, 83, 98, 0.04) 0 1px, transparent 1px 22px);
-  mix-blend-mode: multiply;
-  opacity: 0.6;
 }
 .atlas-shell .atlas-date > * { position: relative; z-index: 1; display: block; }
 
@@ -668,12 +679,12 @@
   font-family: var(--atlas-mono);
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  color: var(--atlas-oxblood);
+  color: var(--atlas-accent-deep);
 }
 .atlas-shell .atlas-date .atlas-date-day {
-  font-family: var(--atlas-sans);
-  font-weight: 500;
-  letter-spacing: -0.05em;
+  font-family: var(--atlas-serif);
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--atlas-ink);
   font-variant-numeric: tabular-nums;
 }
@@ -715,32 +726,20 @@
 
 .atlas-shell .atlas-tile {
   position: relative;
-  background: var(--atlas-paper-deep);
-  border: 1px solid var(--atlas-paper-edge);
+  background: var(--atlas-paper);
+  border: 1px solid var(--atlas-rule);
   border-radius: var(--atlas-r-lg);
   padding: 16px 18px 14px;
   color: var(--atlas-ink);
-  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   text-decoration: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-.atlas-shell .atlas-tile::after {
-  content: "";
-  position: absolute; inset: 0;
-  pointer-events: none;
-  background-image:
-    repeating-linear-gradient( 32deg, rgba(122, 31, 43, 0.04) 0 1px, transparent 1px 14px),
-    repeating-linear-gradient(-32deg, rgba(69, 83, 98, 0.035) 0 1px, transparent 1px 22px);
-  mix-blend-mode: multiply;
-  opacity: 0.55;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 .atlas-shell a.atlas-tile:hover {
-  transform: translateY(-2px);
-  border-color: var(--atlas-oxblood);
-  box-shadow: 0 6px 0 -3px var(--atlas-oxblood);
+  background: var(--atlas-paper-deep);
+  border-color: var(--atlas-ink-mute);
   text-decoration: none;
 }
 
@@ -752,7 +751,6 @@
 }
 .atlas-shell .atlas-tile-name {
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 30, "SOFT" 50, "WONK" 0;
   font-weight: 450;
   font-size: 18px;
   line-height: 1.05;
@@ -767,25 +765,25 @@
   font-size: 10.5px;
   letter-spacing: 0.04em;
   padding: 3px 7px 2px;
-  border-radius: 999px;
+  border-radius: var(--atlas-r);
   border: 1px solid var(--atlas-rule);
-  background: rgba(255, 255, 255, 0.45);
+  background: transparent;
   white-space: nowrap;
   color: var(--atlas-ink-soft);
 }
-.atlas-shell .atlas-tile-trend--up   { color: var(--atlas-oxblood); border-color: var(--atlas-oxblood); background: rgba(122, 31, 43, 0.06); }
-.atlas-shell .atlas-tile-trend--hot  { color: var(--atlas-heat);    border-color: var(--atlas-heat);    background: rgba(217, 102, 63, 0.08); }
-.atlas-shell .atlas-tile-trend--flat { color: var(--atlas-ink-mute); }
-.atlas-shell .atlas-tile-trend--down { color: var(--atlas-slate); border-color: var(--atlas-slate); }
+.atlas-shell .atlas-tile-trend--up   { color: var(--atlas-ink-soft); border-color: var(--atlas-rule); }
+.atlas-shell .atlas-tile-trend--hot  { color: var(--atlas-accent-deep); border-color: var(--atlas-accent-deep); }
+.atlas-shell .atlas-tile-trend--flat { color: var(--atlas-ink-mute); border-color: var(--atlas-rule); }
+.atlas-shell .atlas-tile-trend--down { color: var(--atlas-down); border-color: var(--atlas-down); }
 
 .atlas-shell .atlas-tile svg.atlas-spark {
   margin-top: 8px;
   width: 100%;
   height: 26px;
-  color: var(--atlas-slate);
+  color: var(--atlas-ink-soft);
 }
-.atlas-shell .atlas-tile--up  svg.atlas-spark { color: var(--atlas-oxblood); }
-.atlas-shell .atlas-tile--hot svg.atlas-spark { color: var(--atlas-heat); }
+.atlas-shell .atlas-tile--up  svg.atlas-spark { color: var(--atlas-ink-soft); }
+.atlas-shell .atlas-tile--hot svg.atlas-spark { color: var(--atlas-accent); }
 
 .atlas-shell .atlas-tile-bottom {
   display: flex;
@@ -835,9 +833,8 @@
 .atlas-shell .atlas-tile-foot {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px dashed var(--atlas-paper-edge);
+  border-top: 1px dashed var(--atlas-rule);
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 12, "SOFT" 50, "WONK" 0;
   font-size: 14px;
   line-height: 1.4;
   color: var(--atlas-ink-soft);
@@ -864,26 +861,15 @@
 .atlas-shell .atlas-body-tile {
   position: relative;
   background: var(--atlas-paper-deep);
-  border: 1px solid var(--atlas-paper-edge);
+  border: 1px solid var(--atlas-rule);
   border-radius: var(--atlas-r-lg);
   padding: 14px 16px 14px;
   color: var(--atlas-ink);
-  overflow: hidden;
   display: block;
   text-decoration: none;
   transition: border-color 0.2s ease;
 }
-.atlas-shell .atlas-body-tile::after {
-  content: "";
-  position: absolute; inset: 0;
-  pointer-events: none;
-  background-image:
-    repeating-linear-gradient( 32deg, rgba(122, 31, 43, 0.04) 0 1px, transparent 1px 14px),
-    repeating-linear-gradient(-32deg, rgba(69, 83, 98, 0.035) 0 1px, transparent 1px 22px);
-  mix-blend-mode: multiply;
-  opacity: 0.55;
-}
-.atlas-shell a.atlas-body-tile:hover { border-color: var(--atlas-oxblood); text-decoration: none; }
+.atlas-shell a.atlas-body-tile:hover { border-color: var(--atlas-accent); text-decoration: none; }
 .atlas-shell .atlas-body-tile > * { position: relative; z-index: 1; }
 
 .atlas-shell .atlas-body-tile-row {
@@ -894,7 +880,6 @@
 }
 .atlas-shell .atlas-body-tile-name {
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 24, "SOFT" 50, "WONK" 0;
   font-weight: 450;
   font-size: 17px;
   line-height: 1.15;
@@ -906,11 +891,11 @@
   font-family: var(--atlas-mono);
   font-size: 10.5px;
   letter-spacing: 0.06em;
-  color: var(--atlas-oxblood);
-  border: 1px solid var(--atlas-oxblood);
-  border-radius: 999px;
+  color: var(--atlas-accent-deep);
+  border: 1px solid var(--atlas-accent-deep);
+  border-radius: var(--atlas-r);
   padding: 2px 7px 1px;
-  background: rgba(122, 31, 43, 0.05);
+  background: rgba(255, 183, 51, 0.05);
 }
 .atlas-shell .atlas-body-tile-count {
   font-family: var(--atlas-sans);
@@ -984,15 +969,15 @@
   border-radius: var(--atlas-r);
   padding: 3px 7px 2px;
   color: var(--atlas-ink);
-  background: var(--atlas-paper-deep);
+  background: transparent;
   line-height: 1.4;
   font-weight: 500;
 }
 .atlas-shell .atlas-chip--pill   { border-radius: 999px; }
-.atlas-shell .atlas-chip--oxblood { color: var(--atlas-oxblood); border-color: var(--atlas-oxblood); background: rgba(122, 31, 43, 0.04); }
-.atlas-shell .atlas-chip--sage   { color: var(--atlas-sage);    border-color: var(--atlas-sage);    background: transparent; }
-.atlas-shell .atlas-chip--heat   { color: var(--atlas-heat);    border-color: var(--atlas-heat);    background: transparent; }
-.atlas-shell .atlas-chip--slate  { color: var(--atlas-slate);   border-color: var(--atlas-slate);   background: transparent; }
+.atlas-shell .atlas-chip--oxblood { color: var(--atlas-accent-deep); border-color: var(--atlas-accent-deep); background: transparent; }
+.atlas-shell .atlas-chip--sage   { color: var(--atlas-ink);    border-color: var(--atlas-ink);    background: transparent; }
+.atlas-shell .atlas-chip--heat   { color: var(--atlas-accent-deep); border-color: var(--atlas-accent-deep); background: transparent; }
+.atlas-shell .atlas-chip--slate  { color: var(--atlas-ink-mute);   border-color: var(--atlas-ink-mute);   background: transparent; }
 .atlas-shell .atlas-chip--mute   { color: var(--atlas-ink-mute); }
 
 
@@ -1077,7 +1062,7 @@
 }
 .atlas-shell .atlas-crumbs a:hover { color: var(--atlas-oxblood); }
 .atlas-shell .atlas-crumbs .atlas-crumbs-sep {
-  color: var(--atlas-paper-edge);
+  color: var(--atlas-ink-mute);
   margin: 0 8px;
 }
 
@@ -1111,12 +1096,11 @@
   border-radius: var(--atlas-r);
   padding: 3px 8px 2px;
   margin-left: 8px;
-  background: rgba(122, 31, 43, 0.04);
+  background: rgba(255, 183, 51, 0.04);
 }
 .atlas-shell .atlas-matter-title {
   margin: 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 120, "SOFT" 50, "WONK" 0;
   font-weight: 400;
   font-size: clamp(30px, 4vw, 52px);
   line-height: 1.06;
@@ -1139,7 +1123,7 @@
 .atlas-shell .atlas-matter-meta .atlas-matter-theme-tag {
   color: var(--atlas-ink);
   background: var(--atlas-paper-deep);
-  border: 1px solid var(--atlas-paper-edge);
+  border: 1px solid var(--atlas-rule);
   border-radius: var(--atlas-r);
   padding: 4px 8px 3px;
 }
@@ -1194,7 +1178,7 @@
   text-transform: uppercase;
   padding: 5px 9px 4px;
   border: 1px solid var(--atlas-rule);
-  border-radius: 999px;
+  border-radius: var(--atlas-r);
   color: var(--atlas-ink-soft);
   background: var(--atlas-paper);
   display: inline-flex;
@@ -1254,7 +1238,6 @@
 .atlas-shell .atlas-paper h3 {
   margin: 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 30, "SOFT" 50, "WONK" 0;
   font-weight: 450;
   font-size: 24px;
   line-height: 1.1;
@@ -1281,16 +1264,15 @@
   margin-right: 4px;
 }
 .atlas-shell .atlas-paper-file .atlas-paper-file-v { color: var(--atlas-ink-soft); }
-.atlas-shell .atlas-paper-file .atlas-paper-file-src-missing { color: var(--atlas-heat-deep); }
+.atlas-shell .atlas-paper-file .atlas-paper-file-src-missing { color: var(--atlas-accent-deep); }
 
 /* Manual-import disclosure note inside a paper. */
 .atlas-shell .atlas-paper-manual {
   margin: 0 0 14px;
   padding: 12px 14px;
-  background: rgba(217, 102, 63, 0.06);
-  border-left: 2px solid var(--atlas-heat);
+  background: rgba(255, 183, 51, 0.06);
+  border-left: 2px solid var(--atlas-accent);
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 12, "SOFT" 50, "WONK" 0;
   font-size: 14px;
   line-height: 1.5;
   color: var(--atlas-ink-soft);
@@ -1344,7 +1326,7 @@
 }
 .atlas-shell .atlas-paper-extract-body::-webkit-scrollbar { width: 8px; }
 .atlas-shell .atlas-paper-extract-body::-webkit-scrollbar-thumb {
-  background: var(--atlas-paper-edge);
+  background: var(--atlas-rule);
   border-radius: 999px;
 }
 
@@ -1386,7 +1368,7 @@
 }
 .atlas-shell .atlas-rail-card h4::before {
   content: "—  ";
-  color: var(--atlas-paper-edge);
+  color: var(--atlas-ink-mute);
 }
 
 /* Heard-at meeting card. */
@@ -1399,11 +1381,10 @@
 .atlas-shell .atlas-rail-card .atlas-rail-mtg + .atlas-rail-mtg {
   margin-top: 14px;
   padding-top: 14px;
-  border-top: 1px dashed var(--atlas-paper-edge);
+  border-top: 1px dashed var(--atlas-rule);
 }
 .atlas-shell .atlas-rail-mtg .atlas-rail-mtg-body {
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 18, "SOFT" 50, "WONK" 0;
   font-weight: 450;
   font-size: 16px;
   line-height: 1.2;
@@ -1472,7 +1453,7 @@
 .atlas-shell .atlas-rail-adjacent .atlas-rail-adjacent-row {
   display: block;
   padding: 10px 0;
-  border-top: 1px dashed var(--atlas-paper-edge);
+  border-top: 1px dashed var(--atlas-rule);
   text-decoration: none;
   color: inherit;
 }
@@ -1486,7 +1467,6 @@
 .atlas-shell .atlas-rail-adjacent-title {
   display: block;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 16, "SOFT" 50, "WONK" 0;
   font-weight: 450;
   font-size: 15px;
   line-height: 1.25;
@@ -1520,7 +1500,6 @@
 .atlas-shell .atlas-data-header h1 {
   margin: 8px 0 12px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 144, "SOFT" 50, "WONK" 0;
   font-weight: 400;
   font-size: clamp(36px, 5vw, 60px);
   line-height: 1;
@@ -1529,7 +1508,6 @@
 .atlas-shell .atlas-data-header p {
   margin: 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 18, "SOFT" 50, "WONK" 0;
   font-weight: 350;
   font-size: 18px;
   line-height: 1.5;
@@ -1548,7 +1526,6 @@
 .atlas-shell .atlas-data-empty h2 {
   margin: 0 0 8px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 30, "SOFT" 50, "WONK" 0;
   font-weight: 450;
   font-size: 22px;
   letter-spacing: -0.015em;
@@ -1556,7 +1533,6 @@
 .atlas-shell .atlas-data-empty p {
   margin: 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
   font-size: 15px;
   line-height: 1.55;
   color: var(--atlas-ink-soft);
@@ -1566,7 +1542,7 @@
   font-family: var(--atlas-mono);
   font-size: 13px;
   background: var(--atlas-paper-deep);
-  border: 1px solid var(--atlas-paper-edge);
+  border: 1px solid var(--atlas-rule);
   border-radius: var(--atlas-r);
   padding: 1px 6px;
 }
@@ -1577,26 +1553,26 @@
   padding: 14px 18px;
   background: var(--atlas-paper);
   border: 1px solid var(--atlas-rule);
-  border-left: 3px solid var(--atlas-sage);
+  border-left: 3px solid var(--atlas-ink-soft);
   border-radius: var(--atlas-r-lg);
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px 18px;
 }
-.atlas-shell .atlas-data-freshness--amber   { border-left-color: var(--atlas-amber); }
-.atlas-shell .atlas-data-freshness--red     { border-left-color: var(--atlas-heat); }
+.atlas-shell .atlas-data-freshness--amber   { border-left-color: var(--atlas-accent-deep); }
+.atlas-shell .atlas-data-freshness--red     { border-left-color: var(--atlas-down); }
 .atlas-shell .atlas-data-freshness--unknown { border-left-color: var(--atlas-ink-mute); }
 
 .atlas-shell .atlas-data-freshness-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--atlas-sage);
+  background: var(--atlas-ink-soft);
   flex: none;
 }
-.atlas-shell .atlas-data-freshness--amber   .atlas-data-freshness-dot { background: var(--atlas-amber); }
-.atlas-shell .atlas-data-freshness--red     .atlas-data-freshness-dot { background: var(--atlas-heat); }
+.atlas-shell .atlas-data-freshness--amber   .atlas-data-freshness-dot { background: var(--atlas-accent-deep); }
+.atlas-shell .atlas-data-freshness--red     .atlas-data-freshness-dot { background: var(--atlas-down); }
 .atlas-shell .atlas-data-freshness--unknown .atlas-data-freshness-dot { background: var(--atlas-ink-mute); }
 
 .atlas-shell .atlas-data-freshness-status {
@@ -1620,7 +1596,6 @@
 .atlas-shell .atlas-data-section-note {
   margin: 0 0 14px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
   font-size: 14.5px;
   line-height: 1.55;
   color: var(--atlas-ink-soft);
@@ -1636,7 +1611,7 @@
 }
 .atlas-shell .atlas-data-stat {
   background: var(--atlas-paper-deep);
-  border: 1px solid var(--atlas-paper-edge);
+  border: 1px solid var(--atlas-rule);
   border-radius: var(--atlas-r-lg);
   padding: 14px 16px;
 }
@@ -1665,14 +1640,13 @@
   display: block;
   margin-top: 4px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 12, "SOFT" 50, "WONK" 0;
   font-size: 13px;
   line-height: 1.4;
   color: var(--atlas-ink-soft);
 }
 .atlas-shell .atlas-data-stat .atlas-data-stat-sep {
   display: inline-block;
-  color: var(--atlas-paper-edge);
+  color: var(--atlas-ink-mute);
   margin: 0 8px;
   font-weight: 400;
 }
@@ -1693,7 +1667,7 @@
   margin-bottom: 8px;
 }
 .atlas-shell .atlas-data-rate-bar {
-  background: var(--atlas-paper-edge);
+  background: var(--atlas-rule);
   border-radius: 999px;
   height: 8px;
   overflow: hidden;
@@ -1701,12 +1675,12 @@
 }
 .atlas-shell .atlas-data-rate-fill {
   height: 100%;
-  background: var(--atlas-sage);
+  background: var(--atlas-ink-soft);
   border-radius: 999px;
   transition: width 0.3s ease;
 }
-.atlas-shell .atlas-data-rate-fill--mid { background: var(--atlas-amber); }
-.atlas-shell .atlas-data-rate-fill--low { background: var(--atlas-heat); }
+.atlas-shell .atlas-data-rate-fill--mid { background: var(--atlas-accent-deep); }
+.atlas-shell .atlas-data-rate-fill--low { background: var(--atlas-down); }
 .atlas-shell .atlas-data-rate-value {
   display: flex;
   align-items: baseline;
@@ -1732,13 +1706,12 @@
   margin-top: 44px;
   padding: 22px 24px;
   background: var(--atlas-paper-deep);
-  border: 1px solid var(--atlas-paper-edge);
+  border: 1px solid var(--atlas-rule);
   border-radius: var(--atlas-r-lg);
 }
 .atlas-shell .atlas-data-about h3 {
   margin: 0 0 10px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 24, "SOFT" 50, "WONK" 0;
   font-weight: 450;
   font-size: 18px;
   letter-spacing: -0.012em;
@@ -1746,7 +1719,6 @@
 .atlas-shell .atlas-data-about p {
   margin: 0 0 12px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
   font-size: 14.5px;
   line-height: 1.55;
   color: var(--atlas-ink-soft);
@@ -1798,7 +1770,7 @@
   border-top: 1px solid var(--atlas-rule);
 }
 .atlas-shell .atlas-data-ai-note svg {
-  color: var(--atlas-heat);
+  color: var(--atlas-accent);
   flex: none;
 }
 
@@ -1820,7 +1792,6 @@
 .atlas-shell .atlas-roundups-header h1 {
   margin: 8px 0 12px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 144, "SOFT" 50, "WONK" 0;
   font-weight: 400;
   font-size: clamp(36px, 5vw, 60px);
   line-height: 1;
@@ -1829,7 +1800,6 @@
 .atlas-shell .atlas-roundups-header p {
   margin: 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 18, "SOFT" 50, "WONK" 0;
   font-weight: 350;
   font-size: 18px;
   line-height: 1.5;
@@ -1860,7 +1830,6 @@
 }
 .atlas-shell .atlas-roundup-period-label {
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 72, "SOFT" 50, "WONK" 0;
   font-weight: 400;
   font-size: 26px;
   line-height: 1.05;
@@ -1888,7 +1857,6 @@
 .atlas-shell .atlas-roundup-hero h1 {
   margin: 8px 0 14px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 144, "SOFT" 50, "WONK" 0;
   font-weight: 400;
   font-size: clamp(40px, 6vw, 72px);
   line-height: 1;
@@ -1898,7 +1866,6 @@
 .atlas-shell .atlas-roundup-intro {
   margin: 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 20, "SOFT" 50, "WONK" 0;
   font-weight: 350;
   font-size: 19px;
   line-height: 1.5;
@@ -1927,9 +1894,8 @@
 .atlas-shell .atlas-roundup-highlights li {
   position: relative;
   padding: 6px 0 6px 24px;
-  border-top: 1px dashed var(--atlas-paper-edge);
+  border-top: 1px dashed var(--atlas-rule);
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 16, "SOFT" 50, "WONK" 0;
   font-size: 16px;
   line-height: 1.5;
   color: var(--atlas-ink-soft);
@@ -1945,7 +1911,6 @@
 .atlas-shell .atlas-roundup-storyline p {
   margin: 0 0 12px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 16, "SOFT" 50, "WONK" 0;
   font-size: 16px;
   line-height: 1.6;
   color: var(--atlas-ink-soft);
@@ -1988,7 +1953,7 @@
   border: 1px solid var(--atlas-oxblood);
   border-radius: var(--atlas-r);
   padding: 2px 7px 1px;
-  background: rgba(122, 31, 43, 0.04);
+  background: rgba(255, 183, 51, 0.04);
   margin-bottom: 8px;
   font-weight: 500;
   line-height: 1.4;
@@ -1996,7 +1961,6 @@
 .atlas-shell .atlas-roundup-item-title {
   display: block;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 30, "SOFT" 50, "WONK" 0;
   font-weight: 450;
   font-size: 22px;
   line-height: 1.2;
@@ -2025,7 +1989,6 @@
 .atlas-shell .atlas-roundup-item-blurb {
   margin: 8px 0 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
   font-size: 15px;
   line-height: 1.55;
   color: var(--atlas-ink-soft);
@@ -2039,7 +2002,6 @@
   border: 1px dashed var(--atlas-rule);
   border-radius: var(--atlas-r-lg);
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 18, "SOFT" 50, "WONK" 0;
   font-size: 18px;
   color: var(--atlas-ink-soft);
   text-align: center;
@@ -2061,7 +2023,6 @@
 .atlas-shell .atlas-glossary-header h1 {
   margin: 8px 0 12px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 144, "SOFT" 50, "WONK" 0;
   font-weight: 400;
   font-size: clamp(36px, 5vw, 60px);
   line-height: 1;
@@ -2070,7 +2031,6 @@
 .atlas-shell .atlas-glossary-header p {
   margin: 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 18, "SOFT" 50, "WONK" 0;
   font-weight: 350;
   font-size: 18px;
   line-height: 1.5;
@@ -2083,7 +2043,6 @@
   background: var(--atlas-paper-deep);
   border-radius: var(--atlas-r-lg);
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
   font-size: 15px;
   line-height: 1.5;
   color: var(--atlas-ink-soft);
@@ -2110,7 +2069,6 @@
 .atlas-shell .atlas-glossary-term h3 {
   margin: 0 0 8px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 30, "SOFT" 50, "WONK" 0;
   font-weight: 450;
   font-size: 18px;
   line-height: 1.2;
@@ -2120,7 +2078,6 @@
 .atlas-shell .atlas-glossary-term p {
   margin: 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
   font-size: 14.5px;
   line-height: 1.5;
   color: var(--atlas-ink-soft);
@@ -2137,7 +2094,7 @@
   font-family: var(--atlas-mono);
   font-size: 12.5px;
   background: var(--atlas-paper-deep);
-  border: 1px solid var(--atlas-paper-edge);
+  border: 1px solid var(--atlas-rule);
   border-radius: var(--atlas-r);
   padding: 1px 5px;
   color: var(--atlas-ink-soft);
@@ -2165,7 +2122,6 @@
 .atlas-shell .atlas-glossary-sources li {
   margin: 8px 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 12, "SOFT" 50, "WONK" 0;
   font-size: 14px;
   line-height: 1.5;
   color: var(--atlas-ink-soft);
@@ -2194,7 +2150,6 @@
 .atlas-shell .atlas-meetings-header h1 {
   margin: 8px 0 12px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 144, "SOFT" 50, "WONK" 0;
   font-weight: 400;
   font-size: clamp(44px, 6.5vw, 80px);
   line-height: 0.95;
@@ -2203,7 +2158,6 @@
 .atlas-shell .atlas-meetings-header .atlas-meetings-header-lede {
   margin: 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 18, "SOFT" 50, "WONK" 0;
   font-weight: 350;
   font-size: 18px;
   line-height: 1.45;
@@ -2219,7 +2173,7 @@
   gap: 18px;
   padding: 12px 18px;
   background: var(--atlas-paper-deep);
-  border: 1px solid var(--atlas-paper-edge);
+  border: 1px solid var(--atlas-rule);
   border-radius: var(--atlas-r-lg);
 }
 .atlas-shell .atlas-meetings-monthnav a {
@@ -2234,7 +2188,6 @@
 .atlas-shell .atlas-meetings-monthnav a:hover { color: var(--atlas-oxblood-deep); text-decoration: none; }
 .atlas-shell .atlas-meetings-monthnav strong {
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 36, "SOFT" 50, "WONK" 0;
   font-weight: 450;
   font-size: 22px;
   letter-spacing: -0.015em;
@@ -2249,7 +2202,6 @@
   border-left: 3px solid var(--atlas-oxblood);
   border-radius: var(--atlas-r-lg);
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
   font-size: 15px;
   color: var(--atlas-ink-soft);
 }
@@ -2303,7 +2255,7 @@
 }
 .atlas-shell .atlas-meetings-filter input[type="search"]:focus {
   border-color: var(--atlas-oxblood);
-  box-shadow: 0 0 0 2px rgba(122, 31, 43, 0.08);
+  box-shadow: 0 0 0 2px rgba(255, 183, 51, 0.08);
 }
 .atlas-shell .atlas-meetings-filter select {
   font-family: var(--atlas-sans);
@@ -2315,23 +2267,25 @@
   padding: 10px 28px 10px 14px;
   color: var(--atlas-ink);
   appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, var(--atlas-oxblood) 50%),
-                    linear-gradient(135deg, var(--atlas-oxblood) 50%, transparent 50%);
+  background-image: linear-gradient(45deg, transparent 50%, var(--atlas-accent) 50%),
+                    linear-gradient(135deg, var(--atlas-accent) 50%, transparent 50%);
   background-position: calc(100% - 14px) 50%, calc(100% - 10px) 50%;
   background-size: 4px 4px;
   background-repeat: no-repeat;
 }
+.atlas-shell .atlas-meetings-filter select option { background: var(--atlas-paper-deep); color: var(--atlas-ink); }
 .atlas-shell .atlas-meetings-filter input[type="submit"] {
   font-family: var(--atlas-mono);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.16em;
   color: var(--atlas-paper);
-  background: var(--atlas-oxblood);
-  border: 0;
-  border-radius: 999px;
+  background: var(--atlas-accent);
+  border: 1px solid var(--atlas-accent);
+  border-radius: var(--atlas-r);
   padding: 10px 22px;
   cursor: pointer;
+  font-weight: 500;
 }
 .atlas-shell .atlas-meetings-filter input[type="submit"]:hover { background: var(--atlas-oxblood-deep); }
 .atlas-shell .atlas-meetings-filter .atlas-meetings-filter-clear {
@@ -2383,7 +2337,7 @@
   border-radius: var(--atlas-r-lg);
 }
 .atlas-shell .atlas-meeting-row:hover {
-  background: rgba(122, 31, 43, 0.04);
+  background: rgba(255, 183, 51, 0.04);
   box-shadow: inset 3px 0 0 var(--atlas-oxblood);
 }
 .atlas-shell .atlas-meeting-row-body { min-width: 0; }
@@ -2391,7 +2345,6 @@
 .atlas-shell .atlas-meeting-row h2 {
   margin: 0 0 8px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 30, "SOFT" 50, "WONK" 0;
   font-weight: 450;
   font-size: 22px;
   line-height: 1.2;
@@ -2429,7 +2382,7 @@
   z-index: 1;
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px dashed var(--atlas-paper-edge);
+  border-top: 1px dashed var(--atlas-rule);
 }
 .atlas-shell .atlas-meeting-row-preview-label {
   font-family: var(--atlas-mono);
@@ -2448,7 +2401,6 @@
 .atlas-shell .atlas-meeting-row-preview li {
   margin: 4px 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 12, "SOFT" 50, "WONK" 0;
   font-size: 14px;
   line-height: 1.45;
   color: var(--atlas-ink-soft);
@@ -2521,7 +2473,6 @@
   border: 1px dashed var(--atlas-rule);
   border-radius: var(--atlas-r-lg);
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 18, "SOFT" 50, "WONK" 0;
   font-size: 18px;
   color: var(--atlas-ink-soft);
   text-align: center;
@@ -2560,7 +2511,6 @@
 .atlas-shell .atlas-mtg-title {
   margin: 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 120, "SOFT" 50, "WONK" 0;
   font-weight: 400;
   font-size: clamp(30px, 4.2vw, 52px);
   line-height: 1.04;
@@ -2569,7 +2519,6 @@
 }
 .atlas-shell .atlas-mtg-title em,
 .atlas-shell .atlas-mtg-title .atlas-em {
-  font-variation-settings: "opsz" 9, "SOFT" 100, "WONK" 1;
   color: var(--atlas-oxblood);
   font-style: italic;
   font-weight: 350;
@@ -2644,7 +2593,6 @@
 .atlas-shell .atlas-ag-section h3 {
   margin: 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 36, "SOFT" 50, "WONK" 0;
   font-weight: 450;
   font-size: 22px;
   line-height: 1.15;
@@ -2653,7 +2601,6 @@
 }
 .atlas-shell .atlas-ag-section h3 em,
 .atlas-shell .atlas-ag-section h3 .atlas-em {
-  font-variation-settings: "opsz" 9, "SOFT" 100, "WONK" 1;
   color: var(--atlas-ink-mute);
   font-style: italic;
   font-weight: 350;
@@ -2662,7 +2609,6 @@
 .atlas-shell .atlas-ag-section .atlas-ag-note {
   margin-top: 6px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 12, "SOFT" 50, "WONK" 0;
   font-size: 14px;
   color: var(--atlas-ink-mute);
   line-height: 1.5;
@@ -2678,13 +2624,13 @@
   align-items: start;
   padding: 20px 16px 20px 14px;
   margin-left: 24px;
-  border-top: 1px dashed var(--atlas-paper-edge);
+  border-top: 1px dashed var(--atlas-rule);
   border-radius: var(--atlas-r-lg);
   transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
 .atlas-shell .atlas-ag-matter:first-of-type { border-top: 0; }
 .atlas-shell .atlas-ag-matter:hover {
-  background: rgba(122, 31, 43, 0.04);
+  background: rgba(255, 183, 51, 0.04);
   box-shadow: inset 3px 0 0 var(--atlas-oxblood);
 }
 .atlas-shell .atlas-ag-matter .atlas-ag-item-num {
@@ -2717,7 +2663,7 @@
   border: 1px solid var(--atlas-oxblood);
   border-radius: var(--atlas-r);
   padding: 2px 7px 1px;
-  background: rgba(122, 31, 43, 0.04);
+  background: rgba(255, 183, 51, 0.04);
   display: inline-block;
   margin-bottom: 10px;
   font-weight: 500;
@@ -2726,7 +2672,6 @@
 .atlas-shell .atlas-ag-matter h4 {
   margin: 0 0 10px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 30, "SOFT" 50, "WONK" 0;
   font-weight: 450;
   font-size: 22px;
   line-height: 1.2;
@@ -2750,7 +2695,7 @@
   text-transform: uppercase;
   color: var(--atlas-ink);
   background: var(--atlas-paper-deep);
-  border: 1px solid var(--atlas-paper-edge);
+  border: 1px solid var(--atlas-rule);
   border-radius: var(--atlas-r);
   padding: 3px 7px 2px;
   line-height: 1.4;
@@ -2778,7 +2723,7 @@
 }
 .atlas-shell .atlas-ag-matter .atlas-ag-att-count::after {
   content: "·";
-  color: var(--atlas-paper-edge);
+  color: var(--atlas-ink-mute);
   margin-left: 8px;
 }
 .atlas-shell .atlas-ag-matter .atlas-ag-att-line a.atlas-ag-att {
@@ -2791,7 +2736,7 @@
 }
 .atlas-shell .atlas-ag-matter .atlas-ag-att-line a.atlas-ag-att + a.atlas-ag-att::before {
   content: "·";
-  color: var(--atlas-paper-edge);
+  color: var(--atlas-ink-mute);
   margin-right: 8px;
   margin-left: -2px;
   border-bottom: 0;
@@ -2819,7 +2764,7 @@
   font-family: var(--atlas-mono);
   font-size: 11px;
   letter-spacing: 0.06em;
-  color: var(--atlas-heat-deep);
+  color: var(--atlas-accent-deep);
   margin-top: 8px;
   position: relative;
   z-index: 1;
@@ -2828,7 +2773,7 @@
 /* Folded notices panel. */
 .atlas-shell .atlas-notices {
   background: var(--atlas-paper-deep);
-  border: 1px solid var(--atlas-paper-edge);
+  border: 1px solid var(--atlas-rule);
   border-radius: var(--atlas-r-lg);
   padding: 22px 24px 8px;
   margin-top: 32px;
@@ -2844,7 +2789,6 @@
 .atlas-shell .atlas-notices-head h3 {
   margin: 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 30, "SOFT" 50, "WONK" 0;
   font-weight: 450;
   font-size: 22px;
   line-height: 1;
@@ -2852,7 +2796,6 @@
 }
 .atlas-shell .atlas-notices-head h3 em,
 .atlas-shell .atlas-notices-head h3 .atlas-em {
-  font-variation-settings: "opsz" 9, "SOFT" 100, "WONK" 1;
   color: var(--atlas-oxblood);
   font-style: italic;
   font-weight: 350;
@@ -2865,7 +2808,7 @@
   letter-spacing: 0.14em;
 }
 .atlas-shell details.atlas-notice {
-  border-top: 1px dashed var(--atlas-paper-edge);
+  border-top: 1px dashed var(--atlas-rule);
   padding: 12px 0;
 }
 .atlas-shell details.atlas-notice:first-of-type {
@@ -2899,7 +2842,6 @@
   margin-top: 10px;
   padding-left: 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 12, "SOFT" 50, "WONK" 0;
   font-size: 14px;
   line-height: 1.55;
   color: var(--atlas-ink-soft);
@@ -2922,7 +2864,7 @@
   font-size: 14px;
   padding: 8px 12px;
   background: var(--atlas-paper-deep);
-  border: 1px solid var(--atlas-paper-edge);
+  border: 1px solid var(--atlas-rule);
   border-radius: var(--atlas-r-lg);
   color: var(--atlas-ink);
   text-decoration: none;
@@ -2936,9 +2878,9 @@
   font-size: 10px;
   color: var(--atlas-oxblood);
   border: 1px solid var(--atlas-oxblood);
-  border-radius: 999px;
+  border-radius: var(--atlas-r);
   padding: 2px 7px 1px;
-  background: rgba(122, 31, 43, 0.05);
+  background: rgba(255, 183, 51, 0.05);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   white-space: nowrap;
@@ -2951,12 +2893,12 @@
   gap: 12px;
   align-items: center;
   padding: 10px 0;
-  border-top: 1px dashed var(--atlas-paper-edge);
+  border-top: 1px dashed var(--atlas-rule);
   text-decoration: none;
   color: inherit;
 }
 .atlas-shell .atlas-rail-sibling:first-of-type { border-top: 0; padding-top: 0; }
-.atlas-shell .atlas-rail-sibling:hover { background: rgba(122, 31, 43, 0.025); border-radius: var(--atlas-r-lg); }
+.atlas-shell .atlas-rail-sibling:hover { background: rgba(255, 183, 51, 0.025); border-radius: var(--atlas-r-lg); }
 .atlas-shell .atlas-rail-sibling .atlas-rail-sibling-where {
   font-family: var(--atlas-sans);
   font-size: 13px;
@@ -2997,7 +2939,6 @@
 .atlas-shell .atlas-matters-header h1 {
   margin: 8px 0 12px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 144, "SOFT" 50, "WONK" 0;
   font-weight: 400;
   font-size: clamp(44px, 6.5vw, 80px);
   line-height: 0.95;
@@ -3006,7 +2947,6 @@
 .atlas-shell .atlas-matters-header .atlas-matters-header-lede {
   margin: 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 18, "SOFT" 50, "WONK" 0;
   font-weight: 350;
   font-size: 18px;
   line-height: 1.45;
@@ -3022,7 +2962,6 @@
   border-left: 3px solid var(--atlas-oxblood);
   border-radius: var(--atlas-r-lg);
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
   font-size: 15px;
   color: var(--atlas-ink-soft);
 }
@@ -3080,7 +3019,7 @@
 }
 .atlas-shell .atlas-matters-filter input[type="search"]:focus {
   border-color: var(--atlas-oxblood);
-  box-shadow: 0 0 0 2px rgba(122, 31, 43, 0.08);
+  box-shadow: 0 0 0 2px rgba(255, 183, 51, 0.08);
 }
 .atlas-shell .atlas-matters-filter select {
   font-family: var(--atlas-sans);
@@ -3092,27 +3031,30 @@
   padding: 10px 28px 10px 14px;
   color: var(--atlas-ink);
   appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, var(--atlas-oxblood) 50%),
-                    linear-gradient(135deg, var(--atlas-oxblood) 50%, transparent 50%);
+  background-image: linear-gradient(45deg, transparent 50%, var(--atlas-accent) 50%),
+                    linear-gradient(135deg, var(--atlas-accent) 50%, transparent 50%);
   background-position: calc(100% - 14px) 50%, calc(100% - 10px) 50%;
   background-size: 4px 4px;
   background-repeat: no-repeat;
 }
+.atlas-shell .atlas-matters-filter select option { background: var(--atlas-paper-deep); color: var(--atlas-ink); }
 .atlas-shell .atlas-matters-filter input[type="submit"] {
   font-family: var(--atlas-mono);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.16em;
   color: var(--atlas-paper);
-  background: var(--atlas-oxblood);
-  border: 0;
-  border-radius: 999px;
+  background: var(--atlas-accent);
+  border: 1px solid var(--atlas-accent);
+  border-radius: var(--atlas-r);
   padding: 10px 22px;
   cursor: pointer;
+  font-weight: 500;
   transition: background-color 0.15s ease;
 }
 .atlas-shell .atlas-matters-filter input[type="submit"]:hover {
-  background: var(--atlas-oxblood-deep);
+  background: var(--atlas-accent-deep);
+  border-color: var(--atlas-accent-deep);
 }
 .atlas-shell .atlas-matters-filter .atlas-matters-filter-clear {
   font-family: var(--atlas-mono);
@@ -3163,7 +3105,7 @@
   border-radius: var(--atlas-r-lg);
 }
 .atlas-shell .atlas-matter-row:hover {
-  background: rgba(122, 31, 43, 0.04);
+  background: rgba(255, 183, 51, 0.04);
   box-shadow: inset 3px 0 0 var(--atlas-oxblood);
 }
 .atlas-shell .atlas-matter-row-body { min-width: 0; }
@@ -3178,7 +3120,7 @@
   border: 1px solid var(--atlas-oxblood);
   border-radius: var(--atlas-r);
   padding: 2px 7px 1px;
-  background: rgba(122, 31, 43, 0.04);
+  background: rgba(255, 183, 51, 0.04);
   margin-bottom: 10px;
   font-weight: 500;
   line-height: 1.4;
@@ -3187,7 +3129,6 @@
 .atlas-shell .atlas-matter-row h2 {
   margin: 0 0 8px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 30, "SOFT" 50, "WONK" 0;
   font-weight: 450;
   font-size: 22px;
   line-height: 1.2;
@@ -3230,7 +3171,7 @@
   text-transform: uppercase;
   color: var(--atlas-ink);
   background: var(--atlas-paper-deep);
-  border: 1px solid var(--atlas-paper-edge);
+  border: 1px solid var(--atlas-rule);
   border-radius: var(--atlas-r);
   padding: 3px 7px 2px;
   position: relative;
@@ -3285,7 +3226,7 @@
   z-index: 1;
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px dashed var(--atlas-paper-edge);
+  border-top: 1px dashed var(--atlas-rule);
 }
 .atlas-shell .atlas-matter-row-doc-hits-label {
   font-family: var(--atlas-mono);
@@ -3306,7 +3247,6 @@
 .atlas-shell .atlas-matter-row-doc-hits li {
   margin: 6px 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 12, "SOFT" 50, "WONK" 0;
   font-size: 14px;
   line-height: 1.45;
   color: var(--atlas-ink-soft);
@@ -3322,7 +3262,7 @@
   padding-bottom: 1px;
 }
 .atlas-shell .atlas-matter-row-doc-hits li mark {
-  background: rgba(217, 102, 63, 0.18);
+  background: rgba(255, 183, 51, 0.18);
   color: inherit;
   padding: 0 2px;
   border-radius: 2px;
@@ -3335,7 +3275,6 @@
   border: 1px dashed var(--atlas-rule);
   border-radius: var(--atlas-r-lg);
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 18, "SOFT" 50, "WONK" 0;
   font-size: 18px;
   color: var(--atlas-ink-soft);
   text-align: center;
@@ -3359,7 +3298,6 @@
 .atlas-shell .atlas-pulse-hero h1 {
   margin: 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 144, "SOFT" 30, "WONK" 0;
   font-weight: 400;
   font-size: clamp(48px, 7vw, 96px);
   line-height: 0.92;
@@ -3369,7 +3307,6 @@
 .atlas-shell .atlas-pulse-hero h1 em,
 .atlas-shell .atlas-pulse-hero h1 .atlas-em {
   font-style: italic;
-  font-variation-settings: "opsz" 9, "SOFT" 100, "WONK" 1;
   color: var(--atlas-oxblood);
   font-weight: 300;
 }
@@ -3390,7 +3327,6 @@
   margin: 20px 0 0;
   max-width: 720px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 18, "SOFT" 50, "WONK" 0;
   font-weight: 350;
   font-size: 20px;
   line-height: 1.45;
@@ -3421,28 +3357,29 @@
   padding: 6px 28px 6px 10px;
   color: var(--atlas-ink);
   appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, var(--atlas-oxblood) 50%),
-                    linear-gradient(135deg, var(--atlas-oxblood) 50%, transparent 50%);
+  background-image: linear-gradient(45deg, transparent 50%, var(--atlas-accent) 50%),
+                    linear-gradient(135deg, var(--atlas-accent) 50%, transparent 50%);
   background-position: calc(100% - 12px) 50%, calc(100% - 8px) 50%;
   background-size: 4px 4px;
   background-repeat: no-repeat;
 }
+.atlas-shell .atlas-body-filter select option { background: var(--atlas-paper-deep); color: var(--atlas-ink); }
 .atlas-shell .atlas-body-filter input[type="submit"],
 .atlas-shell .atlas-body-filter button {
   font-family: var(--atlas-mono);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--atlas-oxblood);
+  color: var(--atlas-accent-deep);
   background: transparent;
-  border: 1px solid var(--atlas-oxblood);
-  border-radius: 999px;
+  border: 1px solid var(--atlas-accent-deep);
+  border-radius: var(--atlas-r);
   padding: 5px 12px 4px;
   cursor: pointer;
 }
 .atlas-shell .atlas-body-filter input[type="submit"]:hover,
 .atlas-shell .atlas-body-filter button:hover {
-  background: rgba(122, 31, 43, 0.06);
+  background: rgba(255, 183, 51, 0.06);
 }
 .atlas-shell .atlas-body-filter .atlas-body-filter-clear {
   font-family: var(--atlas-mono);
@@ -3453,12 +3390,15 @@
   border-bottom: 1px dotted var(--atlas-rule);
 }
 
-/* Theme Atlas grid — dense flow packs tiles around the XL anchor. */
+/* Theme Atlas grid — dense flow packs tiles around the XL anchor.
+   1px gaps on a rule background read as hairline grid lines. */
 .atlas-shell .atlas-pulse-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
   grid-auto-rows: 84px;
-  gap: 6px;
+  gap: 1px;
+  background: var(--atlas-rule);
+  border: 1px solid var(--atlas-rule);
   grid-auto-flow: dense;
 }
 .atlas-shell .atlas-pulse-grid .atlas-tile--xl { grid-column: span 5; grid-row: span 3; }
@@ -3486,8 +3426,8 @@
   margin-right: 6px;
   vertical-align: middle;
 }
-.atlas-shell .atlas-pulse-legend .atlas-pulse-legend-swatch--hot  { background: rgba(217, 102, 63, 0.25); border-color: var(--atlas-heat); }
-.atlas-shell .atlas-pulse-legend .atlas-pulse-legend-swatch--up   { background: rgba(122, 31, 43, 0.12); border-color: var(--atlas-oxblood); }
+.atlas-shell .atlas-pulse-legend .atlas-pulse-legend-swatch--hot  { background: rgba(255, 183, 51, 0.25); border-color: var(--atlas-accent); }
+.atlas-shell .atlas-pulse-legend .atlas-pulse-legend-swatch--up   { background: rgba(194, 201, 211, 0.12); border-color: var(--atlas-ink-soft); }
 .atlas-shell .atlas-pulse-legend .atlas-pulse-legend-swatch--flat { background: var(--atlas-paper-deep); }
 
 /* Heating-up rail — four cards with bigger sparklines. */
@@ -3500,21 +3440,21 @@
   display: block;
   background: var(--atlas-paper);
   border: 1px solid var(--atlas-rule);
-  border-top: 3px solid var(--atlas-heat);
+  border-top: 3px solid var(--atlas-accent);
   border-radius: var(--atlas-r-lg);
   padding: 18px 18px 16px;
   position: relative;
   text-decoration: none;
   color: inherit;
 }
-.atlas-shell a.atlas-heat-card:hover { border-color: var(--atlas-heat); text-decoration: none; }
+.atlas-shell a.atlas-heat-card:hover { border-color: var(--atlas-accent); text-decoration: none; }
 .atlas-shell .atlas-heat-card .atlas-heat-num {
   position: absolute;
   top: 14px; right: 16px;
   font-family: var(--atlas-sans);
   font-weight: 500;
   font-size: 13px;
-  color: var(--atlas-heat);
+  color: var(--atlas-accent-deep);
   line-height: 1;
   letter-spacing: 0.18em;
   font-variant-numeric: tabular-nums;
@@ -3522,7 +3462,6 @@
 .atlas-shell .atlas-heat-card h3 {
   margin: 0 0 8px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 30, "SOFT" 50, "WONK" 0;
   font-weight: 450;
   font-size: 20px;
   line-height: 1.1;
@@ -3532,7 +3471,7 @@
 .atlas-shell .atlas-heat-card .atlas-heat-delta {
   font-family: var(--atlas-mono);
   font-size: 12px;
-  color: var(--atlas-heat-deep);
+  color: var(--atlas-accent-deep);
   letter-spacing: 0.04em;
 }
 .atlas-shell .atlas-heat-card .atlas-heat-meta {
@@ -3547,7 +3486,7 @@
   margin-top: 12px;
   width: 100%;
   height: 44px;
-  color: var(--atlas-heat);
+  color: var(--atlas-accent);
 }
 
 /* In-session — numbered editorial entries. */
@@ -3574,7 +3513,6 @@
 .atlas-shell .atlas-session-row h3 {
   margin: 0 0 10px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 60, "SOFT" 50, "WONK" 0;
   font-weight: 400;
   font-size: 30px;
   line-height: 1.08;
@@ -3602,18 +3540,17 @@
   border: 1px solid var(--atlas-oxblood);
   border-radius: var(--atlas-r);
   padding: 2px 6px 1px;
-  background: rgba(122, 31, 43, 0.04);
+  background: rgba(255, 183, 51, 0.04);
 }
 .atlas-shell .atlas-session-meta .atlas-session-theme {
   color: var(--atlas-ink);
   background: var(--atlas-paper-deep);
-  border: 1px solid var(--atlas-paper-edge);
+  border: 1px solid var(--atlas-rule);
   border-radius: var(--atlas-r);
   padding: 2px 6px 1px;
 }
 .atlas-shell .atlas-session-summary {
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
   font-size: 16px;
   line-height: 1.55;
   color: var(--atlas-ink-soft);
@@ -3642,7 +3579,7 @@
 }
 .atlas-shell .atlas-calendar::-webkit-scrollbar { height: 6px; }
 .atlas-shell .atlas-calendar::-webkit-scrollbar-thumb {
-  background: var(--atlas-paper-edge);
+  background: var(--atlas-rule);
   border-radius: 999px;
 }
 .atlas-shell .atlas-cal-card {
@@ -3663,7 +3600,6 @@
 .atlas-shell .atlas-cal-card h4 {
   margin: 0;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 18, "SOFT" 50, "WONK" 0;
   font-weight: 450;
   font-size: 16px;
   line-height: 1.2;
@@ -3713,7 +3649,6 @@
   border-radius: var(--atlas-r-lg);
   padding: 22px 24px;
   font-family: var(--atlas-serif);
-  font-variation-settings: "opsz" 14, "SOFT" 50, "WONK" 0;
   font-size: 16px;
   line-height: 1.5;
   color: var(--atlas-ink-soft);
