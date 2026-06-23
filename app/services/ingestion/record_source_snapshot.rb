@@ -8,6 +8,9 @@ module Ingestion
         response_sha256: response_sha256
       }
 
+      existing = bump_existing!(attributes:, fetched_at:)
+      return existing if existing
+
       begin
         SourceSnapshot.create!(
           **attributes,
@@ -24,13 +27,15 @@ module Ingestion
     end
 
     def self.bump_existing!(attributes:, fetched_at:)
-      SourceSnapshot.where(attributes).update_all(
+      updated_count = SourceSnapshot.where(attributes).update_all(
         [
           "last_fetched_at = ?, fetch_count = fetch_count + 1, updated_at = ?",
           fetched_at,
           Time.current
         ]
       )
+      return nil if updated_count.zero?
+
       SourceSnapshot.find_by!(attributes)
     end
     private_class_method :bump_existing!
