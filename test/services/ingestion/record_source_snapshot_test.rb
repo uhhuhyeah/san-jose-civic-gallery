@@ -52,6 +52,39 @@ module Ingestion
       end
     end
 
+    test "uses update path for an existing response sha instead of logging a uniqueness violation" do
+      RecordSourceSnapshot.call(
+        source_system: "legistar.sanjose",
+        resource_type: "event",
+        source_id: "7621",
+        request_url: "https://example.test/Events/7621",
+        fetched_at: Time.zone.parse("2026-05-15 10:00:00"),
+        http_status: 200,
+        response_sha256: "sha-v1",
+        payload: { "EventId" => 7621 }
+      )
+
+      insert_count = 0
+      callback = lambda do |_name, _started, _finished, _unique_id, payload|
+        insert_count += 1 if payload[:sql].include?('INSERT INTO "ingestion_source_snapshots"')
+      end
+
+      ActiveSupport::Notifications.subscribed(callback, "sql.active_record") do
+        RecordSourceSnapshot.call(
+          source_system: "legistar.sanjose",
+          resource_type: "event",
+          source_id: "7621",
+          request_url: "https://example.test/Events/7621",
+          fetched_at: Time.zone.parse("2026-05-15 11:30:00"),
+          http_status: 200,
+          response_sha256: "sha-v1",
+          payload: { "EventId" => 7621 }
+        )
+      end
+
+      assert_equal 0, insert_count
+    end
+
     test "deduplicates by payload version even after another version has been observed" do
       first = RecordSourceSnapshot.call(
         source_system: "legistar.sanjose",
