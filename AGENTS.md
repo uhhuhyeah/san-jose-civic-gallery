@@ -26,6 +26,8 @@ Follow standard Rails conventions and the configured `rubocop-rails-omakase` sty
 
 Use Rails Minitest. Place tests in the matching `test/...` directory and name files with `_test.rb`, such as `test/services/ingestion/sync_matter_test.rb`. Add focused tests for behavior changes, ingestion edge cases, document extraction, provenance handling, and schema-backed logic. `test/test_helper.rb` intentionally keeps parallel workers at `1`; do not change that without verifying platform safety.
 
+If Rails or tests cannot run because Postgres is unreachable on the local Docker port, ask the user to start Docker on the machine rather than treating the test as inherently blocked.
+
 ## Commit & Pull Request Guidelines
 
 Recent commits use short, imperative summaries such as `Import scope fixes` and `Fix test assertion`. Keep commits focused and avoid mixing schema, UI, ingestion, and docs changes unless they are one coherent change.
