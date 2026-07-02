@@ -27,7 +27,7 @@ module Public
 
       assert_response :success
       assert_equal "text/plain", response.media_type
-      assert_includes response.body, "# San Jose Unified Civic Gallery"
+      assert_includes response.body, "# San Jose Unified School District Civic Gallery"
       assert_includes response.body, "Official public records are authoritative"
       assert_includes response.body, "simbli.eboardsolutions.com"
       assert_not_includes response.body, "sanjose.legistar.com"

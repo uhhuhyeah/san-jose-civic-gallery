@@ -76,8 +76,8 @@ module Civic
     test "presentation copy is district-specific for a school district" do
       sjusd = civic_jurisdictions(:sjusd)
 
-      assert_equal "San Jose Unified", sjusd.short_name
-      assert_equal "San Jose Unified Civic Gallery", sjusd.site_title
+      assert_equal "San Jose Unified School District", sjusd.short_name
+      assert_equal "San Jose Unified School District Civic Gallery", sjusd.site_title
       assert_equal "School board agenda intelligence", sjusd.tagline
       assert_equal "All bodies", sjusd.all_scope_label
       assert_equal "All bodies", sjusd.all_bodies_option_label

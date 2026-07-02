@@ -332,6 +332,64 @@
  * TOPBAR — brand wordmark, command search, primary nav
  * ============================================================ */
 
+.atlas-shell .atlas-jurisdiction-bar {
+  margin: 0 calc(-1 * var(--atlas-pad));
+  background:
+    linear-gradient(180deg, rgba(238, 241, 245, 0.025), transparent),
+    #101724;
+  border-top: 1px solid rgba(238, 241, 245, 0.06);
+  border-bottom: 1px solid var(--atlas-rule);
+  color: var(--atlas-ink-mute);
+}
+
+.atlas-shell .atlas-jurisdiction-bar-inner {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.atlas-shell .atlas-jurisdiction-label {
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.atlas-shell .atlas-jurisdiction-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.atlas-shell .atlas-jurisdiction-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(194, 201, 211, 0.22);
+  background: rgba(17, 24, 38, 0.72);
+  color: var(--atlas-ink-soft);
+  font-family: var(--atlas-sans);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  transition: border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.atlas-shell .atlas-jurisdiction-link:hover,
+.atlas-shell .atlas-jurisdiction-link:focus-visible {
+  border-color: var(--atlas-accent-deep);
+  color: var(--atlas-ink);
+  box-shadow: 0 0 0 2px rgba(255, 183, 51, 0.1);
+  text-decoration: none;
+}
+
 /* Single-row masthead: brand on the left, search and nav on the right.
    A 2px rule-strong border closes the masthead like a broadsheet nameplate. */
 .atlas-shell .atlas-topbar {
@@ -3709,6 +3767,17 @@
 }
 
 @media (max-width: 720px) {
+  .atlas-shell .atlas-jurisdiction-bar-inner {
+    min-height: 0;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .atlas-shell .atlas-jurisdiction-links {
+    justify-content: flex-start;
+  }
+
   /* Brand stacks below 720px. At its desktop size the brand-mark
      ("Jurisdiction Civic Gallery") plus brand-sub tagline render around
      ~500px wide and atlas-brand carries flex-shrink: 0, so without this

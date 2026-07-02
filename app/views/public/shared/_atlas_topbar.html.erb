@@ -7,6 +7,25 @@
     be highlighted. If Data is promoted to primary nav later, add the link
     below and the active comparison will start matching.
 %>
+<% related_jurisdictions = Civic::Jurisdiction.where.not(id: current_jurisdiction.id).order(:name) %>
+
+<% if related_jurisdictions.any? %>
+  <nav class="atlas-jurisdiction-bar" aria-label="Related jurisdictions">
+    <div class="atlas-wrap atlas-jurisdiction-bar-inner">
+      <span class="atlas-jurisdiction-label">Nearby Civic Galleries</span>
+
+      <div class="atlas-jurisdiction-links">
+        <% related_jurisdictions.each do |jurisdiction| %>
+          <%= link_to jurisdiction.short_name,
+            "https://#{jurisdiction.primary_host}/",
+            class: "atlas-jurisdiction-link",
+            title: jurisdiction.name %>
+        <% end %>
+      </div>
+    </div>
+  </nav>
+<% end %>
+
 <header class="atlas-topbar">
   <%= link_to root_path, class: "atlas-brand", aria: { label: "#{current_jurisdiction.site_title}: home" } do %>
     <span class="atlas-brand-mark"><%= current_jurisdiction.site_title %></span>
