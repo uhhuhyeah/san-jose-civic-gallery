@@ -80,10 +80,30 @@ class JurisdictionScopingTest < ActionDispatch::IntegrationTest
     get root_url
 
     assert_response :success
-    assert_includes response.body, "San Jose Unified Civic Gallery"
+    assert_includes response.body, "San Jose Unified School District Civic Gallery"
     assert_includes response.body, "School board agenda intelligence"
     assert_not_includes response.body, "City Hall agenda intelligence"
     assert_not_includes response.body, "(citywide)"
+  end
+
+  test "the San Jose host links to related jurisdiction with friendly label" do
+    host! SANJOSE_HOST
+    get root_url
+
+    assert_response :success
+    assert_select "nav.atlas-jurisdiction-bar[aria-label='Related jurisdictions']", count: 1
+    assert_select "nav.atlas-jurisdiction-bar a[href='https://sjusd.civicgallery.org/'][title='San Jose Unified School District']", text: "San Jose Unified School District", count: 1
+    assert_select "nav.atlas-jurisdiction-bar a[href='https://sanjose.civicgallery.org/']", count: 0
+  end
+
+  test "the SJUSD host links back to San Jose with friendly label" do
+    host! SJUSD_HOST
+    get root_url
+
+    assert_response :success
+    assert_select "nav.atlas-jurisdiction-bar[aria-label='Related jurisdictions']", count: 1
+    assert_select "nav.atlas-jurisdiction-bar a[href='https://sanjose.civicgallery.org/'][title='San Jose City Government']", text: "San Jose", count: 1
+    assert_select "nav.atlas-jurisdiction-bar a[href='https://sjusd.civicgallery.org/']", count: 0
   end
 
   test "the footer cites the San Jose source host on the San Jose host" do

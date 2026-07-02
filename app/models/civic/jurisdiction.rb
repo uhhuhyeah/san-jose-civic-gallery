@@ -97,7 +97,7 @@ module Civic
 
     SHORT_NAMES = {
       "sanjose" => "San Jose",
-      "sjusd" => "San Jose Unified"
+      "sjusd" => "San Jose Unified School District"
     }.freeze
 
     SOURCE_HOSTS = {
