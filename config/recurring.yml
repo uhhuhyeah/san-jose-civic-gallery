@@ -18,7 +18,7 @@ production:
   # agenda amendments and newly added meetings within hours.
   sync_recent_events_all_bodies:
     class: Ingestion::SyncRecentEventsForAllBodiesJob
-    args: [ { limit: 25 } ]
+    args: [{ limit: 25 }]
     schedule: every 4 hours
 
   # Pick up newly-extracted attachments and produce AI summaries for them.
@@ -27,7 +27,7 @@ production:
   # safe to run on a recurring basis.
   generate_attachment_summaries:
     class: Generated::BackfillAttachmentSummariesJob
-    args: [ { limit: 150, dry_run: false } ]
+    args: [{ limit: 150, dry_run: false }]
     schedule: every 2 hours
 
   # Classify matters into Pulse themes. Runs offset from the summary job so the
@@ -37,7 +37,7 @@ production:
   # safe to run on a recurring basis. See docs/pulse.md.
   classify_matter_themes:
     class: Generated::BackfillMatterThemesJob
-    args: [ { limit: 150, dry_run: false } ]
+    args: [{ limit: 150, dry_run: false }]
     schedule: every 2 hours at minute 30
 
   # Summarize meetings from their published agenda. BackfillEventSummaries only
@@ -47,7 +47,7 @@ production:
   # the matter jobs so the agenda items it reads are settled.
   summarize_events:
     class: Generated::BackfillEventSummariesJob
-    args: [ { limit: 100, dry_run: false } ]
+    args: [{ limit: 100, dry_run: false }]
     schedule: every 2 hours at minute 45
 
   # Generate monthly civic roundups. Runs at 06:00 on the 10th of each month so
@@ -58,7 +58,7 @@ production:
   # so this is safe to run on a recurring basis. See docs/monthly-roundup-plan.md.
   generate_monthly_roundups:
     class: Generated::BackfillMonthlyRoundupsJob
-    args: [ { limit: 1, dry_run: false } ]
+    args: [{ limit: 1, dry_run: false }]
     schedule: "0 6 10 * *"
 
   # Discover and re-sync recent SJUSD (Simbli) board meetings. Low cadence and a
@@ -69,5 +69,13 @@ production:
   # initial historical backfill is a one-off manual `simbli:sync_meetings` run.
   sync_recent_sjusd_meetings:
     class: Ingestion::Simbli::SyncMeetingsJob
-    args: [ { limit: 5 } ]
+    args: [{ limit: 5 }]
     schedule: every day at 5:30am
+
+  # Check for accumulated failed job executions and alert via Sentry when
+  # the count exceeds the threshold. Complements the retry logic in
+  # ApplicationJob — retries absorb transient blips, this catches what
+  # retries couldn't recover from.
+  queue_health_check:
+    class: SolidQueueHealth::HealthCheckJob
+    schedule: every 15 minutes

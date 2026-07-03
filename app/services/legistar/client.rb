@@ -87,11 +87,20 @@ module Legistar
         http.request(request)
       end
 
+      status = response.code.to_i
+
+      if status >= 500
+        raise Legistar::ServerError.new(
+          status_code: status,
+          request_url: uri.to_s,
+        )
+      end
+
       body = response.body.presence || "[]"
 
       {
         request_url: uri.to_s,
-        status: response.code.to_i,
+        status:,
         fetched_at: Time.current,
         response_sha256: Digest::SHA256.hexdigest(body),
         payload: JSON.parse(body)
