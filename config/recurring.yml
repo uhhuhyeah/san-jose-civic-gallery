@@ -14,6 +14,10 @@ production:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
 
+  check_failed_jobs:
+    class: CheckFailedJobsJob
+    queue: background
+    schedule: every hour
   # Sync recent events from every active Legistar body. Cadence picks up
   # agenda amendments and newly added meetings within hours.
   sync_recent_events_all_bodies:

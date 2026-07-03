@@ -180,6 +180,10 @@ module DataHealth
       ].join("/")
     end
 
+    # Count of failed SolidQueue executions. Exposed for monitoring.
+    def failed_job_count
+      SolidQueue::FailedExecution.count
+    end
     private
 
     def matters
