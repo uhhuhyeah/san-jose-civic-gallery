@@ -40,6 +40,9 @@ gem "solid_cable"
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 
+# csv was removed from default gems in Ruby 3.4; required by lib/tasks/attachments.rake
+gem "csv"
+
 # Deploy this application anywhere as a Docker container [https://kamal-deploy.org]
 gem "kamal", require: false
 
