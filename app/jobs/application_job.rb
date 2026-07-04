@@ -41,16 +41,28 @@ class ApplicationJob < ActiveJob::Base
   end
 
   # Vendor anti-bot blocks are not transient — retrying within seconds will
-  # keep hitting the same block and burn attempts for nothing. Discard so the
-  # operator sees it as a failed job (and via CheckFailedJobsJob) rather than
-  # churning. Declared after retry_on because rescue handlers are searched
-  # bottom-to-top: BlockedError (a FetchError subclass) matches this first and
-  # is discarded; a plain FetchError falls through to the retry above.
+  # keep hitting the same block and burn attempts for nothing, so discard
+  # instead of retrying. discard_on prevents a SolidQueue::FailedExecution,
+  # so a block would be invisible to Mission Control's failures view and to
+  # CheckFailedJobsJob's count. Report it directly to Sentry here so an
+  # operator still learns the Simbli pipeline is wedged (its daily 5:30am
+  # sync is the only chance to pick up SJUSD meetings for the day). Declared
+  # after retry_on because rescue handlers are searched bottom-to-top:
+  # BlockedError (a FetchError subclass) matches this first and is discarded;
+  # a plain FetchError falls through to the retry above.
   discard_on Simbli::Client::BlockedError do |job, error|
     Rails.logger.warn(
       "ApplicationJob: discarded #{job.class.name} blocked by vendor anti-bot: " \
         "#{error.message}"
     )
+    if defined?(Sentry) && Sentry.initialized?
+      Sentry.capture_message(
+        "Simbli vendor anti-bot block discarded #{job.class.name}",
+        level: :warning,
+        tags: { check: "simbli_vendor_block", job_class: job.class.name },
+        extra: { exception_class: error.class.name, message: error.message }
+      )
+    end
   end
 
   # Stale serialized records — the GlobalID-referenced model was deleted
