@@ -33,5 +33,36 @@ module Ingestion
         SyncRecentEventsForAllBodiesJob.new.perform(limit: 10, body_names: [])
       end
     end
+
+    test "raises HttpServerError (transient) when /Bodies returns 5xx" do
+      stub_bodies_response(status: 503, body: "[]") do
+        assert_raises(Legistar::Client::HttpServerError) do
+          SyncRecentEventsForAllBodiesJob.new.perform(limit: 10, body_names: nil)
+        end
+      end
+    end
+
+    test "raises HttpClientError (permanent) when /Bodies returns 4xx" do
+      stub_bodies_response(status: 404, body: "[]") do
+        assert_raises(Legistar::Client::HttpClientError) do
+          SyncRecentEventsForAllBodiesJob.new.perform(limit: 10, body_names: nil)
+        end
+      end
+    end
+
+    private
+
+    def stub_bodies_response(status:, body:)
+      response = Object.new
+      response.define_singleton_method(:code) { status.to_s }
+      response.define_singleton_method(:body) { body }
+      original = Net::HTTP.method(:get_response)
+      Net::HTTP.define_singleton_method(:get_response) do |*_args|
+        response
+      end
+      yield
+    ensure
+      Net::HTTP.define_singleton_method(:get_response, original)
+    end
   end
 end

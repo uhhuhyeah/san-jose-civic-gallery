@@ -28,8 +28,11 @@ module Ingestion
     def fetch_active_body_names
       uri = URI(BODIES_URL)
       response = Net::HTTP.get_response(uri)
-      unless response.code.to_i == 200
-        raise "Legistar /Bodies returned HTTP #{response.code} for #{uri}"
+      status = response.code.to_i
+      unless status == 200
+        # Reuse the Legistar error hierarchy so ApplicationJob retries 5xx
+        # (the /Bodies endpoint is the same upstream) and lets 4xx fail fast.
+        raise Legistar::Client.error_for(status, uri.to_s)
       end
       JSON.parse(response.body)
         .select { |body| body["BodyActiveFlag"] == 1 }

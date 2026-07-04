@@ -132,5 +132,37 @@ module Legistar
       Net::HTTP.singleton_class.send(:remove_method, :start)
       Net::HTTP.define_singleton_method(:start, original_start)
     end
+
+    test "error_for classifies 5xx as HttpServerError (transient)" do
+      error = Client.error_for(503, "https://example.test/Events")
+      assert_kind_of Client::HttpServerError, error
+      assert_kind_of Client::Error, error
+      assert_equal 503, error.status
+      assert_equal "https://example.test/Events", error.url
+      assert_match(/status 503/, error.message)
+    end
+
+    test "error_for classifies 4xx as HttpClientError (permanent)" do
+      error = Client.error_for(404, "https://example.test/Matters/1")
+      assert_kind_of Client::HttpClientError, error
+      assert_kind_of Client::Error, error
+      assert_equal 404, error.status
+    end
+
+    test "error_for classifies non-standard statuses as HttpError" do
+      error = Client.error_for(302, "https://example.test/Events")
+      assert_kind_of Client::HttpError, error
+      assert_not_kind_of Client::HttpServerError, error
+      assert_not_kind_of Client::HttpClientError, error
+    end
+
+    test "assert_ok! returns nil for 200 and raises classified error otherwise" do
+      client = Client.new
+      assert_nil client.assert_ok!(status: 200, request_url: "https://example.test/Events")
+
+      assert_raises(Client::HttpServerError) do
+        client.assert_ok!(status: 500, request_url: "https://example.test/Events")
+      end
+    end
   end
 end

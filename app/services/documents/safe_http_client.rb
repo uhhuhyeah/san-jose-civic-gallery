@@ -24,6 +24,13 @@ module Documents
       end
     end
 
+    # 5xx responses from an attachment host. Subclasses HttpError so existing
+    # `is_a?(HttpError)` / `assert_raises(HttpError)` checks still match, but
+    # ApplicationJob can retry these specifically without retrying permanent
+    # 4xx failures (403/404 etc., which ImportMatterAttachmentFile may already
+    # recover from via a manually-uploaded sibling).
+    class HttpServerError < HttpError; end
+
     DEFAULT_ALLOWED_HOSTS = %w[
       sanjose.legistar.com
       legistar.granicus.com

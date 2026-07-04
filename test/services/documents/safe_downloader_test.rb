@@ -128,6 +128,28 @@ module Documents
       end
     end
 
+    test "raises HttpServerError (the retried subclass) for 5xx responses" do
+      stub_http_with(SafeDownloaderTest.fake_server_error) do
+        io = StringIO.new
+        error = assert_raises(SafeHttpClient::HttpServerError) do
+          SafeDownloader.call(url: "https://sanjose.legistar.com/file.pdf", io:)
+        end
+        assert_kind_of SafeHttpClient::HttpError, error
+        assert_equal 500, error.status
+      end
+    end
+
+    test "raises plain HttpError (not the retried 5xx subclass) for 4xx responses" do
+      stub_http_with(SafeDownloaderTest.fake_client_error) do
+        io = StringIO.new
+        error = assert_raises(SafeDownloader::HttpError) do
+          SafeDownloader.call(url: "https://sanjose.legistar.com/file.pdf", io:)
+        end
+        assert_not_kind_of SafeHttpClient::HttpServerError, error
+        assert_equal 403, error.status
+      end
+    end
+
     test "respects LEGISTAR_ATTACHMENT_ALLOWED_HOSTS env var" do
       ENV["LEGISTAR_ATTACHMENT_ALLOWED_HOSTS"] = "other.example.com,extra.example.com"
 
@@ -169,6 +191,12 @@ module Documents
 
     def self.fake_server_error
       response = Net::HTTPInternalServerError.new("1.1", "500", "Internal Server Error")
+      response.define_singleton_method(:read_body) { |&_block| }
+      response
+    end
+
+    def self.fake_client_error
+      response = Net::HTTPForbidden.new("1.1", "403", "Forbidden")
       response.define_singleton_method(:read_body) { |&_block| }
       response
     end

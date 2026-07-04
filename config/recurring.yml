@@ -14,6 +14,15 @@ production:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
 
+  # Active visibility for failed jobs. Mission Control (/jobs) shows failures
+  # only when someone looks; this fires a Sentry alert when the failed-
+  # execution backlog accumulates so a chronic ingestion/extraction breakage
+  # can't stall the pipeline silently. Recovery stays a human call via
+  # Mission Control. See CheckFailedJobsJob.
+  check_failed_jobs:
+    class: CheckFailedJobsJob
+    schedule: every hour at minute 5
+
   # Sync recent events from every active Legistar body. Cadence picks up
   # agenda amendments and newly added meetings within hours.
   sync_recent_events_all_bodies:

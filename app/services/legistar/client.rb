@@ -5,6 +5,46 @@ require "uri"
 
 module Legistar
   class Client
+    # Base class for all Legistar HTTP failures. Services and jobs can rescue
+    # this broadly; ApplicationJob retries the transient subclass below.
+    class Error < StandardError; end
+
+    # 5xx — upstream is temporarily broken. Retried by ApplicationJob.
+    class HttpServerError < Error
+      attr_reader :status, :url
+
+      def initialize(status:, url:)
+        @status = status
+        @url = url
+        super("Legistar request failed with status #{status} for #{url}")
+      end
+    end
+
+    # 4xx — the request itself is wrong (bad id, forbidden, gone). Not retried;
+    # retrying would keep failing the same way.
+    class HttpClientError < Error
+      attr_reader :status, :url
+
+      def initialize(status:, url:)
+        @status = status
+        @url = url
+        super("Legistar request failed with status #{status} for #{url}")
+      end
+    end
+
+    # Any other non-2xx status (1xx/3xx leaking through, non-standard codes).
+    # Treated as transient and retried so an unexpected response doesn't
+    # permanently lose a sync.
+    class HttpError < Error
+      attr_reader :status, :url
+
+      def initialize(status:, url:)
+        @status = status
+        @url = url
+        super("Legistar request failed with status #{status} for #{url}")
+      end
+    end
+
     DEFAULT_BASE_URL = "https://webapi.legistar.com/v1/sanjose"
     DEFAULT_SOURCE_SYSTEM = "legistar.sanjose"
     DEFAULT_OPEN_TIMEOUT = 5
@@ -57,6 +97,28 @@ module Legistar
 
     def matter_attachments(matter_id:)
       get("Matters/#{matter_id}/Attachments")
+    end
+
+    # Raise the appropriate Error subclass for a non-200 response. Callers
+    # that already branch on status can keep doing so; this consolidates the
+    # "is this transient?" classification in one place so ApplicationJob can
+    # retry 5xx without retrying permanent 4xx failures.
+    def assert_ok!(response)
+      status = response[:status]
+      return if status == 200
+
+      raise self.class.error_for(status, response[:request_url])
+    end
+
+    # Public so jobs that do their own HTTP (e.g.
+    # SyncRecentEventsForAllBodiesJob hitting /Bodies directly) can raise the
+    # same classified error without instantiating a client.
+    def self.error_for(status, url)
+      case status
+      when 500..599 then HttpServerError.new(status:, url:)
+      when 400..499 then HttpClientError.new(status:, url:)
+      else HttpError.new(status:, url:)
+      end
     end
 
     private

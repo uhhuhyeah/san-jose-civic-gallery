@@ -6,9 +6,8 @@ module Ingestion
     def self.call(event:, client: Legistar::Client.new, sync_matters: :deferred, matter_refresh_after: DEFAULT_MATTER_REFRESH_AFTER)
       source_system = event.source_system
       response = client.event_items(event_id: event.legistar_event_id)
-
-      unless response[:status] == 200
-        raise "Legistar EventItems request failed with status #{response[:status]} for #{response[:request_url]}"
+      if response[:status] != 200
+        raise Legistar::Client.error_for(response[:status], response[:request_url])
       end
 
       event_items = []

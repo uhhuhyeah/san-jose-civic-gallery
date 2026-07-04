@@ -4,9 +4,8 @@ module Ingestion
 
     def self.call(limit: 10, body_name: "City Council", client: Legistar::Client.new, sync_event_items: :deferred)
       response = client.recent_events(limit:, body_name:)
-
-      unless response[:status] == 200
-        raise "Legistar request failed with status #{response[:status]} for #{response[:request_url]}"
+      if response[:status] != 200
+        raise Legistar::Client.error_for(response[:status], response[:request_url])
       end
 
       events = []

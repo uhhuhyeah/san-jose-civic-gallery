@@ -44,7 +44,9 @@ module Documents
           redirect_url = resolve_redirect(original_url: url, response:, redirects_remaining:)
           probe(url: redirect_url, etag:, last_modified_at:, redirects_remaining: redirects_remaining - 1)
         else
-          raise HttpError, "HTTP #{response.code} from #{url}"
+          status = response.code.to_i
+          error_class = status.between?(500, 599) ? HttpServerError : HttpError
+          raise error_class.new("HTTP #{response.code} from #{url}", status: status)
         end
       end
     end

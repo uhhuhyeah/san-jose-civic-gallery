@@ -5,9 +5,8 @@ module Ingestion
     def self.call(matter:, client: Legistar::Client.new, import_files: :deferred)
       source_system = matter.source_system
       response = client.matter_attachments(matter_id: matter.legistar_matter_id)
-
-      unless response[:status] == 200
-        raise "Legistar MatterAttachments request failed with status #{response[:status]} for #{response[:request_url]}"
+      if response[:status] != 200
+        raise Legistar::Client.error_for(response[:status], response[:request_url])
       end
 
       attachments = []
