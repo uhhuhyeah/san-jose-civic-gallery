@@ -5,10 +5,6 @@ module Ingestion
     def self.call(matter_id:, client: Legistar::Client.new, sync_attachments: :deferred)
       response = client.matter(matter_id:)
 
-      unless response[:status] == 200
-        raise "Legistar Matter request failed with status #{response[:status]} for #{response[:request_url]}"
-      end
-
       matter, snapshot = PersistMatter.call(
         matter_payload: response.fetch(:payload),
         source_system: client.source_system,

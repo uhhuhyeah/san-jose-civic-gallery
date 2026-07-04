@@ -316,6 +316,15 @@ module DataHealth
       assert_not_equal first, build_snapshot.cache_key
     end
 
+    test "job_health returns green when no Solid Queue adapter" do
+      # In the test env, SolidQueue::FailedExecution may not exist.
+      # The class method should gracefully return zeroes.
+      health = Snapshot.job_health
+      assert_equal :green, health[:level]
+      assert_equal 0, health[:last_hour]
+      assert_equal 0, health[:last_24_hours]
+    end
+
     private
 
     def build_snapshot(**options)

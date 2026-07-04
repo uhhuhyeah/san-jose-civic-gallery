@@ -5,6 +5,29 @@ require "uri"
 
 module Legistar
   class Client
+    # Raised for non-2xx HTTP responses from the Legistar API.
+    # Transient server errors (5xx) should be retried; client errors
+    # (4xx like 404) are permanent and should not be retried.
+    class HTTPError < StandardError
+      attr_reader :status
+
+      def initialize(message = nil, status: nil)
+        super(message)
+        @status = status
+      end
+
+      def retryable?
+        status.to_i >= 500
+      end
+
+      def permanent?
+        status.to_i < 500
+      end
+    end
+
+    # Subclass for 5xx responses — retried by ApplicationJob via retry_on.
+    class TransientHTTPError < HTTPError; end
+
     DEFAULT_BASE_URL = "https://webapi.legistar.com/v1/sanjose"
     DEFAULT_SOURCE_SYSTEM = "legistar.sanjose"
     DEFAULT_OPEN_TIMEOUT = 5
@@ -87,11 +110,21 @@ module Legistar
         http.request(request)
       end
 
+      status = response.code.to_i
       body = response.body.presence || "[]"
+
+      unless status == 200
+        error_class = status >= 500 ? TransientHTTPError : HTTPError
+        raise error_class.new(
+          "Legistar #{path} returned #{status}: #{response.message} " \
+          "(#{uri})",
+          status: status
+        )
+      end
 
       {
         request_url: uri.to_s,
-        status: response.code.to_i,
+        status: status,
         fetched_at: Time.current,
         response_sha256: Digest::SHA256.hexdigest(body),
         payload: JSON.parse(body)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_10_190000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_03_173624) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -239,6 +239,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_10_190000) do
     t.datetime "updated_at", null: false
     t.index ["civic_jurisdiction_id", "period_start", "period_end"], name: "idx_civic_roundup_periods_unique", unique: true
     t.index ["civic_jurisdiction_id"], name: "index_civic_roundup_periods_on_civic_jurisdiction_id"
+  end
+
+  create_table "data_health_job_status_snapshots", force: :cascade do |t|
+    t.datetime "captured_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.integer "failed_jobs_last_24_hours", default: 0, null: false
+    t.integer "failed_jobs_last_hour", default: 0, null: false
+    t.index ["captured_at"], name: "index_data_health_job_status_snapshots_on_captured_at"
   end
 
   create_table "document_extracted_texts", force: :cascade do |t|

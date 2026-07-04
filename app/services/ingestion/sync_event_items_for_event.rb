@@ -7,10 +7,6 @@ module Ingestion
       source_system = event.source_system
       response = client.event_items(event_id: event.legistar_event_id)
 
-      unless response[:status] == 200
-        raise "Legistar EventItems request failed with status #{response[:status]} for #{response[:request_url]}"
-      end
-
       event_items = []
       snapshots = []
       seen_ids = []

@@ -6,10 +6,6 @@ module Ingestion
       source_system = matter.source_system
       response = client.matter_attachments(matter_id: matter.legistar_matter_id)
 
-      unless response[:status] == 200
-        raise "Legistar MatterAttachments request failed with status #{response[:status]} for #{response[:request_url]}"
-      end
-
       attachments = []
       snapshots = []
       seen_ids = []

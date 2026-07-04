@@ -132,5 +132,74 @@ module Legistar
       Net::HTTP.singleton_class.send(:remove_method, :start)
       Net::HTTP.define_singleton_method(:start, original_start)
     end
+
+    test "raises TransientHTTPError for 5xx responses" do
+      original_start = Net::HTTP.method(:start)
+      Net::HTTP.define_singleton_method(:start) do |*_args, **_kwargs, &block|
+        fake_http = Object.new
+        fake_http.define_singleton_method(:request) do |_req|
+          response = Net::HTTPServerError.new("1.1", "503", "Service Unavailable")
+          response.define_singleton_method(:body) { '{"error":"overloaded"}' }
+          response.define_singleton_method(:code) { "503" }
+          response
+        end
+        block.call(fake_http)
+      end
+
+      begin
+        error = assert_raises(Legistar::Client::TransientHTTPError) do
+          Client.new.event_items(event_id: 1)
+        end
+
+        assert_kind_of Legistar::Client::HTTPError, error
+        assert_equal 503, error.status
+        assert error.retryable?
+        assert_not error.permanent?
+      ensure
+        Net::HTTP.define_singleton_method(:start, original_start)
+      end
+    end
+
+    test "raises HTTPError (not retried) for 4xx responses" do
+      original_start = Net::HTTP.method(:start)
+      Net::HTTP.define_singleton_method(:start) do |*_args, **_kwargs, &block|
+        fake_http = Object.new
+        fake_http.define_singleton_method(:request) do |_req|
+          response = Net::HTTPNotFound.new("1.1", "404", "Not Found")
+          response.define_singleton_method(:body) { '{"error":"no such matter"}' }
+          response.define_singleton_method(:code) { "404" }
+          response
+        end
+        block.call(fake_http)
+      end
+
+      begin
+        error = assert_raises(Legistar::Client::HTTPError) do
+          Client.new.matter(matter_id: "2026-0000")
+        end
+
+        assert_equal 404, error.status
+        assert_not error.retryable?
+        assert error.permanent?
+        # 404 error is NOT a TransientHTTPError (so retry_on won't catch it)
+        assert_not_kind_of Legistar::Client::TransientHTTPError, error
+      ensure
+        Net::HTTP.define_singleton_method(:start, original_start)
+      end
+    end
+
+    test "HTTPError classes distinguish retryable from permanent" do
+      server_error = Legistar::Client::TransientHTTPError.new("oops", status: 502)
+      assert server_error.retryable?
+      assert_not server_error.permanent?
+      assert_kind_of Legistar::Client::TransientHTTPError, server_error
+      assert_kind_of Legistar::Client::HTTPError, server_error
+      assert_kind_of StandardError, server_error
+
+      client_error = Legistar::Client::HTTPError.new("oops", status: 404)
+      assert_not client_error.retryable?
+      assert client_error.permanent?
+      assert_not_kind_of Legistar::Client::TransientHTTPError, client_error
+    end
   end
 end

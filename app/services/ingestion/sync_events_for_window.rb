@@ -57,9 +57,6 @@ module Ingestion
           limit: @page_size,
           skip:
         )
-        unless response[:status] == 200
-          raise "Legistar Events window request failed with status #{response[:status]} for #{response[:request_url]}"
-        end
 
         payload = response.fetch(:payload)
         payload.each do |event_payload|

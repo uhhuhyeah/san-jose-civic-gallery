@@ -15,6 +15,48 @@ module DataHealth
     # Top N event bodies surfaced inline; the rest roll up into "other".
     EVENT_BODY_TOP_N = 3
 
+    class << self
+      # On-demand failed-job stats (not persisted). Returns
+      # { last_hour: Integer, last_24_hours: Integer, level: Symbol }.
+      def job_health
+        return { last_hour: 0, last_24_hours: 0, level: :green } unless defined?(SolidQueue::FailedExecution)
+        return { last_hour: 0, last_24_hours: 0, level: :green } unless solid_queue_failed_table_exists?
+
+        last_hour = SolidQueue::FailedExecution
+          .where(created_at: 1.hour.ago..)
+          .count
+        last_24_hours = SolidQueue::FailedExecution
+          .where(created_at: 24.hours.ago..)
+          .count
+
+        {
+          last_hour:,
+          last_24_hours:,
+          level: compute_level(last_hour)
+        }
+      rescue ActiveRecord::NoDatabaseError, ActiveRecord::ConnectionNotEstablished,
+             ActiveRecord::StatementInvalid
+        { last_hour: 0, last_24_hours: 0, level: :green }
+      end
+
+      private
+
+      def solid_queue_failed_table_exists?
+        connection = SolidQueue::FailedExecution.connection
+        connection.data_source_exists?(SolidQueue::FailedExecution.table_name)
+      rescue ActiveRecord::ConnectionNotEstablished
+        false
+      end
+
+      private
+
+      def compute_level(failed_last_hour)
+        return :green if failed_last_hour.zero?
+        return :amber if failed_last_hour <= 5
+        :red
+      end
+    end
+
     def initialize(jurisdiction:, now: Time.current)
       @jurisdiction = jurisdiction
       @now = now
