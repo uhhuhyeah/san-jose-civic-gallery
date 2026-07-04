@@ -75,4 +75,30 @@ class ApplicationJobTest < ActiveSupport::TestCase
     assert_nothing_raised { job_class.perform_now("gid://app/Civic::Matter/1") }
     assert_equal 0, job_class.queue_adapter.enqueued_jobs.count { |j| j["job_class"] == "TestStaleRecordJob" }
   end
+
+  test "discards a Simbli vendor anti-bot Block but retries a plain FetchError" do
+    blocked_job = Class.new(ApplicationJob) do
+      def self.name = "TestSimbliBlockedJob"
+
+      def perform(*)
+        raise Simbli::Client::BlockedError, "blocked by Akamai"
+      end
+    end
+
+    assert_nothing_raised { blocked_job.perform_now(1) }
+    # Discarded, not retried — a vendor block won't clear in seconds.
+    assert_equal 0, blocked_job.queue_adapter.enqueued_jobs.count { |j| j["job_class"] == "TestSimbliBlockedJob" }
+
+    fetch_job = Class.new(ApplicationJob) do
+      def self.name = "TestSimbliFetchJob"
+
+      def perform(*)
+        raise Simbli::Client::FetchError, "fetch exited 1: timeout"
+      end
+    end
+
+    assert_nothing_raised { fetch_job.perform_now(1) }
+    # A non-block fetch failure is transient and re-enqueues for retry.
+    assert_equal 1, fetch_job.queue_adapter.enqueued_jobs.count { |j| j["job_class"] == "TestSimbliFetchJob" }
+  end
 end

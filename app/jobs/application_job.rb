@@ -26,16 +26,31 @@ class ApplicationJob < ActiveJob::Base
 
   # Polynomially longer wait (≈ executions^4 with jitter, +2s floor). Five
   # attempts covers a multi-minute upstream hiccup without blocking the queue
-  # for hours. After exhaustion the block re-raises so Solid Queue records a
-  # FailedExecution (visible in Mission Control at /jobs) and sentry-rails
-  # captures it automatically — Mission Control only helps if someone looks,
-  # so the Sentry alert from CheckFailedJobsJob is the active signal.
+  # for hours. After exhaustion the block re-raises — this is what records a
+  # SolidQueue::FailedExecution (visible in Mission Control at /jobs) AND
+  # what lets sentry-rails capture the exception. Note: with a block, retry_on
+  # does NOT auto-raise, so removing the `raise error` below would silently
+  # swallow exhausted failures. The active alert signal is CheckFailedJobsJob;
+  # the sentry-rails capture is the per-failure fallback.
   retry_on(*TRANSIENT_ERRORS, wait: :polynomially_longer, attempts: 5) do |job, error|
     Rails.logger.warn(
       "ApplicationJob: #{job.class.name} exhausted 5 retries: " \
         "#{error.class}: #{error.message}"
     )
     raise error
+  end
+
+  # Vendor anti-bot blocks are not transient — retrying within seconds will
+  # keep hitting the same block and burn attempts for nothing. Discard so the
+  # operator sees it as a failed job (and via CheckFailedJobsJob) rather than
+  # churning. Declared after retry_on because rescue handlers are searched
+  # bottom-to-top: BlockedError (a FetchError subclass) matches this first and
+  # is discarded; a plain FetchError falls through to the retry above.
+  discard_on Simbli::Client::BlockedError do |job, error|
+    Rails.logger.warn(
+      "ApplicationJob: discarded #{job.class.name} blocked by vendor anti-bot: " \
+        "#{error.message}"
+    )
   end
 
   # Stale serialized records — the GlobalID-referenced model was deleted
