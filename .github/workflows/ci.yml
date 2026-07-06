@@ -135,3 +135,21 @@ jobs:
           name: screenshots
           path: ${{ github.workspace }}/tmp/screenshots
           if-no-files-found: ignore
+
+  production-image-smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Build production image
+        run: docker build -t san-jose-civic-gallery:ci .
+
+      - name: Smoke test PDF and OCR tools
+        run: |
+          docker run --rm --entrypoint bash san-jose-civic-gallery:ci -lc '
+            pdftotext -v
+            ocrmypdf --version
+            tesseract --list-langs | grep -E "^(eng|spa|vie)$"
+          '
