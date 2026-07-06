@@ -76,6 +76,18 @@ module Documents
       end
     end
 
+    test "raises when redirect chain exceeds the cap" do
+      redirect = SafeDownloaderTest.fake_redirect(location: "https://sanjose.legistar.com/next.pdf")
+
+      stub_http_with(redirect, redirect, redirect, redirect) do
+        io = StringIO.new
+
+        assert_raises(SafeDownloader::TooManyRedirectsError) do
+          SafeDownloader.call(url: "https://sanjose.legistar.com/View.ashx?M=F&ID=1", io:)
+        end
+      end
+    end
+
     test "rejects redirects to a disallowed host" do
       redirect = SafeDownloaderTest.fake_redirect(location: "https://evil.example.com/file.pdf")
 
@@ -84,6 +96,22 @@ module Documents
         assert_raises(SafeDownloader::DisallowedHostError) do
           SafeDownloader.call(url: "https://sanjose.legistar.com/View.ashx?M=F&ID=1", io:)
         end
+      end
+    end
+
+    test "streams response with missing Content-Length while enforcing byte cap" do
+      body = "streamed without declared length"
+
+      stub_http_with(SafeDownloaderTest.fake_success(
+        headers: { "Content-Type" => "application/pdf" },
+        chunks: [ body[0, 9], body[9..] ]
+      )) do
+        io = StringIO.new
+        result = SafeDownloader.call(url: "https://sanjose.legistar.com/file.pdf", io:)
+
+        assert_equal body, io.string
+        assert_equal body.bytesize, result.byte_size
+        assert_equal Digest::SHA256.hexdigest(body), result.checksum_sha256
       end
     end
 
