@@ -3,6 +3,7 @@ require "test_helper"
 module Public
   class MattersControllerTest < ActionDispatch::IntegrationTest
     setup do
+      PublicRateLimitedSearch::RATE_LIMIT_STORE.clear
       @event = Civic::Event.create!(
         legistar_event_id: 7622,
         body_name: "City Council",
@@ -543,6 +544,83 @@ module Public
       assert_response :success
       assert_select ".atlas-matters-banner strong", text: "Housing"
       assert_select ".atlas-matters-banner a.atlas-matters-banner-clear[href=?]", public_matters_path, text: "View all matters"
+    end
+
+    # ---- Rate limiting (P0 item 5) ----
+
+    test "repeated matters search requests eventually return 429" do
+      PublicRateLimitedSearch::SEARCH_RATE_LIMIT.times do
+        get public_matters_url(q: "agreement")
+        assert_response :success
+      end
+
+      get public_matters_url(q: "agreement")
+      assert_response :too_many_requests
+    end
+
+    test "matters index browsing without a search query is not throttled" do
+      (PublicRateLimitedSearch::SEARCH_RATE_LIMIT + 5).times do
+        get public_matters_url
+        assert_response :success
+      end
+    end
+
+    test "rate-limited matters search still returns a 304 ETag on cache hits" do
+      get public_matters_url(q: "agreement")
+      assert_response :success
+      etag = response.headers["ETag"]
+
+      get public_matters_url(q: "agreement"), headers: { "If-None-Match" => etag }
+      assert_response :not_modified
+    end
+
+    # ---- Cloudflare-aware identity (P0 item 5 follow-up) ----
+
+    test "rate limit uses CF-Connecting-IP when present" do
+      PublicRateLimitedSearch::SEARCH_RATE_LIMIT.times do
+        get public_matters_url(q: "agreement"),
+            headers: { "CF-Connecting-IP" => "203.0.113.1" },
+            env: { "REMOTE_ADDR" => "104.22.20.83" }
+        assert_response :success
+      end
+
+      get public_matters_url(q: "agreement"),
+          headers: { "CF-Connecting-IP" => "203.0.113.1" },
+          env: { "REMOTE_ADDR" => "104.22.20.83" }
+      assert_response :too_many_requests
+    end
+
+    test "different CF-Connecting-IP values get separate buckets despite same REMOTE_ADDR" do
+      PublicRateLimitedSearch::SEARCH_RATE_LIMIT.times do
+        get public_matters_url(q: "agreement"),
+            headers: { "CF-Connecting-IP" => "203.0.113.1" },
+            env: { "REMOTE_ADDR" => "104.22.20.83" }
+        assert_response :success
+      end
+
+      # Same edge IP, different real client — must not share the exhausted bucket.
+      get public_matters_url(q: "agreement"),
+          headers: { "CF-Connecting-IP" => "203.0.113.2" },
+          env: { "REMOTE_ADDR" => "104.22.20.83" }
+      assert_response :success
+
+      # The original client's bucket is still exhausted.
+      get public_matters_url(q: "agreement"),
+          headers: { "CF-Connecting-IP" => "203.0.113.1" },
+          env: { "REMOTE_ADDR" => "104.22.20.83" }
+      assert_response :too_many_requests
+    end
+
+    test "without CF-Connecting-IP, falls back to request.remote_ip" do
+      PublicRateLimitedSearch::SEARCH_RATE_LIMIT.times do
+        get public_matters_url(q: "agreement"),
+            env: { "REMOTE_ADDR" => "104.22.20.83" }
+        assert_response :success
+      end
+
+      get public_matters_url(q: "agreement"),
+          env: { "REMOTE_ADDR" => "104.22.20.83" }
+      assert_response :too_many_requests
     end
   end
 end

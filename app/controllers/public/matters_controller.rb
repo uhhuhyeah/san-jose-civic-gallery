@@ -1,5 +1,7 @@
 module Public
   class MattersController < ApplicationController
+    include PublicRateLimitedSearch
+
     def index
       @query = params[:q].to_s.strip
       @theme = normalized_theme
