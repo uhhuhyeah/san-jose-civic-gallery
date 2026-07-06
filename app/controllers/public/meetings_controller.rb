@@ -1,5 +1,7 @@
 module Public
   class MeetingsController < ApplicationController
+    include PublicRateLimitedSearch
+
     def index
       @month = parsed_month
       @query = params[:q].to_s.strip

@@ -3,6 +3,7 @@ require "test_helper"
 module Public
   class MeetingsControllerTest < ActionDispatch::IntegrationTest
     setup do
+      PublicRateLimitedSearch::RATE_LIMIT_STORE.clear
       @may_event = Civic::Event.create!(
         legistar_event_id: 7621,
         body_name: "City Council",
@@ -181,6 +182,34 @@ module Public
 
       assert_response :success
       assert_select ".atlas-meetings-count strong", text: "1"
+    end
+
+    # ---- Rate limiting (P0 item 5) ----
+
+    test "repeated meetings search requests eventually return 429" do
+      PublicRateLimitedSearch::SEARCH_RATE_LIMIT.times do
+        get public_meetings_url(month: "2026-05", q: "library")
+        assert_response :success
+      end
+
+      get public_meetings_url(month: "2026-05", q: "library")
+      assert_response :too_many_requests
+    end
+
+    test "meetings index browsing without a search query is not throttled" do
+      (PublicRateLimitedSearch::SEARCH_RATE_LIMIT + 5).times do
+        get public_meetings_url(month: "2026-05")
+        assert_response :success
+      end
+    end
+
+    test "rate-limited meetings search still returns a 304 ETag on cache hits" do
+      get public_meetings_url(month: "2026-05", q: "library")
+      assert_response :success
+      etag = response.headers["ETag"]
+
+      get public_meetings_url(month: "2026-05", q: "library"), headers: { "If-None-Match" => etag }
+      assert_response :not_modified
     end
   end
 end
