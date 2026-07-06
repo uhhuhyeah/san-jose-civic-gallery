@@ -71,3 +71,9 @@ production:
     class: Ingestion::Simbli::SyncMeetingsJob
     args: [ { limit: 5 } ]
     schedule: every day at 5:30am
+
+  # Check for accumulated failed jobs and alert via Sentry if the threshold
+  # is exceeded. Threshold and window are configurable via environment variables.
+  alert_on_failed_jobs:
+    class: Operations::AlertOnFailedJobsJob
+    schedule: every hour at minute 18
