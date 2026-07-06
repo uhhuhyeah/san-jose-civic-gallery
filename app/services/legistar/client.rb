@@ -59,6 +59,10 @@ module Legistar
       get("Matters/#{matter_id}/Attachments")
     end
 
+    def bodies
+      get("Bodies")
+    end
+
     private
 
     def escape_odata_string(value)
