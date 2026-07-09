@@ -31,6 +31,7 @@ module Public
         agenda_number: "3.4",
         title: "Approve library outreach agreement"
       )
+      @may_event.update_searchable_text!
       matter.all_attachments.create!(legistar_matter_attachment_id: 39135, name: "Agreement")
     end
 

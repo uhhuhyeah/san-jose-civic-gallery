@@ -5,6 +5,7 @@ module Civic
     include JurisdictionScoped
     include SourceIdentified
     include BumpsJurisdictionDataVersion
+    include SearchableText
 
     bumps_jurisdiction_data_version
 
@@ -25,10 +26,9 @@ module Civic
       normalized = query.to_s.strip
       next all if normalized.blank?
 
-      pattern = "%#{sanitize_sql_like(normalized)}%"
       where(
-        "matter_file ILIKE :pattern OR title ILIKE :pattern OR name ILIKE :pattern",
-        pattern:
+        "to_tsvector('english', coalesce(civic_matters.searchable_text, '')) @@ plainto_tsquery('english', ?)",
+        normalized
       )
     }
 
@@ -38,6 +38,14 @@ module Civic
 
     def descriptive_title
       title.presence || name.presence
+    end
+
+    def compute_searchable_text
+      [ matter_file, title, name ].compact.join(" ")
+    end
+
+    def searchable_text_watched_columns
+      [ "matter_file", "title", "name" ]
     end
   end
 end

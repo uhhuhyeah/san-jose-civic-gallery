@@ -5,6 +5,7 @@ module Civic
     include JurisdictionScoped
     include SourceIdentified
     include BumpsJurisdictionDataVersion
+    include SearchableText
 
     bumps_jurisdiction_data_version
 
@@ -41,6 +42,20 @@ module Civic
       return title if title.present? && title != body_name
 
       "#{body_name.presence || "Meeting"} meeting"
+    end
+
+    def compute_searchable_text
+      event_items_text = Civic::EventItem
+        .where(civic_event_id: id)
+        .current_from_source
+        .pluck(:title, :matter_file)
+        .flatten
+        .compact
+      [ title, body_name, event_items_text ].flatten.compact.join(" ")
+    end
+
+    def searchable_text_watched_columns
+      [ "title", "body_name" ]
     end
   end
 end

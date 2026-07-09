@@ -52,6 +52,7 @@ module Ingestion
         mode: sync_matters
       )
 
+      event.update_searchable_text!
       Result.new(event_items:, snapshots:)
     end
 

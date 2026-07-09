@@ -12,8 +12,8 @@ module Public
         jurisdiction:
       )
 
-      assert_includes matters_key, "public/matters-index/v2/sanjose"
-      assert_includes meetings_key, "public/meetings/month-v2/sanjose/2026-05"
+      assert_includes matters_key, "public/matters-index/v3/sanjose"
+      assert_includes meetings_key, "public/meetings/month-v3/sanjose/2026-05"
       assert_no_match(/Library Outreach|City Council/, matters_key)
       assert_no_match(/Library Outreach|City Council/, meetings_key)
     end
