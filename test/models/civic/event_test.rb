@@ -71,5 +71,37 @@ module Civic
       event.title = "Budget study session"
       assert_equal "Budget study session", event.listing_title
     end
+
+    test "compute_searchable_text includes event items and linked matter data" do
+      event = Event.create!(legistar_event_id: 99010, event_date: Date.new(2026, 6, 1), title: "Council meeting", body_name: "City Council")
+      matter = Civic::Matter.create!(legistar_matter_id: 99011, matter_file: "26-900", title: "Budget allocation", name: "Fiscal year budget")
+      event.event_items.create!(
+        legistar_event_item_id: 3001,
+        civic_matter_id: matter.id,
+        title: "Approve budget",
+        matter_file: "26-900"
+      )
+      # Create a second event_item without a linked matter (only denormalized matter_file)
+      event.event_items.create!(
+        legistar_event_item_id: 3002,
+        title: "Public comment",
+        matter_file: "26-901"
+      )
+
+      text = event.compute_searchable_text
+
+      # Event's own fields
+      assert_includes text, "Council meeting"
+      assert_includes text, "City Council"
+      # Event item titles
+      assert_includes text, "Approve budget"
+      assert_includes text, "Public comment"
+      # Event item matter_files (denormalized)
+      assert_includes text, "26-900"
+      assert_includes text, "26-901"
+      # Linked matter title and name (the new addition in Fix 1)
+      assert_includes text, "Budget allocation"
+      assert_includes text, "Fiscal year budget"
+    end
   end
 end

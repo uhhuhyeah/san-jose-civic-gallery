@@ -51,7 +51,19 @@ module Civic
         .pluck(:title, :matter_file)
         .flatten
         .compact
-      [ title, body_name, event_items_text ].flatten.compact.join(" ")
+
+      matter_ids = Civic::EventItem
+        .where(civic_event_id: id)
+        .current_from_source
+        .pluck(:civic_matter_id)
+        .compact
+      linked_matters_text = if matter_ids.any?
+        Civic::Matter.where(id: matter_ids).pluck(:title, :name, :matter_file).flatten.compact
+      else
+        []
+      end
+
+      [ title, body_name, event_items_text, linked_matters_text ].flatten.compact.join(" ")
     end
 
     def searchable_text_watched_columns

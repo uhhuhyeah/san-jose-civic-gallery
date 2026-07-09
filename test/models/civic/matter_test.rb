@@ -61,5 +61,28 @@ module Civic
       assert_equal Matter.count, Matter.search("   ").count
       assert_equal Matter.count, Matter.search(nil).count
     end
+
+    test "after_save persists searchable_text from matter_file title and name" do
+      matter = Matter.create!(legistar_matter_id: 88020, matter_file: "26-800", title: "Zoning amendment")
+      assert_equal "26-800 Zoning amendment", matter.reload.searchable_text
+
+      matter.update!(name: "Downtown rezoning")
+      assert_equal "26-800 Zoning amendment Downtown rezoning", matter.reload.searchable_text
+    end
+
+    test "search uses stemming so plurals and related forms match" do
+      # "libraries" should stem to "librari" and match "Library"
+      matter = Matter.create!(legistar_matter_id: 88021, matter_file: "26-801", title: "Library agreement")
+      Matter.create!(legistar_matter_id: 88022, matter_file: "26-802", title: "Parking regulations")
+
+      # Searching for plural "libraries" should find "Library agreement"
+      results = Matter.search("libraries")
+      assert_includes results.pluck(:id), matter.id
+      assert_equal 1, results.count, "Stemming should match 'libraries' to 'Library'"
+
+      # Searching for "park" should find "Parking" (same stem)
+      results = Matter.search("park")
+      refute_empty results, "Stemming should match 'park' to 'Parking'"
+    end
   end
 end
