@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_10_190000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_08_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -102,6 +102,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_10_190000) do
     t.string "minutes_file_uri"
     t.string "minutes_status_name"
     t.string "raw_source_digest"
+    t.text "searchable_text"
     t.string "source_event_id", null: false
     t.datetime "source_last_modified_at"
     t.string "source_meeting_type"
@@ -110,6 +111,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_10_190000) do
     t.string "source_system", default: "legistar.sanjose", null: false
     t.string "title"
     t.datetime "updated_at", null: false
+    t.index "to_tsvector('english'::regconfig, COALESCE(searchable_text, ''::text))", name: "idx_civic_events_searchable_text", using: :gin
     t.index ["civic_jurisdiction_id", "body_name", "event_date"], name: "idx_civic_events_jurisdiction_body_date"
     t.index ["civic_jurisdiction_id"], name: "index_civic_events_on_civic_jurisdiction_id"
     t.index ["event_date"], name: "index_civic_events_on_event_date"
@@ -216,12 +218,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_10_190000) do
     t.date "passed_date"
     t.string "raw_source_digest"
     t.string "requester"
+    t.text "searchable_text"
     t.datetime "source_last_modified_at"
     t.string "source_matter_id", null: false
     t.string "source_system", default: "legistar.sanjose", null: false
     t.text "title"
     t.datetime "updated_at", null: false
     t.string "version"
+    t.index "to_tsvector('english'::regconfig, COALESCE(searchable_text, ''::text))", name: "idx_civic_matters_searchable_text", using: :gin
     t.index ["civic_jurisdiction_id"], name: "index_civic_matters_on_civic_jurisdiction_id"
     t.index ["last_source_snapshot_id"], name: "index_civic_matters_on_last_source_snapshot_id"
     t.index ["matter_file"], name: "index_civic_matters_on_matter_file"

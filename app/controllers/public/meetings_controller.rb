@@ -36,20 +36,10 @@ module Public
     end
 
     def apply_query(scope)
-      pattern = "%#{Civic::Event.sanitize_sql_like(@query)}%"
-      scope
-        .left_joins(event_items: :matter)
-        .where(
-          "civic_events.title ILIKE :pattern OR " \
-          "civic_events.body_name ILIKE :pattern OR " \
-          "civic_event_items.title ILIKE :pattern OR " \
-          "civic_event_items.matter_file ILIKE :pattern OR " \
-          "civic_matters.matter_file ILIKE :pattern OR " \
-          "civic_matters.title ILIKE :pattern OR " \
-          "civic_matters.name ILIKE :pattern",
-          pattern:
-        )
-        .distinct
+      scope.where(
+        "to_tsvector('english', coalesce(civic_events.searchable_text, '')) @@ plainto_tsquery('english', ?)",
+        @query
+      )
     end
 
     def parsed_month
@@ -87,7 +77,14 @@ module Public
 
     def cached_event_ids
       Rails.cache.fetch([ meetings_index_cache_version, "event-ids" ], expires_in: INDEX_CACHE_TTL) do
-        filtered_events.recent_first.limit(100).map(&:id)
+        scope = filtered_events
+        scope = if @query.present?
+          rank_sql = Arel.sql("ts_rank(to_tsvector('english', coalesce(civic_events.searchable_text, '')), plainto_tsquery('english', #{Civic::Event.connection.quote(@query)})) DESC")
+          scope.reorder(rank_sql, "civic_events.event_date DESC", "civic_events.legistar_event_id DESC")
+        else
+          scope.recent_first
+        end
+        scope.limit(100).map(&:id)
       end
     end
 

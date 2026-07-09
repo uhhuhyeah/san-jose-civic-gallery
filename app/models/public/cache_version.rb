@@ -33,7 +33,7 @@ module Public
 
       def meetings_index(month:, query:, body_name:, jurisdiction:)
         compose(
-          "public/meetings/month-v2",
+          "public/meetings/month-v3",
           jurisdiction.slug,
           month.strftime("%Y-%m"),
           query_digest(query),
@@ -64,7 +64,7 @@ module Public
 
       def matters_index(query:, jurisdiction:, theme: nil)
         compose(
-          "public/matters-index/v2",
+          "public/matters-index/v3",
           jurisdiction.slug,
           query_digest(query),
           value_digest(theme),

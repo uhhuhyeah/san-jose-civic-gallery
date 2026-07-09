@@ -29,12 +29,15 @@ module Ingestion
     end
 
     def self.link_event_items!(matter:)
-      Civic::EventItem
-        .where(source_system: matter.source_system, matter_id: matter.legistar_matter_id)
-        .update_all(
-          civic_matter_id: matter.id,
-          updated_at: Time.current
-        )
+      scope = Civic::EventItem.where(source_system: matter.source_system, matter_id: matter.legistar_matter_id)
+      affected_event_ids = scope.distinct.pluck(:civic_event_id)
+
+      scope.update_all(
+        civic_matter_id: matter.id,
+        updated_at: Time.current
+      )
+
+      Civic::Event.where(id: affected_event_ids).find_each(&:update_searchable_text!)
     end
     private_class_method :link_event_items!
   end

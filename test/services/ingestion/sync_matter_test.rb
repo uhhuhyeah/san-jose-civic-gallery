@@ -43,6 +43,13 @@ module Ingestion
       @event_item.reload
       assert_equal result.matter.id, @event_item.civic_matter_id
       assert_enqueued_jobs 0
+
+      # Verify the event's searchable_text now includes the linked matter's data
+      event = @event_item.reload.event
+      assert_includes event.searchable_text, "Agreement approval",
+        "Event searchable_text should include linked matter title after SyncMatter refreshes it"
+      assert_includes event.searchable_text, "26-575",
+        "Event searchable_text should include linked matter file"
     end
 
     test "does not link event items from a different source_system" do

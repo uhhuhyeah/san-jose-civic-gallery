@@ -170,7 +170,12 @@ module Public
           .limit(50)
           .pluck(:id)
       else
-        scope.recent_first.limit(50).pluck(:id)
+        if query.present?
+          rank_sql = Arel.sql("ts_rank(to_tsvector('english', coalesce(civic_matters.searchable_text, '')), plainto_tsquery('english', #{Civic::Matter.connection.quote(query)})) DESC")
+          scope.reorder(rank_sql, "civic_matters.agenda_date DESC", "civic_matters.intro_date DESC", "civic_matters.legistar_matter_id DESC").limit(50).pluck(:id)
+        else
+          scope.recent_first.limit(50).pluck(:id)
+        end
       end
     end
 
