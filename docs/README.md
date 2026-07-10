@@ -20,7 +20,7 @@ This repository is intentionally documented in a compact way so contributors and
   reconciliation workflow
 - `generated-summaries.md`: operator workflow for creating generated
   attachment summaries from extracted text
-- `semantic-search-plan.md`: maintainer guide for semantic search, including
+- `semantic-search.md`: maintainer guide for semantic search, including
   embedding backfills, tuning levers, smoke tests, and limitations
 - `background-queues.md`: Solid Queue worker responsibilities and why
   long-running work is isolated by queue
