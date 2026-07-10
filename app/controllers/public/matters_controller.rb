@@ -1,3 +1,5 @@
+require "set"
+
 module Public
   class MattersController < ApplicationController
     include PublicRateLimitedSearch
@@ -249,4 +251,3 @@ module Public
     end
   end
 end
-require "set"
