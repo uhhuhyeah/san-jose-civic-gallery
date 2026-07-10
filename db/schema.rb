@@ -10,9 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_08_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_09_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+  enable_extension "vector"
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
@@ -304,6 +305,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_08_120000) do
     t.index ["source_system", "resource_type", "source_id"], name: "idx_source_snapshots_identity"
   end
 
+  create_table "search_embeddings", force: :cascade do |t|
+    t.integer "chunk_index"
+    t.bigint "civic_jurisdiction_id", null: false
+    t.string "content_sha256", null: false
+    t.datetime "created_at", null: false
+    t.datetime "embedded_at"
+    t.vector "embedding", limit: 1536
+    t.integer "embedding_dimensions", null: false
+    t.string "embedding_model", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.bigint "result_record_id", null: false
+    t.string "result_record_type", null: false
+    t.string "source_kind", null: false
+    t.bigint "source_record_id", null: false
+    t.string "source_record_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["civic_jurisdiction_id"], name: "idx_search_embeddings_jurisdiction"
+    t.index ["civic_jurisdiction_id"], name: "index_search_embeddings_on_civic_jurisdiction_id"
+    t.index ["result_record_type", "result_record_id"], name: "idx_search_embeddings_result"
+    t.index ["source_record_type", "source_record_id", "source_kind", "chunk_index", "embedding_model", "content_sha256"], name: "idx_search_embeddings_idempotency", unique: true
+    t.index ["source_record_type", "source_record_id"], name: "idx_search_embeddings_source"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "civic_event_items", "civic_events"
@@ -321,4 +345,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_08_120000) do
   add_foreign_key "civic_matters", "ingestion_source_snapshots", column: "last_source_snapshot_id", on_delete: :nullify
   add_foreign_key "civic_roundup_periods", "civic_jurisdictions"
   add_foreign_key "document_extracted_texts", "civic_matter_attachments"
+  add_foreign_key "search_embeddings", "civic_jurisdictions"
 end

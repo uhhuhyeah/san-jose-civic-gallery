@@ -208,6 +208,8 @@ GEM
       stimulus-rails
       turbo-rails
     msgpack (1.8.3)
+    neighbor (1.2.0)
+      activerecord (>= 7.2)
     net-imap (0.6.4.1)
       date
       net-protocol
@@ -258,6 +260,7 @@ GEM
     pg (1.6.3-x86_64-darwin)
     pg (1.6.3-x86_64-linux)
     pg (1.6.3-x86_64-linux-musl)
+    pgvector (0.3.3)
     pp (0.6.3)
       prettyprint
     prettyprint (0.2.0)
@@ -501,7 +504,9 @@ DEPENDENCIES
   jbuilder
   kamal
   mission_control-jobs
+  neighbor
   pg (~> 1.1)
+  pgvector
   propshaft
   puma (>= 5.0)
   rails (~> 8.1.3)
