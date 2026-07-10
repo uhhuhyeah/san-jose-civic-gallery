@@ -1,3 +1,4 @@
+require "digest"
 require "test_helper"
 
 module Public
@@ -621,6 +622,281 @@ module Public
       get public_matters_url(q: "agreement"),
           env: { "REMOTE_ADDR" => "104.22.20.83" }
       assert_response :too_many_requests
+    end
+
+    # ---- Semantic search (Phase 2) ----
+
+    test "semantic search is not used when SEMANTIC_SEARCH_ENABLED is unset" do
+      # Default: SEMANTIC_SEARCH_ENABLED is not "true"
+      with_env("SEMANTIC_SEARCH_ENABLED", nil) do
+        get public_matters_url(q: "agreement")
+        assert_response :success
+        assert_includes response.body, "26-575"
+        # No concept-match label
+        assert_select ".atlas-matter-row-semantic", count: 0
+      end
+    end
+
+    test "semantic search adds concept-match label when enabled" do
+      # We need to stub the embedding client so it doesn't hit the API
+      # Create a matter that won't match via keyword
+      semantic_matter = Civic::Matter.create!(
+        legistar_matter_id: 99_100,
+        matter_file: "26-900",
+        title: "Unrelated zoning variance"
+      )
+      semantic_attachment = semantic_matter.all_attachments.create!(
+        legistar_matter_attachment_id: 99_100,
+        name: "Zoning Analysis.pdf"
+      )
+      semantic_artifact = semantic_attachment.generated_artifacts.create!(
+        source_artifact: nil,
+        kind: "attachment_summary",
+        status: "succeeded",
+        model_identifier: "test-model",
+        prompt_version: "test-v1",
+        input_sha256: "semantic-test",
+        content: {
+          "summary" => "Housing density and affordability analysis.",
+          "key_points" => [ "Housing policy" ],
+          "limitations" => [ "Generated from extracted text" ],
+          "document_status" => "final"
+        }
+      )
+      Search::Embedding.create!(
+        civic_jurisdiction: Civic::Jurisdiction.first,
+        source_record: semantic_artifact,
+        result_record: semantic_matter,
+        source_kind: "attachment_summary",
+        content_sha256: Digest::SHA256.hexdigest("semantic-test"),
+        embedding_model: "text-embedding-3-small",
+        embedding_dimensions: 1536,
+        embedding: [ 0.1 ] * 1536,
+        metadata: { artifact_id: semantic_artifact.id }
+      )
+
+      fake_client = fake_embedding_client([ 0.1 ] * 1536)
+
+      with_embedding_client(fake_client) do
+        with_env("SEMANTIC_SEARCH_ENABLED", "true") do
+          get public_matters_url(q: "housing affordability")
+          assert_response :success
+
+          # The semantic-only matter should appear
+          assert_includes response.body, "26-900"
+          # It should have the concept-match label
+          assert_select ".atlas-matter-row-semantic", count: 1
+          assert_select ".atlas-matter-row-semantic-label", text: "Concept match"
+        end
+      end
+    end
+
+    test "semantic search preserves existing keyword results" do
+      semantic_matter = Civic::Matter.create!(
+        legistar_matter_id: 99_101,
+        matter_file: "26-901",
+        title: "Unrelated zoning"
+      )
+      semantic_attachment = semantic_matter.all_attachments.create!(
+        legistar_matter_attachment_id: 99_101,
+        name: "Analysis.pdf"
+      )
+      semantic_artifact = semantic_attachment.generated_artifacts.create!(
+        source_artifact: nil,
+        kind: "attachment_summary",
+        status: "succeeded",
+        model_identifier: "test-model",
+        prompt_version: "test-v1",
+        input_sha256: "semantic-test-2",
+        content: { "summary" => "Housing affordability." }
+      )
+      Search::Embedding.create!(
+        civic_jurisdiction: Civic::Jurisdiction.first,
+        source_record: semantic_artifact,
+        result_record: semantic_matter,
+        source_kind: "attachment_summary",
+        content_sha256: Digest::SHA256.hexdigest("semantic-test-2"),
+        embedding_model: "text-embedding-3-small",
+        embedding_dimensions: 1536,
+        embedding: [ 0.1 ] * 1536,
+        metadata: {}
+      )
+
+      fake_client = fake_embedding_client([ 0.1 ] * 1536)
+
+      with_embedding_client(fake_client) do
+        with_env("SEMANTIC_SEARCH_ENABLED", "true") do
+          get public_matters_url(q: "agreement")
+          assert_response :success
+
+          # Original keyword match still appears
+          assert_includes response.body, "26-575"
+          assert_includes response.body, "Agreement approval"
+          # Semantic-only match also appears
+          assert_includes response.body, "26-901"
+        end
+      end
+    end
+
+    test "semantic search falls back to keyword-only on client failure" do
+      failing_client = fake_embedding_client(nil)
+      failing_client.define_singleton_method(:embed) do |_input|
+        raise Search::EmbeddingClient::RequestError, "API timeout"
+      end
+
+      with_embedding_client(failing_client) do
+        with_env("SEMANTIC_SEARCH_ENABLED", "true") do
+          get public_matters_url(q: "agreement")
+          assert_response :success
+          assert_includes response.body, "26-575"
+          # No semantic label since nothing matched
+          assert_select ".atlas-matter-row-semantic", count: 0
+        end
+      end
+    end
+
+    test "semantic search finds matters through event summaries" do
+      event = Civic::Event.create!(
+        legistar_event_id: 88_888,
+        body_name: "City Council",
+        title: "Housing budget hearing",
+        event_date: Date.new(2026, 6, 15)
+      )
+      event.event_items.create!(
+        legistar_event_item_id: 88_888,
+        civic_matter_id: @matter.id,
+        matter_id: @matter.legistar_matter_id,
+        agenda_sequence: 2,
+        agenda_number: "2.1",
+        title: "Budget hearing item"
+      )
+      event_artifact = Generated::Artifact.create!(
+        target: event,
+        source_artifact: nil,
+        kind: "event_summary",
+        status: "succeeded",
+        model_identifier: "test-model",
+        prompt_version: "test-v1",
+        input_sha256: "controller-event-digest",
+        content: {
+          "summary" => "Council discussed housing budget.",
+          "key_topics" => [ "Housing funding" ]
+        }
+      )
+      Search::Embedding.create!(
+        civic_jurisdiction: Civic::Jurisdiction.first,
+        source_record: event_artifact,
+        result_record: event,
+        source_kind: "event_summary",
+        content_sha256: Digest::SHA256.hexdigest("controller-event-digest"),
+        embedding_model: "text-embedding-3-small",
+        embedding_dimensions: 1536,
+        embedding: [ 0.1 ] * 1536,
+        metadata: {}
+      )
+
+      fake_client = fake_embedding_client([ 0.1 ] * 1536)
+
+      with_embedding_client(fake_client) do
+        with_env("SEMANTIC_SEARCH_ENABLED", "true") do
+          get public_matters_url(q: "housing budget")
+          assert_response :success
+
+          # The matter linked to the event should appear
+          assert_includes response.body, "26-575"
+          # The concept-match label should appear since this is a semantic match
+          assert_select ".atlas-matter-row-semantic", count: 1
+          assert_select ".atlas-matter-row-semantic-label", text: "Concept match"
+        end
+      end
+    end
+
+    test "semantic search filters by theme when theme param is present" do
+      thematic_matter = Civic::Matter.create!(
+        legistar_matter_id: 99_200,
+        matter_file: "26-910",
+        title: "Housing density study"
+      )
+      thematic_matter.themes.create!(theme_slug: "housing", rank: 1)
+
+      non_thematic_matter = Civic::Matter.create!(
+        legistar_matter_id: 99_201,
+        matter_file: "26-911",
+        title: "Transportation plan"
+      )
+      non_thematic_matter.themes.create!(theme_slug: "transportation", rank: 1)
+
+      # Create attachment_summary embeddings for both matters
+      [ thematic_matter, non_thematic_matter ].each do |m|
+        att = m.all_attachments.create!(
+          legistar_matter_attachment_id: m.legistar_matter_id,
+          name: "Attachment for #{m.matter_file}"
+        )
+        art = att.generated_artifacts.create!(
+          source_artifact: nil,
+          kind: "attachment_summary",
+          status: "succeeded",
+          model_identifier: "test-model",
+          prompt_version: "test-v1",
+          input_sha256: "theme-#{m.id}",
+          content: { "summary" => "Content about #{m.title}" }
+        )
+        Search::Embedding.create!(
+          civic_jurisdiction: Civic::Jurisdiction.first,
+          source_record: art,
+          result_record: m,
+          source_kind: "attachment_summary",
+          content_sha256: Digest::SHA256.hexdigest("theme-#{m.id}"),
+          embedding_model: "text-embedding-3-small",
+          embedding_dimensions: 1536,
+          embedding: [ 0.1 ] * 1536,
+          metadata: {}
+        )
+      end
+
+      fake_client = fake_embedding_client([ 0.1 ] * 1536)
+
+      with_embedding_client(fake_client) do
+        with_env("SEMANTIC_SEARCH_ENABLED", "true") do
+          get public_matters_url(q: "content", theme: "housing")
+          assert_response :success
+
+          # Should show the housing-themed matter
+          assert_includes response.body, "26-910"
+          # Should NOT show the transportation-themed matter
+          assert_not_includes response.body, "26-911"
+        end
+      end
+    end
+
+    private
+
+    def fake_embedding_client(vector)
+      client = Search::EmbeddingClient.new(api_key: "test-key")
+      client.define_singleton_method(:embed) do |_input|
+        Search::EmbeddingClient::Response.new(
+          vector: vector,
+          model_name: "text-embedding-3-small",
+          usage_metadata: {}
+        )
+      end
+      client
+    end
+
+    def with_embedding_client(fake_client)
+      original = MattersController.semantic_search_client_factory
+      MattersController.semantic_search_client_factory = -> { fake_client }
+      yield
+    ensure
+      MattersController.semantic_search_client_factory = original
+    end
+
+    def with_env(key, value)
+      original = ENV[key]
+      ENV[key] = value
+      yield
+    ensure
+      ENV[key] = original
     end
   end
 end

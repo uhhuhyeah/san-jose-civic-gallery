@@ -1,6 +1,11 @@
+require "set"
+
 module Public
   class MattersController < ApplicationController
     include PublicRateLimitedSearch
+
+    # Override in tests to inject a fake embedding client.
+    class_attribute :semantic_search_client_factory, default: -> { Search::EmbeddingClient.new }
 
     def index
       @query = params[:q].to_s.strip
@@ -10,6 +15,9 @@ module Public
 
       ids = cached_index_ids
       @document_matches = document_matches_for(ids[:document_match_ids])
+      @semantic_matches = ids[:semantic_matches] || []
+      @semantic_match_by_matter_id = @semantic_matches.index_by(&:matter_id)
+
       @matters = records_in_cached_order(ids[:matter_ids], Civic::Matter.for_jurisdiction(current_jurisdiction).includes(:attachments, :themes))
       @document_matches_by_matter_id = @document_matches.group_by { |match| match.matter_attachment.matter.id }
     end
@@ -101,7 +109,28 @@ module Public
     end
 
     def matters_index_cache_version
-      @matters_index_cache_version ||= Public::CacheVersion.matters_index(query: @query, theme: @theme, jurisdiction: current_jurisdiction)
+      @matters_index_cache_version ||= Public::CacheVersion.matters_index(
+        query: @query, theme: @theme, jurisdiction: current_jurisdiction
+      ) + "/#{semantic_search_config_digest}"
+    end
+
+    def semantic_search_enabled?
+      ENV["SEMANTIC_SEARCH_ENABLED"] == "true"
+    end
+
+    # Uses a class-level factory so tests can inject a fake client without
+    # hitting the embedding API. In production, defaults to EmbeddingClient.new.
+    def semantic_search_client
+      self.class.semantic_search_client_factory.call
+    end
+
+    def semantic_search_config_digest
+      return "keyword" unless semantic_search_enabled?
+
+      # Include config so cache is invalidated when settings change
+      limit = ENV.fetch("SEMANTIC_SEARCH_LIMIT", 10)
+      max_distance = ENV.fetch("SEMANTIC_SEARCH_MAX_DISTANCE", 0.7)
+      "semantic-v1-#{limit}-#{max_distance}"
     end
 
     # Both id lists for the index page live in one cache entry because the
@@ -111,11 +140,48 @@ module Public
     def cached_index_ids
       Rails.cache.fetch([ matters_index_cache_version, "index-ids" ], expires_in: INDEX_CACHE_TTL) do
         matches = document_match_pairs(@query)
+        keyword_matter_ids = matter_ids_for(@query, matches.map(&:last).uniq)
+
+        semantic_data = compute_semantic_data(keyword_matter_ids)
+
         {
           document_match_ids: matches.map(&:first),
-          matter_ids: matter_ids_for(@query, matches.map(&:last).uniq)
+          matter_ids: semantic_data[:merged_ids],
+          semantic_matches: semantic_data[:semantic_matches]
         }
       end
+    end
+
+    def compute_semantic_data(keyword_matter_ids)
+      return { merged_ids: keyword_matter_ids, semantic_matches: [] } unless semantic_search_enabled? && @query.present?
+
+      matches = Search::SemanticMatterSearch.call(
+        query: @query,
+        jurisdiction: current_jurisdiction,
+        client: semantic_search_client
+      )
+
+      # Filter by theme when active — semantic matches must respect the
+      # same theme filtering that keyword results use.
+      if @theme && matches.any?
+        themed_ids = Civic::Matter
+          .for_jurisdiction(current_jurisdiction)
+          .joins(:themes)
+          .where(civic_matter_themes: { theme_slug: @theme })
+          .where(id: matches.map(&:matter_id))
+          .pluck(:id)
+          .to_set
+
+        matches = matches.select { |m| themed_ids.include?(m.matter_id) }
+      end
+
+      match_ids = matches.map(&:matter_id)
+
+      # Merge: keyword order first, then semantic-only matches appended
+      merged_ids = keyword_matter_ids.dup
+      match_ids.each { |sid| merged_ids << sid unless merged_ids.include?(sid) }
+
+      { merged_ids:, semantic_matches: matches }
     end
 
     # [extracted_text_id, matter_id] pairs for the top document matches. The
