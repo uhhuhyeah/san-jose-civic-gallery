@@ -6,6 +6,8 @@ gem "rails", "~> 8.1.3"
 gem "propshaft"
 # Use postgresql as the database for Active Record
 gem "pg", "~> 1.1"
+gem "pgvector"
+gem "neighbor"
 # Local on-disk store for the production Solid Cache database. Primary data
 # stays in Postgres; the cache must not pay a network round-trip per read.
 gem "sqlite3", ">= 2.1"
