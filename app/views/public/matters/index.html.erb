@@ -108,6 +108,16 @@
                 </ul>
               </div>
             <% end %>
+            <% semantic_match = @semantic_match_by_matter_id[matter.id] %>
+            <% if semantic_match %>
+              <div class="atlas-matter-row-semantic">
+                <p class="atlas-matter-row-semantic-label">Concept match</p>
+                <p class="atlas-matter-row-semantic-note">Matched an AI-assisted summary; review the official attachment before relying on it.</p>
+                <% if semantic_match.provenance[:attachment_name] %>
+                  <p class="atlas-matter-row-semantic-source">Via: <%= semantic_match.provenance[:attachment_name] %></p>
+                <% end %>
+              </div>
+            <% end %>
           </div>
 
           <dl class="atlas-matter-row-facts">
