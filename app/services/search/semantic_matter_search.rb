@@ -161,7 +161,9 @@ module Search
       return {} if event_ids.empty?
 
       Civic::EventItem
+        .current_from_source
         .where(civic_event_id: event_ids)
+        .where.not(civic_matter_id: nil)
         .pluck(:civic_event_id, :civic_matter_id)
         .group_by(&:first)
         .transform_values { |pairs| pairs.map(&:second).uniq }

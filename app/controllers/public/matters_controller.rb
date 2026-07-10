@@ -13,31 +13,10 @@ module Public
 
       ids = cached_index_ids
       @document_matches = document_matches_for(ids[:document_match_ids])
-      keyword_matter_ids = ids[:matter_ids]
-      semantic_matter_ids = []
+      @semantic_matches = ids[:semantic_matches] || []
+      @semantic_match_by_matter_id = @semantic_matches.index_by(&:matter_id)
 
-      if semantic_search_enabled? && @query.present?
-        @semantic_matches = Search::SemanticMatterSearch.call(
-          query: @query,
-          jurisdiction: current_jurisdiction,
-          client: semantic_search_client
-        )
-
-        semantic_matter_ids = @semantic_matches.map(&:matter_id)
-        @semantic_match_by_matter_id = @semantic_matches.index_by(&:matter_id)
-
-        # Merge: keyword order first, then semantic-only matches appended
-        merged_ids = keyword_matter_ids.dup
-        semantic_matter_ids.each do |sid|
-          merged_ids << sid unless merged_ids.include?(sid)
-        end
-        keyword_matter_ids = merged_ids
-      else
-        @semantic_matches = []
-        @semantic_match_by_matter_id = {}
-      end
-
-      @matters = records_in_cached_order(keyword_matter_ids, Civic::Matter.for_jurisdiction(current_jurisdiction).includes(:attachments, :themes))
+      @matters = records_in_cached_order(ids[:matter_ids], Civic::Matter.for_jurisdiction(current_jurisdiction).includes(:attachments, :themes))
       @document_matches_by_matter_id = @document_matches.group_by { |match| match.matter_attachment.matter.id }
     end
 
@@ -159,11 +138,48 @@ module Public
     def cached_index_ids
       Rails.cache.fetch([ matters_index_cache_version, "index-ids" ], expires_in: INDEX_CACHE_TTL) do
         matches = document_match_pairs(@query)
+        keyword_matter_ids = matter_ids_for(@query, matches.map(&:last).uniq)
+
+        semantic_data = compute_semantic_data(keyword_matter_ids)
+
         {
           document_match_ids: matches.map(&:first),
-          matter_ids: matter_ids_for(@query, matches.map(&:last).uniq)
+          matter_ids: semantic_data[:merged_ids],
+          semantic_matches: semantic_data[:semantic_matches]
         }
       end
+    end
+
+    def compute_semantic_data(keyword_matter_ids)
+      return { merged_ids: keyword_matter_ids, semantic_matches: [] } unless semantic_search_enabled? && @query.present?
+
+      matches = Search::SemanticMatterSearch.call(
+        query: @query,
+        jurisdiction: current_jurisdiction,
+        client: semantic_search_client
+      )
+
+      # Filter by theme when active — semantic matches must respect the
+      # same theme filtering that keyword results use.
+      if @theme && matches.any?
+        themed_ids = Civic::Matter
+          .for_jurisdiction(current_jurisdiction)
+          .joins(:themes)
+          .where(civic_matter_themes: { theme_slug: @theme })
+          .where(id: matches.map(&:matter_id))
+          .pluck(:id)
+          .to_set
+
+        matches = matches.select { |m| themed_ids.include?(m.matter_id) }
+      end
+
+      match_ids = matches.map(&:matter_id)
+
+      # Merge: keyword order first, then semantic-only matches appended
+      merged_ids = keyword_matter_ids.dup
+      match_ids.each { |sid| merged_ids << sid unless merged_ids.include?(sid) }
+
+      { merged_ids:, semantic_matches: matches }
     end
 
     # [extracted_text_id, matter_id] pairs for the top document matches. The
@@ -233,3 +249,4 @@ module Public
     end
   end
 end
+require "set"

@@ -115,6 +115,8 @@
                 <p class="atlas-matter-row-semantic-note">Matched an AI-assisted summary; review the official attachment before relying on it.</p>
                 <% if semantic_match.provenance[:attachment_name] %>
                   <p class="atlas-matter-row-semantic-source">Via: <%= semantic_match.provenance[:attachment_name] %></p>
+                <% elsif semantic_match.provenance[:event_title] %>
+                  <p class="atlas-matter-row-semantic-source">Via meeting: <%= semantic_match.provenance[:event_title] %></p>
                 <% end %>
               </div>
             <% end %>

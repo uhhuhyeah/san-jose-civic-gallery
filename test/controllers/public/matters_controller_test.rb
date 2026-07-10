@@ -811,6 +811,64 @@ module Public
       end
     end
 
+    test "semantic search filters by theme when theme param is present" do
+      thematic_matter = Civic::Matter.create!(
+        legistar_matter_id: 99_200,
+        matter_file: "26-910",
+        title: "Housing density study"
+      )
+      thematic_matter.themes.create!(theme_slug: "housing", rank: 1)
+
+      non_thematic_matter = Civic::Matter.create!(
+        legistar_matter_id: 99_201,
+        matter_file: "26-911",
+        title: "Transportation plan"
+      )
+      non_thematic_matter.themes.create!(theme_slug: "transportation", rank: 1)
+
+      # Create attachment_summary embeddings for both matters
+      [ thematic_matter, non_thematic_matter ].each do |m|
+        att = m.all_attachments.create!(
+          legistar_matter_attachment_id: m.legistar_matter_id,
+          name: "Attachment for #{m.matter_file}"
+        )
+        art = att.generated_artifacts.create!(
+          source_artifact: nil,
+          kind: "attachment_summary",
+          status: "succeeded",
+          model_identifier: "test-model",
+          prompt_version: "test-v1",
+          input_sha256: "theme-#{m.id}",
+          content: { "summary" => "Content about #{m.title}" }
+        )
+        Search::Embedding.create!(
+          civic_jurisdiction: Civic::Jurisdiction.first,
+          source_record: art,
+          result_record: m,
+          source_kind: "attachment_summary",
+          content_sha256: Digest::SHA256.hexdigest("theme-#{m.id}"),
+          embedding_model: "text-embedding-3-small",
+          embedding_dimensions: 1536,
+          embedding: [ 0.1 ] * 1536,
+          metadata: {}
+        )
+      end
+
+      fake_client = fake_embedding_client([ 0.1 ] * 1536)
+
+      with_embedding_client(fake_client) do
+        with_env("SEMANTIC_SEARCH_ENABLED", "true") do
+          get public_matters_url(q: "content", theme: "housing")
+          assert_response :success
+
+          # Should show the housing-themed matter
+          assert_includes response.body, "26-910"
+          # Should NOT show the transportation-themed matter
+          assert_not_includes response.body, "26-911"
+        end
+      end
+    end
+
     private
 
     def fake_embedding_client(vector)
