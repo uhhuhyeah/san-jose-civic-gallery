@@ -72,6 +72,17 @@ production:
     args: [ { limit: 5 } ]
     schedule: every day at 5:30am
 
+  # Discover and re-sync recent Santa Clara County (IQM2) Board of Supervisors
+  # meetings. Plain HTTP on the isolated iqm2_ingestion queue; a low cadence and
+  # small limit keep us a polite guest on the vendor portal, and the discovery
+  # filter (Board of Supervisors, Agenda only) keeps volume bounded. The initial
+  # historical backfill is a one-off manual `iqm2:sync_meetings` run. Offset from
+  # the SJUSD discovery so the two vendor syncs do not start together.
+  sync_recent_sccounty_meetings:
+    class: Ingestion::Iqm2::SyncMeetingsJob
+    args: [ { limit: 5 } ]
+    schedule: every day at 5:45am
+
   # Check for accumulated failed jobs and alert via Sentry if the threshold
   # is exceeded. Threshold and window are configurable via environment variables.
   alert_on_failed_jobs:

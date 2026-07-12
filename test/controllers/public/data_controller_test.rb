@@ -97,6 +97,29 @@ module Public
       assert_not_includes response.body, "webapi.legistar.com/v1/sanjose"
     end
 
+    test "names IQM2, not Legistar, as the source on the Santa Clara County host" do
+      host! "santaclaracounty.civicgallery.org"
+      # A synced record so the freshness banner (with the Source label) renders.
+      Civic::Event.create!(
+        source_system: "iqm2.sccgov",
+        source_event_id: "17599",
+        body_name: "Board of Supervisors",
+        event_date: Date.current,
+        last_synced_at: 2.hours.ago
+      )
+
+      get data_url
+
+      assert_response :success
+      # Lead paragraph, freshness banner, and About block all name IQM2.
+      assert_includes response.body, "ingested from IQM2 (Granicus)"
+      assert_includes response.body, "Source: IQM2 (Granicus)"
+      assert_includes response.body, "sccgov.iqm2.com"
+      # Nothing on the county host should read as Legistar.
+      assert_not_includes response.body, "Legistar"
+      assert_not_includes response.body, "webapi.legistar.com/v1/sanjose"
+    end
+
     test "returns 304 when client ETag matches" do
       Civic::Matter.create!(legistar_matter_id: 1, matter_file: "26-001", last_synced_at: 2.hours.ago)
 

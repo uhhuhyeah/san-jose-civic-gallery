@@ -10,6 +10,7 @@ class SolidQueueConfigurationTest < ActiveSupport::TestCase
     assert_includes queues, "solid_queue_recurring"
     assert_includes queues, "generated_summary"
     assert_includes queues, "slow_extract"
+    assert_includes queues, "iqm2_ingestion"
   end
 
   test "recurring generated summaries enqueue a dedicated job instead of running inline" do
@@ -18,6 +19,14 @@ class SolidQueueConfigurationTest < ActiveSupport::TestCase
 
     assert_equal "Generated::BackfillAttachmentSummariesJob", task.fetch("class")
     assert_not task.key?("command"), "generated summaries should not run inside solid_queue_recurring"
+  end
+
+  test "recurring Santa Clara County discovery enqueues the IQM2 sync job" do
+    recurring_config = load_yaml_config("config/recurring.yml").fetch("production")
+    task = recurring_config.fetch("sync_recent_sccounty_meetings")
+
+    assert_equal "Ingestion::Iqm2::SyncMeetingsJob", task.fetch("class")
+    assert_not task.key?("command"), "county discovery should enqueue a job, not run inline"
   end
 
   private

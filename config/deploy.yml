@@ -16,6 +16,7 @@ proxy:
   hosts:
     - sanjose.civicgallery.org
     - sjusd.civicgallery.org
+    - santaclaracounty.civicgallery.org
   app_port: 80
 
 registry:
