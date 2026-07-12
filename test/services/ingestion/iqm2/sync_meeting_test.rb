@@ -99,6 +99,54 @@ module Ingestion
         assert_not Civic::MatterAttachment.find_by(source_attachment_id: "30:9002").source_present
       end
 
+      test "raises on a non-200 meeting response instead of persisting an event" do
+        bad_client = Class.new do
+          def meeting_detail(meeting_id:)
+            { request_url: "https://example.test/#{meeting_id}", status: 503, fetched_at: Time.current, response_sha256: "s", payload: "<html>error</html>" }
+          end
+        end.new
+
+        assert_raises(::Iqm2::Client::ResponseError) do
+          SyncMeeting.call(meeting_id: "8001", client: bad_client)
+        end
+        assert_not Civic::Event.exists?(source_system: "iqm2.sccgov", source_event_id: "8001")
+      end
+
+      test "does not tombstone a shared matter's attachments when re-syncing another meeting" do
+        shared_a = file_fixture("iqm2/sync_shared_a.html").read
+        shared_b = file_fixture("iqm2/sync_shared_b.html").read
+
+        # LegiFile 700 appears on meetings 8100 and 8200 with different attachment
+        # sets (8100 shows 30:7001 and 4:7002; 8200 shows only 4:7002).
+        SyncMeeting.call(meeting_id: "8100", event_date: Date.new(2026, 6, 18), client: FakeClient.new(shared_a))
+        SyncMeeting.call(meeting_id: "8200", event_date: Date.new(2026, 6, 23), client: FakeClient.new(shared_b))
+
+        # Syncing 8200 must not tombstone 30:7001, which is legitimately present
+        # via 8100. Both remain, so the matter carries the file's full doc set.
+        assert Civic::MatterAttachment.find_by(source_attachment_id: "30:7001").source_present
+        assert Civic::MatterAttachment.find_by(source_attachment_id: "4:7002").source_present
+
+        matter = Civic::Matter.find_by(source_matter_id: "700")
+        assert_equal [ "30:7001", "4:7002" ], matter.all_attachments.reorder(:source_attachment_id).pluck(:source_attachment_id)
+      end
+
+      test "enqueues a download job for each new attachment" do
+        assert_enqueued_jobs 2, only: Documents::ImportMatterAttachmentFileJob do
+          sync
+        end
+      end
+
+      test "does not re-enqueue a download for an already-imported attachment" do
+        sync
+        imported = Civic::MatterAttachment.find_by(source_attachment_id: "30:9001")
+        imported.source_file.attach(io: StringIO.new("%PDF-1.4 fake"), filename: "a.pdf", content_type: "application/pdf")
+
+        # Only 30:9002 (still not imported) should re-enqueue; 30:9001 is skipped.
+        assert_enqueued_jobs 1, only: Documents::ImportMatterAttachmentFileJob do
+          sync
+        end
+      end
+
       private
 
       def sync(html = @detail)

@@ -33,15 +33,32 @@ module Ingestion
         end
       end
 
+      test "raises on a non-200 calendar response instead of enqueuing nothing" do
+        assert_no_enqueued_jobs only: SyncMeetingJob do
+          assert_raises(::Iqm2::Client::ResponseError) do
+            SyncMeetings.call(client: FakeClient.new(@listing, status: 502))
+          end
+        end
+      end
+
+      test "raises on a blocked calendar payload instead of a silent zero-meeting success" do
+        assert_no_enqueued_jobs only: SyncMeetingJob do
+          assert_raises(::Iqm2::MeetingCalendar::ParseError) do
+            SyncMeetings.call(client: FakeClient.new("<html><body>Access Denied</body></html>"))
+          end
+        end
+      end
+
       class FakeClient
-        def initialize(listing)
+        def initialize(listing, status: 200)
           @listing = listing
+          @status = status
         end
 
         def meeting_listing
           {
             request_url: "https://example.test/listing",
-            status: 200,
+            status: @status,
             fetched_at: Time.current,
             response_sha256: "listing-sha",
             payload: @listing

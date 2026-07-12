@@ -79,9 +79,24 @@ module Ingestion
           last_source_snapshot_id: snapshot.id
         )
         record.save!
+        enqueue_import(record)
         record
       end
       private_class_method :upsert_attachment
+
+      # Unlike SJUSD (whose downloads are blocked), IQM2 serves attachment PDFs
+      # directly, so hand each new attachment to the shared download ->
+      # extraction -> summary pipeline. Only enqueue for attachments that have
+      # not been imported yet: the FileOpen URL is stable, so a re-sync should
+      # not re-download the whole agenda's PDFs. (The host is allowlisted in a
+      # later change; until then the job would record a DisallowedHost error.)
+      def self.enqueue_import(attachment)
+        return if attachment.hyperlink.blank?
+        return if attachment.imported?
+
+        Documents::ImportMatterAttachmentFileJob.perform_later(attachment.id)
+      end
+      private_class_method :enqueue_import
     end
   end
 end

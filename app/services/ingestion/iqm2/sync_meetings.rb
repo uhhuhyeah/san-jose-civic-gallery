@@ -9,7 +9,14 @@ module Ingestion
       IN_SCOPE_BODIES = [ "Board of Supervisors" ].freeze
 
       def self.call(client:, limit: nil, body_names: IN_SCOPE_BODIES)
-        refs = ::Iqm2::MeetingCalendar.parse(client.meeting_listing[:payload])
+        listing = client.meeting_listing
+        unless listing[:status] == 200
+          raise ::Iqm2::Client::ResponseError, "IQM2 calendar returned HTTP #{listing[:status]}"
+        end
+
+        # MeetingCalendar raises on a blocked/unrecognizable payload, so a bad
+        # response fails here instead of enqueuing zero meetings as a success.
+        refs = ::Iqm2::MeetingCalendar.parse(listing[:payload])
         refs = refs.select { |ref| ref.media_type == "Agenda" && ref.meeting_id.present? && body_names.include?(ref.body_name) }
         refs = refs.first(limit) if limit
 
