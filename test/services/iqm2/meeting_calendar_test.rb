@@ -11,6 +11,12 @@ module Iqm2
       assert_equal 216, refs.size
     end
 
+    test "parse raises on a blocked or unrecognizable response instead of returning empty" do
+      assert_raises(MeetingCalendar::ParseError) { MeetingCalendar.parse("") }
+      assert_raises(MeetingCalendar::ParseError) { MeetingCalendar.parse("<html><body>Access Denied</body></html>") }
+      assert_raises(MeetingCalendar::ParseError) { MeetingCalendar.parse(nil) }
+    end
+
     test "first ref is HIV Commission agenda for Jul 16, 2026" do
       refs = MeetingCalendar.parse(@payload)
       first = refs.first

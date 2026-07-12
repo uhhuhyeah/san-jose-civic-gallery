@@ -55,7 +55,11 @@ module Iqm2
         elsif href =~ /FileOpen\.aspx/i && current
           attachment = build_attachment(href, link.text.strip)
           current.attachments << attachment if attachment
-        elsif href =~ /Detail_Motion\.aspx/i
+        else
+          # Any other titled row -- a section header, a motion/vote link, or an
+          # unrecognized link -- ends the current item's attachment context, so a
+          # following attachment can never be misattributed across a section
+          # boundary to the item above it.
           current = nil
         end
       end
