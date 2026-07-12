@@ -11,3 +11,10 @@ sjusd:
   kind: school_district
   primary_host: sjusd.civicgallery.org
   source_system_default: simbli.sjusd
+
+santaclaracounty:
+  slug: santaclaracounty
+  name: County of Santa Clara
+  kind: county
+  primary_host: santaclaracounty.civicgallery.org
+  source_system_default: iqm2.sccgov

@@ -21,6 +21,13 @@ module Civic
         kind: "school_district",
         primary_host: "sjusd.civicgallery.org",
         source_system_default: "simbli.sjusd"
+      },
+      {
+        slug: "santaclaracounty",
+        name: "County of Santa Clara",
+        kind: "county",
+        primary_host: "santaclaracounty.civicgallery.org",
+        source_system_default: "iqm2.sccgov"
       }
     ].freeze
 
@@ -97,17 +104,55 @@ module Civic
 
     SHORT_NAMES = {
       "sanjose" => "San Jose",
-      "sjusd" => "San Jose Unified School District"
+      "sjusd" => "San Jose Unified School District",
+      "santaclaracounty" => "Santa Clara County"
     }.freeze
 
     SOURCE_HOSTS = {
       "legistar.sanjose" => "sanjose.legistar.com",
-      "simbli.sjusd" => "simbli.eboardsolutions.com"
+      "simbli.sjusd" => "simbli.eboardsolutions.com",
+      "iqm2.sccgov" => "sccgov.iqm2.com"
     }.freeze
 
     SOURCE_LABELS = {
       "legistar.sanjose" => "Legistar",
-      "simbli.sjusd" => "Simbli (eBoardSolutions)"
+      "simbli.sjusd" => "Simbli (eBoardSolutions)",
+      "iqm2.sccgov" => "IQM2 (Granicus)"
+    }.freeze
+
+    # Presentation vocabulary keyed on `kind`, so jurisdiction copy stops
+    # stacking `city?` conditionals and a new kind is one table entry.
+    VOCAB = {
+      "city" => {
+        tagline: "City Hall agenda intelligence",
+        all_scope_label: "Citywide",
+        all_bodies_option_label: "All bodies (citywide)",
+        view_all_scope_label: "View Citywide",
+        governing_bodies_phrase: "the city's bodies",
+        civic_subject: "City Hall",
+        kind_noun: "city",
+        theme_example: "Housing or Transportation"
+      },
+      "county" => {
+        tagline: "Board of Supervisors agenda intelligence",
+        all_scope_label: "Countywide",
+        all_bodies_option_label: "All bodies (countywide)",
+        view_all_scope_label: "View Countywide",
+        governing_bodies_phrase: "the county's bodies",
+        civic_subject: "the Board of Supervisors",
+        kind_noun: "county",
+        theme_example: "Housing or Public Health"
+      },
+      "school_district" => {
+        tagline: "School board agenda intelligence",
+        all_scope_label: "All bodies",
+        all_bodies_option_label: "All bodies",
+        view_all_scope_label: "View all bodies",
+        governing_bodies_phrase: "the district's bodies",
+        civic_subject: "the district",
+        kind_noun: "district",
+        theme_example: "Curriculum or School Safety"
+      }
     }.freeze
 
     # Brand-facing label, shorter than the formal `name`.
@@ -120,9 +165,15 @@ module Civic
       "#{short_name} Civic Gallery"
     end
 
+    # Vocabulary for this jurisdiction's kind; unknown kinds read as a school
+    # district (the prior non-city default) rather than raising.
+    def vocab
+      VOCAB.fetch(kind, VOCAB["school_district"])
+    end
+
     # Tagline beneath the brand in the topbar.
     def tagline
-      city? ? "City Hall agenda intelligence" : "School board agenda intelligence"
+      vocab[:tagline]
     end
 
     # Default meta description when a page does not set its own.
@@ -133,34 +184,39 @@ module Civic
 
     # Label for the unfiltered (whole-jurisdiction) scope.
     def all_scope_label
-      city? ? "Citywide" : "All bodies"
+      vocab[:all_scope_label]
     end
 
     # Option label in the body-filter <select>.
     def all_bodies_option_label
-      city? ? "All bodies (citywide)" : "All bodies"
+      vocab[:all_bodies_option_label]
     end
 
     # Link label that returns to the unfiltered view.
     def view_all_scope_label
-      city? ? "View Citywide" : "View all bodies"
+      vocab[:view_all_scope_label]
     end
 
     # Possessive phrase: "the city's bodies" / "the district's bodies".
     def governing_bodies_phrase
-      city? ? "the city's bodies" : "the district's bodies"
+      vocab[:governing_bodies_phrase]
     end
 
     # Subject noun for sentences like "what <subject> is talking about".
     def civic_subject
-      city? ? "City Hall" : "the district"
+      vocab[:civic_subject]
     end
 
     # Bare jurisdiction noun for editorial copy, e.g. "What the <kind_noun> is
     # paying attention to." Pair with a leading article in the surrounding
     # sentence. Returns lowercase; suitable for mid-sentence use.
     def kind_noun
-      city? ? "city" : "district"
+      vocab[:kind_noun]
+    end
+
+    # Example subject areas used in the glossary "Theme" definition.
+    def theme_example
+      vocab[:theme_example]
     end
 
     # Public source host this jurisdiction's records are mirrored from.
@@ -180,8 +236,11 @@ module Civic
     private
 
     def records_phrase
-      if city?
+      case kind
+      when "city"
         "#{short_name} City Hall agendas, matters"
+      when "county"
+        "#{short_name} Board of Supervisors agendas, matters"
       else
         "#{name} board agendas, matters"
       end
