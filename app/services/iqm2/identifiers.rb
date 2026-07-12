@@ -51,5 +51,11 @@ module Iqm2
     def absolute_url(href)
       URI.join(CITIZENS_BASE, href).to_s
     end
+
+    # Stable, collision-proof matter_file for a LegiFile (civic_matters.matter_file
+    # is NOT NULL). Prefixed so it never collides with a Legistar matter_file.
+    def matter_file(legifile_id:)
+      "SCC-#{legifile_id}"
+    end
   end
 end
