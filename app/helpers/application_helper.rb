@@ -3,6 +3,7 @@ module ApplicationHelper
     sanjose.legistar.com
     www.sanjoseca.gov
     simbli.eboardsolutions.com
+    sccgov.iqm2.com
   ].freeze
   EXTRACTED_TEXT_PREVIEW_LENGTH = 1_200
   DOCUMENT_SEARCH_SNIPPET_LENGTH = 320

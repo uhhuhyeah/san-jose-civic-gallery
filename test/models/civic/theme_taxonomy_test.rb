@@ -10,8 +10,12 @@ module Civic
       civic_jurisdictions(:sjusd)
     end
 
+    def santaclaracounty
+      civic_jurisdictions(:santaclaracounty)
+    end
+
     test "each jurisdiction's slugs are unique and non-blank" do
-      [ sanjose, sjusd ].each do |jurisdiction|
+      [ sanjose, sjusd, santaclaracounty ].each do |jurisdiction|
         slugs = ThemeTaxonomy.slugs_for(jurisdiction)
 
         assert_equal slugs.uniq, slugs
@@ -20,7 +24,7 @@ module Civic
     end
 
     test "every theme has a label" do
-      [ ThemeTaxonomy::SANJOSE, ThemeTaxonomy::SJUSD ].each do |themes|
+      [ ThemeTaxonomy::SANJOSE, ThemeTaxonomy::SJUSD, ThemeTaxonomy::SANTACLARA ].each do |themes|
         assert(themes.all? { |theme| theme[:label].present? })
       end
     end
@@ -32,12 +36,17 @@ module Civic
       assert ThemeTaxonomy.valid_slug?("special_education", sjusd)
       assert_not ThemeTaxonomy.valid_slug?("special_education", sanjose)
 
+      assert ThemeTaxonomy.valid_slug?("health_hospital", santaclaracounty)
+      assert_not ThemeTaxonomy.valid_slug?("health_hospital", sanjose)
+      assert_not ThemeTaxonomy.valid_slug?("special_education", santaclaracounty)
+
       assert_not ThemeTaxonomy.valid_slug?("not_a_theme", sanjose)
     end
 
     test "label_for resolves per jurisdiction" do
       assert_equal "Housing", ThemeTaxonomy.label_for("housing", sanjose)
       assert_equal "Special Education", ThemeTaxonomy.label_for("special_education", sjusd)
+      assert_equal "Health & Hospital System", ThemeTaxonomy.label_for("health_hospital", santaclaracounty)
       assert_nil ThemeTaxonomy.label_for("housing", sjusd)
     end
 
