@@ -71,6 +71,7 @@ module Civic
       assert_equal "sanjose.legistar.com", sanjose.source_host
       assert_equal "Legistar", sanjose.ingestion_source_label
       assert_includes sanjose.default_description, "San Jose City Hall agendas"
+      assert_equal "Housing or Transportation", sanjose.theme_example
     end
 
     test "presentation copy is district-specific for a school district" do
@@ -89,6 +90,26 @@ module Civic
       assert_equal "Simbli (eBoardSolutions)", sjusd.ingestion_source_label
       assert_includes sjusd.default_description, "San Jose Unified School District board agendas"
       assert_not_includes sjusd.default_description, "City Hall"
+      assert_equal "Curriculum or School Safety", sjusd.theme_example
+    end
+
+    test "presentation copy is county-specific for a county" do
+      county = civic_jurisdictions(:santaclaracounty)
+
+      assert_equal "Santa Clara County", county.short_name
+      assert_equal "Santa Clara County Civic Gallery", county.site_title
+      assert_equal "Board of Supervisors agenda intelligence", county.tagline
+      assert_equal "Countywide", county.all_scope_label
+      assert_equal "All bodies (countywide)", county.all_bodies_option_label
+      assert_equal "View Countywide", county.view_all_scope_label
+      assert_equal "the county's bodies", county.governing_bodies_phrase
+      assert_equal "the Board of Supervisors", county.civic_subject
+      assert_equal "county", county.kind_noun
+      assert_equal "Housing or Public Health", county.theme_example
+      assert_equal "sccgov.iqm2.com", county.source_host
+      assert_equal "IQM2 (Granicus)", county.ingestion_source_label
+      assert_includes county.default_description, "Santa Clara County Board of Supervisors agendas"
+      assert_not_includes county.default_description, "City Hall"
     end
 
     test "for_jurisdiction scopes civic records to a single jurisdiction" do

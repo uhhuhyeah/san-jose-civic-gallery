@@ -192,6 +192,25 @@ module Generated
       assert_equal [ "special_education" ], sjusd_matter.themes.pluck(:theme_slug)
     end
 
+    test "a Santa Clara County matter classifies against the county vocabulary and prompt version" do
+      county_matter = Civic::Matter.create!(
+        source_system: "iqm2.sccgov",
+        source_matter_id: "129725",
+        matter_file: "SCC-129725",
+        title: "Agreement for behavioral health services at Valley Medical Center"
+      )
+      # The model returns one county slug and one city-only slug; the city slug
+      # must be dropped because it is not in the county vocabulary.
+      client = FakeThemesClient.new(themes: [ "health_hospital", "transportation" ])
+
+      result = ClassifyMatterThemes.call(matter: county_matter, client:)
+
+      assert_equal "succeeded", result.artifact.status
+      assert_equal "santaclara_matter_themes_v1", result.artifact.prompt_version
+      assert_equal [ "health_hospital" ], result.artifact.content["themes"]
+      assert_equal [ "health_hospital" ], county_matter.themes.pluck(:theme_slug)
+    end
+
     test "client errors are captured on a failed artifact" do
       add_summary(summary: "Housing.", key_points: [])
       failing = FakeThemesClient.new(error: RuntimeError.new("budget exceeded"))

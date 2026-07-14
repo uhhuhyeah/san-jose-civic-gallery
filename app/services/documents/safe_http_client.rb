@@ -28,6 +28,7 @@ module Documents
       sanjose.legistar.com
       legistar.granicus.com
       www.sanjoseca.gov
+      sccgov.iqm2.com
     ].freeze
     DEFAULT_OPEN_TIMEOUT = 5
     DEFAULT_READ_TIMEOUT = 30

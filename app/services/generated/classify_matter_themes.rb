@@ -19,7 +19,8 @@ module Generated
     # against its own vocabulary without colliding with another's artifacts.
     PROMPTS_BY_JURISDICTION = {
       "sanjose" => Generated::Prompts::MatterThemesV1,
-      "sjusd" => Generated::Prompts::SjusdMatterThemesV1
+      "sjusd" => Generated::Prompts::SjusdMatterThemesV1,
+      "santaclaracounty" => Generated::Prompts::SantaClaraMatterThemesV1
     }.freeze
     DEFAULT_PROMPT = Generated::Prompts::MatterThemesV1
 
