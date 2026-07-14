@@ -33,6 +33,12 @@ default: &default
       threads: 1
       processes: 1
       polling_interval: 1
+    # Plain-HTTP IQM2 (Santa Clara County) ingestion. Single-threaded so we stay
+    # a polite, low-rate guest on the vendor portal and never burst requests.
+    - queues: [ "iqm2_ingestion" ]
+      threads: 1
+      processes: 1
+      polling_interval: 1
 
 development:
   <<: *default

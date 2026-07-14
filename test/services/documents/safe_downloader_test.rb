@@ -178,6 +178,15 @@ module Documents
       end
     end
 
+    test "allows the Santa Clara County IQM2 attachment host by default" do
+      stub_http_with(SafeDownloaderTest.fake_success(headers: {}, chunks: [ "body" ])) do
+        io = StringIO.new
+        SafeDownloader.call(url: "https://sccgov.iqm2.com/Citizens/FileOpen.aspx?Type=30&ID=228428&MeetingID=17599", io:)
+
+        assert_equal "body", io.string
+      end
+    end
+
     def self.fake_success(headers:, chunks:)
       response = Net::HTTPOK.new("1.1", "200", "OK")
       headers.each { |k, v| response[k] = v }

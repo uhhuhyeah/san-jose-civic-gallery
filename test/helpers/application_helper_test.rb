@@ -11,6 +11,11 @@ class ApplicationHelperTest < ActionView::TestCase
       official_source_url("https://sanjose.legistar.com/MeetingDetail.aspx?ID=7621")
   end
 
+  test "official_source_url allows the Santa Clara County IQM2 host" do
+    url = "https://sccgov.iqm2.com/Citizens/FileOpen.aspx?Type=30&ID=228428&MeetingID=17599"
+    assert_equal url, official_source_url(url)
+  end
+
   test "returns the URL for an https://www.sanjoseca.gov link" do
     assert_equal "https://www.sanjoseca.gov/your-government/appointees/city-clerk/language-access-for-city-council-and-council-committee-meetings",
       official_source_url("https://www.sanjoseca.gov/your-government/appointees/city-clerk/language-access-for-city-council-and-council-committee-meetings")

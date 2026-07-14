@@ -9,6 +9,11 @@ module Iqm2
   # downloads do NOT go through this client; they use the shared document
   # download pipeline once the host is allowlisted (a later PR).
   class Client
+    # Raised by callers when a fetch returns a non-200 status, so a blocked or
+    # error response becomes a recorded failure instead of being parsed as if it
+    # were the feed.
+    class ResponseError < StandardError; end
+
     DEFAULT_BASE_URL = "https://sccgov.iqm2.com"
     DEFAULT_SOURCE_SYSTEM = "iqm2.sccgov"
     DEFAULT_OPEN_TIMEOUT = 5
