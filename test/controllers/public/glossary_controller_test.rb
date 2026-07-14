@@ -37,6 +37,25 @@ module Public
       assert_not_includes response.body, "Office of the City Clerk"
     end
 
+    test "shows the Board of Supervisors glossary on the Santa Clara County host" do
+      host! "santaclaracounty.civicgallery.org"
+      get glossary_url
+
+      assert_response :success
+      assert_includes response.body, "Plain-language guide to Board of Supervisors records"
+      assert_includes response.body, "Consent Calendar"
+      assert_includes response.body, "Board Referral"
+      assert_includes response.body, "Off-Agenda Report"
+      assert_includes response.body, "Legislative File (LegiFile)"
+      assert_includes response.body, "Santa Clara County Legislative Portal"
+      # Shared terms section is still present.
+      assert_includes response.body, "Generated Summary"
+      # City-government and school-district copy must not leak onto the county host.
+      assert_not_includes response.body, "Plain-language guide to City Hall records"
+      assert_not_includes response.body, "Office of the City Clerk"
+      assert_not_includes response.body, "Board of Education"
+    end
+
     test "links to glossary from primary navigation and footer" do
       get root_url
 

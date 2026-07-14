@@ -57,9 +57,31 @@ module Civic
       { slug: "contracts_procurement", label: "Contracts & Procurement" }
     ].freeze
 
+    SANTACLARA = [
+      { slug: "health_hospital", label: "Health & Hospital System" },
+      { slug: "social_services", label: "Social Services & Safety Net" },
+      { slug: "housing", label: "Housing" },
+      { slug: "homelessness", label: "Homelessness" },
+      { slug: "public_safety_justice", label: "Public Safety & Criminal Justice" },
+      { slug: "land_use_planning", label: "Land Use & Planning" },
+      { slug: "transportation_roads", label: "Transportation & Roads" },
+      { slug: "environment_sustainability", label: "Environment & Sustainability" },
+      { slug: "parks_recreation", label: "Parks & Recreation" },
+      { slug: "budget_finance", label: "Budget & Finance" },
+      { slug: "elections_governance", label: "Elections & Governance" },
+      { slug: "assessment_taxation", label: "Assessment & Property Tax" },
+      { slug: "children_families_seniors", label: "Children, Families & Seniors" },
+      { slug: "labor_employment", label: "Labor & Employment" },
+      { slug: "legal_litigation", label: "Legal & Litigation" },
+      { slug: "contracts_procurement", label: "Contracts & Procurement" },
+      { slug: "technology", label: "Technology & Data" },
+      { slug: "equity_immigration", label: "Equity & Immigrant Affairs" }
+    ].freeze
+
     BY_JURISDICTION_SLUG = {
       "sanjose" => SANJOSE,
-      "sjusd" => SJUSD
+      "sjusd" => SJUSD,
+      "santaclaracounty" => SANTACLARA
     }.freeze
 
     # Unknown or nil jurisdictions fall back to the city vocabulary, matching the
