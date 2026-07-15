@@ -46,7 +46,7 @@ module Documents
       sql = ExtractedText.matching_latest("library outreach").to_sql
 
       assert_operator sql.scan(%("document_extracted_texts"."status" = 'ok')).size, :>=, 1
-      assert_includes sql, "to_tsvector('english', coalesce(document_extracted_texts.content, ''))"
+      assert_includes sql, "to_tsvector('english', left(coalesce(document_extracted_texts.content, ''), 200000))"
       assert_not_includes sql, "ts_rank_cd"
       assert_not_includes sql, "ts_headline"
     end
