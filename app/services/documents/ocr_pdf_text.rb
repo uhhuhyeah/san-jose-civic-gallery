@@ -30,6 +30,7 @@ module Documents
         run_ocr(
           command:,
           languages:,
+          skip_text: true,
           source_path: source_tempfile.path,
           sidecar_path: sidecar_tempfile.path,
           timeout_seconds:
@@ -48,11 +49,13 @@ module Documents
       raise "ocrmypdf unavailable: #{error.message}"
     end
 
-    def self.run_ocr(command:, languages:, source_path:, sidecar_path:, timeout_seconds:)
+    def self.run_ocr(command:, languages:, skip_text:, source_path:, sidecar_path:, timeout_seconds:)
       stderr_read, stderr_write = IO.pipe
+      mode_args = skip_text ? [ "--skip-text" ] : []
       pid = Process.spawn(
         command,
         "--quiet",
+        *mode_args,
         "--language", languages,
         "--sidecar", sidecar_path,
         source_path,

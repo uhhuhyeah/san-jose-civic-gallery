@@ -39,6 +39,20 @@ module Documents
       assert_equal "", result.text
     end
 
+    test "runs OCR in skip-text mode for mixed text and scanned PDFs" do
+      received = nil
+      stub_run_ocr do |**kwargs|
+        received = kwargs
+        File.write(kwargs.fetch(:sidecar_path), "OCR body text")
+      end
+      stub_capture_version("ocrmypdf 16.10.0")
+
+      OcrPdfText.call(matter_attachment: @attachment)
+
+      assert_equal "ocrmypdf", received[:command]
+      assert_equal true, received[:skip_text]
+    end
+
     test "raises a clear error when ocrmypdf fails" do
       stub_run_ocr { |**_| raise "ocrmypdf failed: bad scan" }
 
