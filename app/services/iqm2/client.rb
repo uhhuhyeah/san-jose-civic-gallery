@@ -31,7 +31,14 @@ module Iqm2
       get("/Services/RSS.aspx", params: { "Feed" => "Calendar" })
     end
 
-    # Date-ranged discovery for historical backfill.
+    # Date-ranged discovery for historical backfill. NOT YET WIRED: no parser
+    # consumes this and nothing calls it. It returns the /Citizens/calendar.aspx
+    # List-view HTML page, which has a DIFFERENT DOM from the RSS feed, so its
+    # payload must NOT be passed to Iqm2::MeetingCalendar.parse. Beware: that
+    # page contains the literal text "Meeting Calendar", which is one of the two
+    # signatures MeetingCalendar.parse's blocked-feed guard accepts, so feeding
+    # it there would silently pass the guard and yield near-zero refs instead of
+    # raising. A deep historical backfill needs its own calendar-page parser.
     def calendar(from:, to:)
       get("/Citizens/calendar.aspx", params: { "From" => us_date(from), "To" => us_date(to), "View" => "List" })
     end
