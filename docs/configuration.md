@@ -63,7 +63,8 @@ A redirect cap of three is enforced in code (not env-configurable).
 
 Imported PDFs are first processed with the local `pdftotext` CLI. When
 that returns no embedded text, the extraction pipeline falls back to
-local OCR with `ocrmypdf`. Both run synchronously inside the
+local OCR with `ocrmypdf --skip-text`, so mixed PDFs with some existing
+text pages do not abort OCR for scanned pages. Both run synchronously inside the
 `slow_extract` Solid Queue worker (see `config/queue.yml`) so long
 OCR jobs cannot starve the default queue.
 
