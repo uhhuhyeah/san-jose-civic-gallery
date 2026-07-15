@@ -2,6 +2,8 @@ module Documents
   class ImportMatterAttachmentFileJob < ApplicationJob
     queue_as :default
 
+    discard_on Documents::SafeHttpClient::TooLargeError
+
     def perform(civic_matter_attachment_id)
       matter_attachment = Civic::MatterAttachment.find(civic_matter_attachment_id)
       matter_attachment = ImportMatterAttachmentFile.call(matter_attachment:)
