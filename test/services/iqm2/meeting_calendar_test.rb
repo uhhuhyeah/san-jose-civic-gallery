@@ -49,5 +49,14 @@ module Iqm2
       refs = MeetingCalendar.parse(@payload)
       assert refs.any? { |r| r.body_name == "Housing, Land Use, Environment, and Transportation Committee" }
     end
+
+    # The live feed declares encoding="utf-16" but is UTF-8, and Net::HTTP hands
+    # us an ASCII-8BIT body. Parsing must survive that (production regression:
+    # the file-read fixture is UTF-8 and hid the bug, so exercise the wire form).
+    test "parses a body delivered as ASCII-8BIT despite the utf-16 declaration" do
+      wire = @payload.dup.force_encoding("ASCII-8BIT")
+      refs = MeetingCalendar.parse(wire)
+      assert_equal 216, refs.size
+    end
   end
 end

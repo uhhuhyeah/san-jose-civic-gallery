@@ -11,7 +11,10 @@ module Iqm2
     Result = Data.define(:meeting, :agenda_items)
 
     def self.parse(payload)
-      doc = Nokogiri::HTML(payload.to_s)
+      # Force UTF-8 rather than let Nokogiri sniff the charset: the IQM2 portal
+      # serves UTF-8 bytes (the RSS feed even mislabels itself utf-16), and
+      # Net::HTTP delivers an ASCII-8BIT body. See Iqm2::MeetingCalendar#parse.
+      doc = Nokogiri::HTML(payload.to_s, nil, "UTF-8")
       table = doc.at_css("table#MeetingDetail")
       raise ParseError, "IQM2 meeting detail: no MeetingDetail table" if table.nil?
 

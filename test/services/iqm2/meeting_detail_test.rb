@@ -60,5 +60,12 @@ module Iqm2
         MeetingDetail.parse("<html><body>Access Denied</body></html>")
       end
     end
+
+    # Net::HTTP delivers the agenda body as ASCII-8BIT; parsing must not depend
+    # on Nokogiri sniffing the charset (see MeetingCalendar for the utf-16 trap).
+    test "parses an agenda body delivered as ASCII-8BIT" do
+      result = MeetingDetail.parse(@payload.dup.force_encoding("ASCII-8BIT"))
+      assert_equal 171, result.agenda_items.size
+    end
   end
 end
