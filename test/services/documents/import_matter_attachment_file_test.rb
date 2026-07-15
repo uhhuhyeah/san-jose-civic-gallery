@@ -62,6 +62,23 @@ module Documents
       assert_match(/DisallowedHostError/, @attachment.source_file_import_error)
     end
 
+    test "records oversize downloads as import errors" do
+      failing_downloader = Class.new do
+        def self.call(url:, io:)
+          raise SafeHttpClient::TooLargeError, "Declared Content-Length 626935849 exceeds cap of 104857600"
+        end
+      end
+
+      assert_raises(SafeHttpClient::TooLargeError) do
+        ImportMatterAttachmentFile.call(matter_attachment: @attachment, downloader: failing_downloader)
+      end
+
+      @attachment.reload
+      assert_not @attachment.source_file.attached?
+      assert_match(/TooLargeError/, @attachment.source_file_import_error)
+      assert_match(/626935849/, @attachment.source_file_import_error)
+    end
+
     test "reuses a manually uploaded sibling file after a 403 instead of re-raising" do
       sibling_body = "%PDF-1.4 sibling\n%%EOF\n"
       sibling = Civic::MatterAttachment.create!(

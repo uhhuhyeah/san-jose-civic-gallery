@@ -15,7 +15,9 @@ module Documents
     validates :matter_attachment, presence: true
     validates :extractor_name, presence: true
 
-    SEARCH_VECTOR_SQL = "to_tsvector('english', coalesce(document_extracted_texts.content, ''))"
+    SEARCH_INDEX_CHARACTER_LIMIT = 200_000
+    SEARCHABLE_CONTENT_SQL = "left(coalesce(document_extracted_texts.content, ''), #{SEARCH_INDEX_CHARACTER_LIMIT})"
+    SEARCH_VECTOR_SQL = "to_tsvector('english', #{SEARCHABLE_CONTENT_SQL})"
     SEARCH_MATCH_SQL = "#{SEARCH_VECTOR_SQL} @@ plainto_tsquery('english', ?)"
 
     def self.search(query)
@@ -49,7 +51,7 @@ module Documents
 
       select(
         "#{table_name}.*",
-        "ts_headline('english', #{table_name}.content, #{tsquery}, #{connection.quote(headline_options)}) AS search_snippet"
+        "ts_headline('english', #{SEARCHABLE_CONTENT_SQL}, #{tsquery}, #{connection.quote(headline_options)}) AS search_snippet"
       )
     end
 

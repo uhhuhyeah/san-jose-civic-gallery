@@ -36,5 +36,24 @@ module Documents
     ensure
       Documents::ImportMatterAttachmentFile.define_singleton_method(:call, original_call)
     end
+
+    test "discards oversize imports without enqueueing extraction" do
+      original_call = Documents::ImportMatterAttachmentFile.method(:call)
+
+      Documents::ImportMatterAttachmentFile.define_singleton_method(:call) do |matter_attachment:|
+        matter_attachment.update!(
+          source_file_import_error: "Documents::SafeHttpClient::TooLargeError: Declared Content-Length 626935849 exceeds cap of 104857600"
+        )
+        raise Documents::SafeHttpClient::TooLargeError, "Declared Content-Length 626935849 exceeds cap of 104857600"
+      end
+
+      assert_no_enqueued_jobs only: Documents::ExtractMatterAttachmentTextJob do
+        ImportMatterAttachmentFileJob.perform_now(@attachment.id)
+      end
+
+      assert_match(/TooLargeError/, @attachment.reload.source_file_import_error)
+    ensure
+      Documents::ImportMatterAttachmentFile.define_singleton_method(:call, original_call)
+    end
   end
 end
