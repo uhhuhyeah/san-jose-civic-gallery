@@ -11,7 +11,13 @@ module Iqm2
     MeetingRef = Data.define(:meeting_id, :body_name, :media_type, :event_date, :agenda_file_id, :published_at)
 
     def self.parse(payload)
-      doc = Nokogiri::HTML(payload.to_s)
+      # The IQM2 RSS feed declares encoding="utf-16" in its XML prolog but is
+      # actually UTF-8 on the wire, where Net::HTTP hands us an ASCII-8BIT body.
+      # Left alone, Nokogiri honors the bogus declaration and mis-parses the
+      # document into an empty tree (zero refs / guard trips). Force UTF-8 so the
+      # real content is parsed regardless of the lying prolog. (Fixtures read
+      # from disk are already UTF-8, which is why this only bit in production.)
+      doc = Nokogiri::HTML(payload.to_s, nil, "UTF-8")
 
       # A blocked, empty, or interstitial response must be a recorded failure,
       # never an empty-but-successful discovery pass (the sync layer would
