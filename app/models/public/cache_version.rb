@@ -81,7 +81,7 @@ module Public
           "public/matter-attachment/v1",
           attachment.cache_key_with_version,
           attachment.source_file_attachment&.cache_key_with_version,
-          attachment.source_file_blob&.cache_key_with_version,
+          attachment.source_file_attachment&.blob&.cache_key_with_version,
           latest_text&.cache_key_with_version,
           summary_artifact&.cache_key_with_version
         ]
