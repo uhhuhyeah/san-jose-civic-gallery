@@ -28,7 +28,48 @@ module Ingestion
 
         Rails.logger.info("Ingestion::Iqm2::SyncMeetings enqueued #{enqueued.size} meeting syncs (limit=#{limit || 'none'})")
         enqueued
+      rescue ::Iqm2::MeetingCalendar::ParseError
+        log_unrecognizable_calendar_response(listing) if defined?(listing) && listing
+        raise
       end
+
+      def self.log_unrecognizable_calendar_response(listing)
+        diagnostics = calendar_response_diagnostics(listing)
+
+        Rails.logger.warn(
+          {
+            message: "Ingestion::Iqm2::SyncMeetings received an unrecognizable calendar response",
+            iqm2_calendar_response: diagnostics
+          }.to_json
+        )
+
+        Sentry.set_context("iqm2_calendar_response", diagnostics) if defined?(Sentry)
+      end
+      private_class_method :log_unrecognizable_calendar_response
+
+      def self.calendar_response_diagnostics(listing)
+        payload = listing[:payload].to_s
+        text = payload.scrub
+        normalized_text = text.gsub(/\s+/, " ").strip
+
+        {
+          request_url: listing[:request_url],
+          http_status: listing[:status],
+          response_sha256: listing[:response_sha256],
+          payload_bytes: payload.bytesize,
+          text_preview: normalized_text.first(500),
+          html_title: text[%r{<title[^>]*>(.*?)</title>}im, 1]&.gsub(/\s+/, " ")&.strip,
+          first_heading: text[%r{<h[1-6][^>]*>(.*?)</h[1-6]>}im, 1]&.gsub(/<[^>]+>/, " ")&.gsub(/\s+/, " ")&.strip,
+          signals: {
+            meeting_calendar: text.match?(/Meeting Calendar/i),
+            detail_meeting_link: text.match?(/Detail_Meeting\.aspx\?ID=/i),
+            access_denied: text.match?(/Access Denied/i),
+            captcha: text.match?(/captcha/i),
+            error: text.match?(/\berror\b/i)
+          }
+        }
+      end
+      private_class_method :calendar_response_diagnostics
     end
   end
 end
