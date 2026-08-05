@@ -49,6 +49,32 @@ module Ingestion
         end
       end
 
+      test "logs diagnostics when the calendar payload is unrecognizable" do
+        body = "<html><head><title>Denied</title></head><body><h1>Access Denied</h1></body></html>"
+        io = StringIO.new
+        original_logger = Rails.logger
+        Rails.logger = ActiveSupport::Logger.new(io)
+
+        assert_raises(::Iqm2::MeetingCalendar::ParseError) do
+          SyncMeetings.call(client: FakeClient.new(body))
+        end
+
+        log_entry = JSON.parse(io.string.lines.last)
+        diagnostics = log_entry.fetch("iqm2_calendar_response")
+
+        assert_equal "Ingestion::Iqm2::SyncMeetings received an unrecognizable calendar response", log_entry.fetch("message")
+        assert_equal "https://example.test/listing", diagnostics.fetch("request_url")
+        assert_equal 200, diagnostics.fetch("http_status")
+        assert_equal "listing-sha", diagnostics.fetch("response_sha256")
+        assert_equal body.bytesize, diagnostics.fetch("payload_bytes")
+        assert_equal "Denied", diagnostics.fetch("html_title")
+        assert_equal "Access Denied", diagnostics.fetch("first_heading")
+        assert diagnostics.fetch("signals").fetch("access_denied")
+        assert_not diagnostics.fetch("signals").fetch("detail_meeting_link")
+      ensure
+        Rails.logger = original_logger
+      end
+
       class FakeClient
         def initialize(listing, status: 200)
           @listing = listing
