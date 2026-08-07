@@ -3,6 +3,9 @@ module Documents
     queue_as :default
 
     discard_on Documents::SafeHttpClient::TooLargeError
+    discard_on Documents::SafeHttpClient::HttpError do |_job, error|
+      raise error unless ImportMatterAttachmentFile::ACCESS_BLOCKED_HTTP_STATUSES.include?(error.status)
+    end
 
     def perform(civic_matter_attachment_id)
       matter_attachment = Civic::MatterAttachment.find(civic_matter_attachment_id)

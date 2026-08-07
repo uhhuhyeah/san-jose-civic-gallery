@@ -15,7 +15,8 @@ module Documents
     # Access-blocked HTTP responses where re-downloading will keep failing and
     # an operator may already have manually uploaded the same file for a
     # sibling attachment with the same hyperlink. See ReuseManualSiblingFile.
-    REUSABLE_AFTER_HTTP_STATUSES = [ 401, 403, 451 ].freeze
+    ACCESS_BLOCKED_HTTP_STATUSES = [ 401, 403, 451 ].freeze
+    REUSABLE_AFTER_HTTP_STATUSES = ACCESS_BLOCKED_HTTP_STATUSES
 
     def self.call(matter_attachment:, downloader: SafeDownloader)
       raise ArgumentError, "Matter attachment hyperlink is missing" if matter_attachment.hyperlink.blank?
