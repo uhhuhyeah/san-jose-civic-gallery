@@ -55,5 +55,29 @@ module Documents
     ensure
       Documents::ImportMatterAttachmentFile.define_singleton_method(:call, original_call)
     end
+
+    test "discards access-blocked imports after recording the manual upload error" do
+      original_call = Documents::ImportMatterAttachmentFile.method(:call)
+
+      Documents::ImportMatterAttachmentFile.define_singleton_method(:call) do |matter_attachment:|
+        matter_attachment.update!(
+          source_file_import_error: "Documents::SafeHttpClient::HttpError: HTTP 403 from #{matter_attachment.hyperlink}"
+        )
+        raise Documents::SafeHttpClient::HttpError.new(
+          "HTTP 403 from #{matter_attachment.hyperlink}",
+          status: 403
+        )
+      end
+
+      assert_no_enqueued_jobs only: Documents::ExtractMatterAttachmentTextJob do
+        ImportMatterAttachmentFileJob.perform_now(@attachment.id)
+      end
+
+      @attachment.reload
+      assert_not @attachment.source_file.attached?
+      assert_match(/HTTP 403/, @attachment.source_file_import_error)
+    ensure
+      Documents::ImportMatterAttachmentFile.define_singleton_method(:call, original_call)
+    end
   end
 end
