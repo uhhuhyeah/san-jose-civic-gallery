@@ -46,3 +46,10 @@
 # Operator manual-upload CSV scratch files.
 /needs_manual_upload.csv
 /.~lock.needs_manual_upload.csv#
+
+# sssf runtime
+adws/adw_data/sessions/
+adws/adw_data/sssf.db*
+.env
+__pycache__/
+*.pyc
