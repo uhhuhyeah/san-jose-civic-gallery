@@ -1,6 +1,7 @@
 <% deploy_host = ENV.fetch("DEPLOY_HOST", "31.220.108.29") %>
 service: san-jose-civic-gallery
 image: uhhuhyeah/san-jose-civic-gallery
+deploy_timeout: 300
 
 servers:
   web:
