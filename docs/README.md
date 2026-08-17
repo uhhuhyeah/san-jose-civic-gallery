@@ -24,6 +24,8 @@ This repository is intentionally documented in a compact way so contributors and
   embedding backfills, tuning levers, smoke tests, and limitations
 - `background-queues.md`: Solid Queue worker responsibilities and why
   long-running work is isolated by queue
+- `vps-operations.md`: Hostinger/Kamal storage model, BuildKit cache cleanup,
+  and VPS recreation checklist
 - `source-data-quality.md`: known limitations in the upstream source data,
   what they mean for Civic Gallery, and why we cannot fix them downstream
 
