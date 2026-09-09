@@ -38,6 +38,15 @@ Rails.application.routes.draw do
   get "roundups", to: "public/roundups#index", as: :roundups
   get "roundups/:period", to: "public/roundups#show", as: :roundup
 
+  # Durable topical landing pages (issue #152). Root-level paths for
+  # discoverability; controllers stay in Public:: so they keep the shared
+  # public cache headers and session-skipping.
+  get "topics", to: "public/topics#index", as: :topics
+  get "topics/:slug", to: "public/topics#show", as: :topic
+  get "bodies", to: "public/bodies#index", as: :bodies
+  get "bodies/:slug", to: "public/bodies#show", as: :body
+  get "years/:year", to: "public/years#show", as: :year, constraints: { year: /\d{4}/ }
+
   # Legacy preview path, now the homepage. Permanent-redirect any old shared
   # links to root.
   get "pulse-v2", to: redirect("/", status: 301)

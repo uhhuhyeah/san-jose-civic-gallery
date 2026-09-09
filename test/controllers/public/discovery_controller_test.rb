@@ -59,11 +59,13 @@ module Public
         title: "Roll call"
       )
       sanjose_matter = Civic::Matter.create!(legistar_matter_id: 97_101, matter_file: "26-971")
+      sanjose_matter.themes.create!(theme_slug: "public_safety", rank: 1)
       sjusd_matter = Civic::Matter.create!(
         source_system: "simbli.sjusd",
         source_matter_id: "sjusd:sitemap:1",
         matter_file: "SJUSD-971"
       )
+      sjusd_matter.themes.create!(theme_slug: "curriculum_instruction", rank: 1)
 
       host! SJUSD_HOST
       get "/sitemap.xml"
@@ -75,6 +77,29 @@ module Public
       assert_includes response.body, public_matter_url(sjusd_matter)
       assert_not_includes response.body, public_event_url(sanjose_event)
       assert_not_includes response.body, public_matter_url(sanjose_matter)
+      # Durable landing pages are jurisdiction-scoped too (issue #152): the
+      # SJUSD sitemap carries SJUSD topics and bodies, never San Jose's.
+      assert_includes response.body, "<loc>http://#{SJUSD_HOST}/topics</loc>"
+      assert_includes response.body, "<loc>http://#{SJUSD_HOST}/topics/curriculum-instruction</loc>"
+      assert_includes response.body, "<loc>http://#{SJUSD_HOST}/bodies</loc>"
+      assert_includes response.body, "<loc>http://#{SJUSD_HOST}/bodies/board-of-education</loc>"
+      assert_includes response.body, "<loc>http://#{SJUSD_HOST}/years/#{Date.current.year}</loc>"
+      assert_not_includes response.body, "topics/public-safety"
+      assert_not_includes response.body, "bodies/city-council"
+
+      host! SANJOSE_HOST
+      get "/sitemap.xml"
+
+      assert_response :success
+      assert_includes response.body, "<loc>http://#{SANJOSE_HOST}/topics</loc>"
+      assert_includes response.body, "<loc>http://#{SANJOSE_HOST}/topics/public-safety</loc>"
+      assert_includes response.body, "<loc>http://#{SANJOSE_HOST}/bodies</loc>"
+      assert_includes response.body, "<loc>http://#{SANJOSE_HOST}/bodies/city-council</loc>"
+      assert_includes response.body, "<loc>http://#{SANJOSE_HOST}/years/#{Date.current.year}</loc>"
+      # Empty topic variants are excluded from the sitemap.
+      assert_not_includes response.body, "topics/arts-culture"
+      # No other host's landing page leaks into this sitemap.
+      assert_not_includes response.body, "http://#{SJUSD_HOST}/"
     end
 
     test "indexable public pages emit canonical and social metadata" do

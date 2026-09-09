@@ -72,6 +72,62 @@ module Public
         )
       end
 
+      # Landing-page versions (issue #152). Same shape as the index versions:
+      # jurisdiction component plus the page's own discriminator, so a data
+      # bump re-renders every landing page in that jurisdiction and the
+      # Rails.cache entries behind them refresh together.
+      def topics_index(jurisdiction:)
+        compose(
+          "public/topics-index/v1",
+          jurisdiction.slug,
+          jurisdiction.data_version
+        )
+      end
+
+      def topic_landing(slug:, jurisdiction:)
+        compose(
+          "public/topic/v1",
+          jurisdiction.slug,
+          slug,
+          jurisdiction.data_version
+        )
+      end
+
+      def bodies_index(jurisdiction:)
+        compose(
+          "public/bodies-index/v1",
+          jurisdiction.slug,
+          jurisdiction.data_version
+        )
+      end
+
+      def body_landing(slug:, jurisdiction:)
+        compose(
+          "public/body/v1",
+          jurisdiction.slug,
+          value_digest(slug),
+          jurisdiction.data_version
+        )
+      end
+
+      def year_landing(year:, jurisdiction:)
+        compose(
+          "public/year/v1",
+          jurisdiction.slug,
+          year,
+          jurisdiction.data_version
+        )
+      end
+
+      # Aggregates behind the sitemap's landing-page rows (issue #152).
+      def landing_sitemap(jurisdiction:)
+        compose(
+          "public/landing-sitemap/v1",
+          jurisdiction.slug,
+          jurisdiction.data_version
+        )
+      end
+
       def data(snapshot)
         compose("public/data/v1", snapshot.cache_key)
       end
