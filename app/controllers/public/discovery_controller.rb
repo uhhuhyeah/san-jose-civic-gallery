@@ -13,6 +13,10 @@ module Public
       render formats: :text, content_type: "text/plain"
     end
 
+    def llms_full
+      render formats: :text, content_type: "text/plain"
+    end
+
     def sitemap
       # Events with no ingested agenda items render only template scaffolding
       # and are noindex'd at the page level; advertising them in the sitemap
@@ -48,6 +52,7 @@ module Public
 
         Sitemap: #{sitemap_url}
         # LLM guide: #{llms_url}
+        # Full LLM guide: #{llms_full_url}
       ROBOTS
     end
 
@@ -58,7 +63,8 @@ module Public
         [ public_matters_url, Civic::Matter.for_jurisdiction(current_jurisdiction).maximum(:updated_at) ],
         [ data_url, Date.current ],
         [ glossary_url, Date.current ],
-        [ llms_url, Date.current ]
+        [ llms_url, Date.current ],
+        [ llms_full_url, Date.current ]
       ] + landing_sitemap_urls
     end
 

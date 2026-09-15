@@ -1,0 +1,3 @@
+<% Civic::Jurisdiction.order(:name).each do |jurisdiction| %>
+- [<%= jurisdiction.site_title %>](https://<%= jurisdiction.primary_host %>/)<%= " (this host)" if jurisdiction == current_jurisdiction %>
+<% end %>

@@ -16,11 +16,13 @@ module Public
       assert_includes response.body, "Allow: /"
       assert_includes response.body, "Disallow: /jobs"
       assert_includes response.body, "Sitemap: http://#{SANJOSE_HOST}/sitemap.xml"
+      assert_includes response.body, "# LLM guide: http://#{SANJOSE_HOST}/llms.txt"
+      assert_includes response.body, "# Full LLM guide: http://#{SANJOSE_HOST}/llms-full.txt"
       assert_not_includes response.body, "Content-Signal"
       assert_no_match(/^LLMs:/, response.body)
     end
 
-    test "llms.txt describes source boundaries for the current jurisdiction" do
+    test "llms.txt provides concise, host-scoped discovery and citation guidance" do
       host! SJUSD_HOST
 
       get "/llms.txt"
@@ -28,11 +30,41 @@ module Public
       assert_response :success
       assert_equal "text/plain", response.media_type
       assert_includes response.body, "# San Jose Unified School District Civic Gallery"
+      assert_includes response.body, "This guide applies only to #{SJUSD_HOST}"
+      assert_includes response.body, "[full guide](http://#{SJUSD_HOST}/llms-full.txt)"
+      assert_includes response.body, "## Civic Gallery Hosts"
+      assert_includes response.body, "[San Jose Civic Gallery](https://#{SANJOSE_HOST}/)"
+      assert_includes response.body, "[San Jose Unified School District Civic Gallery](https://#{SJUSD_HOST}/) (this host)"
+      assert_includes response.body, "[Santa Clara County Civic Gallery](https://santaclaracounty.civicgallery.org/)"
       assert_includes response.body, "Official public records are authoritative"
       assert_includes response.body, "[Topics](http://#{SJUSD_HOST}/topics)"
       assert_includes response.body, "[Bodies](http://#{SJUSD_HOST}/bodies)"
+      assert_includes response.body, "[Data Health](http://#{SJUSD_HOST}/data)"
+      assert_includes response.body, "[Glossary](http://#{SJUSD_HOST}/glossary)"
+      assert_includes response.body, "[Sitemap](http://#{SJUSD_HOST}/sitemap.xml)"
+      assert_includes response.body, "For definitive factual claims, cite the linked official source record or document"
+      assert_includes response.body, "OCR or extraction errors"
       assert_includes response.body, "simbli.eboardsolutions.com"
       assert_not_includes response.body, "sanjose.legistar.com"
+    end
+
+    test "llms-full.txt provides verification workflow without crossing source boundaries" do
+      host! SANJOSE_HOST
+
+      get "/llms-full.txt"
+
+      assert_response :success
+      assert_equal "text/plain", response.media_type
+      assert_includes response.body, "# San Jose Civic Gallery: Full AI-Agent Guide"
+      assert_includes response.body, "This guide applies only to #{SANJOSE_HOST}"
+      assert_includes response.body, "[llms.txt](http://#{SANJOSE_HOST}/llms.txt)"
+      assert_includes response.body, "## Corpus and Source Boundaries"
+      assert_includes response.body, "## Recommended Agent Workflow"
+      assert_includes response.body, "## Citation Guidance"
+      assert_includes response.body, "sanjose.legistar.com"
+      assert_not_includes response.body, "simbli.eboardsolutions.com"
+      assert_includes response.body, "[San Jose Civic Gallery](https://#{SANJOSE_HOST}/) (this host)"
+      assert_includes response.body, "[San Jose Unified School District Civic Gallery](https://#{SJUSD_HOST}/)"
     end
 
     test "sitemap.xml includes only the current host's jurisdiction records" do
@@ -75,6 +107,7 @@ module Public
       assert_response :success
       assert_equal "application/xml", response.media_type
       assert_includes response.body, "http://#{SJUSD_HOST}/"
+      assert_includes response.body, "<loc>http://#{SJUSD_HOST}/llms-full.txt</loc>"
       assert_includes response.body, public_event_url(sjusd_event)
       assert_includes response.body, public_matter_url(sjusd_matter)
       assert_not_includes response.body, public_event_url(sanjose_event)

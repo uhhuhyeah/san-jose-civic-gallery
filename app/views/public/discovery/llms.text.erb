@@ -2,13 +2,19 @@
 
 > <%= current_jurisdiction.site_title %> is a source-first civic information site for browsing <%= current_jurisdiction.name %> public meetings, matters, attachments, extracted document text, generated summaries, source links, and theme trends.
 
-Official public records are authoritative. Generated summaries, extracted text, and theme labels are assistive metadata for discovery and should be checked against official source materials before making factual claims.
+This guide applies only to <%= request.host %> and its <%= current_jurisdiction.name %> records. See the [full guide](<%= llms_full_url %>) for corpus structure, validation, and citation workflow.
+
+## Civic Gallery Hosts
+
+Each host has a separate jurisdiction-specific corpus. Do not combine records across hosts without saying so.
+
+<%= render "public/discovery/jurisdiction_hosts" %>
 
 ## Key Pages
 
 - [Homepage and Pulse](<%= root_url %>): Recent agenda activity and theme trends.
-- [Topics](<%= topics_url %>): Civic topic hubs that link to related official matters and meetings.
-- [Bodies](<%= bodies_url %>): Governing-body hubs that link to meeting records and matters heard.
+- [Topics](<%= topics_url %>): Civic topic hubs and populated durable topic pages that link to related official matters and meetings.
+- [Bodies](<%= bodies_url %>): Governing-body hubs and populated durable body pages that link to meeting records and matters heard.
 - [Meetings](<%= public_meetings_url %>): Public meetings, bodies, agenda items, and source links.
 - [Matters](<%= public_matters_url %>): Public matters, files, attachments, extracted text, generated summaries, and related meetings.
 - [Data Health](<%= data_url %>): Ingestion freshness, record counts, import coverage, extraction coverage, and known source-data limits.
@@ -18,10 +24,10 @@ Official public records are authoritative. Generated summaries, extracted text, 
 ## Source Boundaries
 
 - Primary source system: <%= current_jurisdiction.ingestion_source_label %> (<%= current_jurisdiction.source_host %>).
-- Official source links on matter and meeting pages should be treated as the source of truth.
-- Generated summaries and theme classifications are model-derived and may be incomplete or wrong.
-- Search snippets and extracted text come from public documents and can contain OCR or extraction errors.
+- Official public records are authoritative; linked official documents are the supporting primary evidence.
+- Generated summaries and theme classifications are assistive, model-derived metadata; they may be incomplete or wrong.
+- Search snippets and extracted text come from public documents and can contain OCR or extraction errors. Check the source file before relying on them.
 
-## Suggested Use
+## Citation and Freshness
 
-Use this site to find relevant official records quickly, then cite the linked official source document or meeting record when accuracy matters.
+Use Civic Gallery matter and meeting URLs to identify the records you consulted. For definitive factual claims, cite the linked official source record or document as well. Check [Data Health](<%= data_url %>) for import freshness, coverage, and known limitations before drawing conclusions from apparent gaps.
