@@ -1,0 +1,48 @@
+<% content_for(:title) { "Topics" } %>
+<% content_for(:description) { "Browse #{current_jurisdiction.short_name} records by civic topic: official matters, meeting agendas, attachments, and source links for each theme." } %>
+<% content_for(:robots) { "noindex,follow" } if @themes.empty? %>
+<% content_for :body_class, "atlas-shell" %>
+<% content_for :head do %>
+  <%= stylesheet_link_tag "atlas", "data-turbo-track": "reload" %>
+<% end %>
+
+<main class="atlas-wrap" id="main">
+  <%= render "public/shared/atlas_topbar", active: :matters %>
+
+  <nav class="atlas-crumbs" aria-label="Breadcrumb">
+    <span>Topics</span>
+  </nav>
+
+  <header class="atlas-matters-header">
+    <p class="atlas-eyebrow">Official Records</p>
+    <h1>Topics</h1>
+    <p class="atlas-matters-header-lede">Civic topics with records on file from <%= current_jurisdiction.civic_subject %>. Each topic page gathers the official matters and meetings where it appears.</p>
+  </header>
+
+  <% if @themes.any? %>
+    <section aria-label="Topics with records">
+      <div class="atlas-pulse-grid" role="list">
+        <% @themes.each do |theme| %>
+          <%= render "public/shared/atlas_theme_tile",
+                     name: theme[:label],
+                     count: theme[:matter_count],
+                     size: :m,
+                     count_label: "Matters",
+                     href: topic_path(theme[:url_slug]),
+                     aria_label: "#{theme[:label]}: #{theme[:matter_count]} matters" %>
+        <% end %>
+      </div>
+    </section>
+  <% else %>
+    <div class="atlas-empty-state">
+      <h3>No topics have records yet</h3>
+      <p>No matters have been tagged with a theme yet. Check back as more meetings are ingested, or browse <%= link_to "all matters", public_matters_path %> directly.</p>
+    </div>
+  <% end %>
+
+  <p class="atlas-matters-banner">
+    Looking for a specific legislative file? <%= link_to "Browse all matters", public_matters_path %>.
+  </p>
+
+  <%= render "public/shared/atlas_footer" %>
+</main>

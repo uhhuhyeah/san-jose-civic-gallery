@@ -140,6 +140,28 @@ module Public
       assert_select "select#matter-filter-theme option[selected][value='housing']", text: "Housing"
     end
 
+    test "theme-filtered listing canonicals to its topic hub" do
+      host! "sanjose.civicgallery.org"
+      @matter.themes.create!(theme_slug: "housing", rank: 1)
+
+      get public_matters_url(theme: "housing")
+
+      assert_response :success
+      assert_select "meta[name='robots']", false
+      assert_select "link[rel='canonical'][href='http://sanjose.civicgallery.org/topics/housing']"
+    end
+
+    test "query-filtered listing stays noindex with no canonical and an unparameterized og:url" do
+      @matter.themes.create!(theme_slug: "housing", rank: 1)
+
+      get public_matters_url(q: "housing", theme: "housing")
+
+      assert_response :success
+      assert_select "meta[name='robots'][content='noindex,follow']"
+      assert_select "link[rel='canonical']", false
+      assert_select "meta[property='og:url'][content='http://www.example.com/public/matters']"
+    end
+
     test "renders the SJUSD theme vocabulary in the dropdown on the SJUSD host" do
       host! "sjusd.civicgallery.org"
 

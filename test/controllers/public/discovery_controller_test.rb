@@ -29,6 +29,8 @@ module Public
       assert_equal "text/plain", response.media_type
       assert_includes response.body, "# San Jose Unified School District Civic Gallery"
       assert_includes response.body, "Official public records are authoritative"
+      assert_includes response.body, "[Topics](http://#{SJUSD_HOST}/topics)"
+      assert_includes response.body, "[Bodies](http://#{SJUSD_HOST}/bodies)"
       assert_includes response.body, "simbli.eboardsolutions.com"
       assert_not_includes response.body, "sanjose.legistar.com"
     end
@@ -59,11 +61,13 @@ module Public
         title: "Roll call"
       )
       sanjose_matter = Civic::Matter.create!(legistar_matter_id: 97_101, matter_file: "26-971")
+      sanjose_matter.themes.create!(theme_slug: "public_safety", rank: 1)
       sjusd_matter = Civic::Matter.create!(
         source_system: "simbli.sjusd",
         source_matter_id: "sjusd:sitemap:1",
         matter_file: "SJUSD-971"
       )
+      sjusd_matter.themes.create!(theme_slug: "curriculum_instruction", rank: 1)
 
       host! SJUSD_HOST
       get "/sitemap.xml"
@@ -75,6 +79,29 @@ module Public
       assert_includes response.body, public_matter_url(sjusd_matter)
       assert_not_includes response.body, public_event_url(sanjose_event)
       assert_not_includes response.body, public_matter_url(sanjose_matter)
+      # Durable landing pages are jurisdiction-scoped too (issue #152): the
+      # SJUSD sitemap carries SJUSD topics and bodies, never San Jose's.
+      assert_includes response.body, "<loc>http://#{SJUSD_HOST}/topics</loc>"
+      assert_includes response.body, "<loc>http://#{SJUSD_HOST}/topics/curriculum-instruction</loc>"
+      assert_includes response.body, "<loc>http://#{SJUSD_HOST}/bodies</loc>"
+      assert_includes response.body, "<loc>http://#{SJUSD_HOST}/bodies/board-of-education</loc>"
+      assert_includes response.body, "<loc>http://#{SJUSD_HOST}/years/#{Date.current.year}</loc>"
+      assert_not_includes response.body, "topics/public-safety"
+      assert_not_includes response.body, "bodies/city-council"
+
+      host! SANJOSE_HOST
+      get "/sitemap.xml"
+
+      assert_response :success
+      assert_includes response.body, "<loc>http://#{SANJOSE_HOST}/topics</loc>"
+      assert_includes response.body, "<loc>http://#{SANJOSE_HOST}/topics/public-safety</loc>"
+      assert_includes response.body, "<loc>http://#{SANJOSE_HOST}/bodies</loc>"
+      assert_includes response.body, "<loc>http://#{SANJOSE_HOST}/bodies/city-council</loc>"
+      assert_includes response.body, "<loc>http://#{SANJOSE_HOST}/years/#{Date.current.year}</loc>"
+      # Empty topic variants are excluded from the sitemap.
+      assert_not_includes response.body, "topics/arts-culture"
+      # No other host's landing page leaks into this sitemap.
+      assert_not_includes response.body, "http://#{SJUSD_HOST}/"
     end
 
     test "indexable public pages emit canonical and social metadata" do
@@ -129,6 +156,43 @@ module Public
       assert_response :success
       assert_includes response.body, public_event_url(populated)
       assert_not_includes response.body, public_event_url(empty)
+    end
+
+    test "every sitemap URL resolves successfully" do
+      Civic::Matter.create!(
+        legistar_matter_id: 97_301,
+        matter_file: "26-973",
+        body_name: "Matter Only Commission",
+        agenda_date: Date.current
+      )
+      Civic::Event.create!(
+        legistar_event_id: 97_302,
+        body_name: "Historical Commission",
+        event_date: Date.new(1999, 12, 31)
+      )
+      legacy_matter = Civic::Matter.create!(
+        legistar_matter_id: 97_303,
+        matter_file: "26-974",
+        agenda_date: Date.current
+      )
+      Civic::MatterTheme.insert_all!(
+        [ {
+          civic_matter_id: legacy_matter.id,
+          theme_slug: "legacy_topic",
+          rank: 1,
+          created_at: Time.current,
+          updated_at: Time.current
+        } ]
+      )
+
+      host! SANJOSE_HOST
+      get "/sitemap.xml"
+      assert_response :success
+
+      response.body.scan(%r{<loc>([^<]+)</loc>}).flatten.each do |url|
+        get URI.parse(url).request_uri
+        assert_response :success, "Expected sitemap URL #{url} to resolve successfully"
+      end
     end
 
     test "noindex result variants suppress the canonical link" do

@@ -1,6 +1,10 @@
 <% content_for(:title) { "Matters" } %>
 <% content_for(:description) { "Browse #{current_jurisdiction.short_name} legislative matters, agenda files, official attachments, extracted document text, and source links." } %>
 <% content_for(:robots) { "noindex,follow" } if @query.present? %>
+<%# A theme-filtered listing is a near-duplicate of its durable topic hub
+    (issue #152), so it canonicals to the hub. Query variants stay noindex,
+    and noindex suppresses the canonical tag in the layout. %>
+<% content_for(:canonical_url) { topic_url(Civic::ThemeTaxonomy.url_slug_for(@theme)) } if @theme && @query.blank? %>
 <% content_for :body_class, "atlas-shell" %>
 <% content_for :head do %>
   <%= stylesheet_link_tag "atlas", "data-turbo-track": "reload" %>

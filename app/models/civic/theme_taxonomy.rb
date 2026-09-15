@@ -108,5 +108,17 @@ module Civic
     def label_for(slug, jurisdiction)
       themes_for(jurisdiction).find { |theme| theme[:slug] == slug }&.dig(:label)
     end
+
+    # URL form of a stored slug. Stored slugs use underscores; the durable
+    # landing-page URLs (issue #152) use hyphens. Centralized here so the
+    # mapping is bidirectional in exactly one place. Stored slugs never
+    # change; only the URL alphabet does.
+    def url_slug_for(slug)
+      slug.to_s.tr("_", "-")
+    end
+
+    def slug_from_url(url_slug)
+      url_slug.to_s.tr("-", "_")
+    end
   end
 end

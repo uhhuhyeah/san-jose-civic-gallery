@@ -1,0 +1,136 @@
+<% content_for(:title) { "#{@body_name} records" } %>
+<% content_for(:description) { "Browse #{@body_name} records from #{current_jurisdiction.short_name}: meeting agendas, agenda items, matters heard, official attachments, and links to the source documents." } %>
+<% content_for(:robots) { "noindex,follow" } if @empty %>
+<% content_for :body_class, "atlas-shell" %>
+<% content_for :head do %>
+  <%= stylesheet_link_tag "atlas", "data-turbo-track": "reload" %>
+<% end %>
+
+<main class="atlas-wrap" id="main">
+  <%= render "public/shared/atlas_topbar", active: :meetings %>
+
+  <nav class="atlas-crumbs" aria-label="Breadcrumb">
+    <%= link_to "Bodies", bodies_path %>
+    <span class="atlas-crumbs-sep">/</span>
+    <span><%= @body_name %></span>
+  </nav>
+
+  <header class="atlas-meetings-header">
+    <p class="atlas-eyebrow">Body</p>
+    <h1><%= @body_name %> records</h1>
+    <p class="atlas-meetings-header-lede">Meetings of <strong><%= @body_name %></strong> and the matters heard by it, with links to the source documents on <%= current_jurisdiction.source_host %>.</p>
+  </header>
+
+  <% if @events.any? %>
+    <%= render "public/shared/atlas_section_heading",
+               title: "Meetings of",
+               em: @body_name,
+               label: pluralize(@events.length, "meeting"),
+               level: 2 %>
+    <section class="atlas-meetings-results" aria-label="Meetings">
+      <% @events.each do |event| %>
+        <% remaining = event.event_items.size - 3 %>
+        <article class="atlas-meeting-row">
+          <%= render "public/shared/atlas_date_plate",
+                     date: event.event_date,
+                     size: :md,
+                     aria_label: "Meeting date #{event.event_date.strftime('%-d %B %Y')}" %>
+
+          <div class="atlas-meeting-row-body">
+            <h2><%= link_to event.listing_title, public_event_path(event) %></h2>
+            <div class="atlas-meeting-row-meta">
+              <% if event.location_name.present? %><span><%= event.location_name %></span><% end %>
+              <% if event.agenda_status_name.present? %>
+                <% variant = event.agenda_status_name.downcase == "final" ? "sage" : "heat" %>
+                <span class="atlas-chip atlas-chip--<%= variant %>">Agenda · <%= event.agenda_status_name %></span>
+              <% end %>
+            </div>
+
+            <% if event.event_items.any? %>
+              <div class="atlas-meeting-row-preview">
+                <p class="atlas-meeting-row-preview-label">Agenda items</p>
+                <ul>
+                  <% event.event_items.first(3).each do |item| %>
+                    <li>
+                      <% if item.matter %>
+                        <%= link_to item.display_name, public_matter_path(item.matter) %>
+                      <% else %>
+                        <span><%= item.display_name %></span>
+                      <% end %>
+                      <% if item.title.present? && item.title != item.display_name %>
+                        <span><%= item.title %></span>
+                      <% end %>
+                    </li>
+                  <% end %>
+                </ul>
+                <% if remaining.positive? %>
+                  <%= link_to "+#{pluralize(remaining, "more agenda item")}", public_event_path(event), class: "atlas-meeting-row-preview-more" %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </article>
+      <% end %>
+    </section>
+    <p class="atlas-meetings-banner">
+      <%= link_to "View all #{@body_name} meetings", public_meetings_path(body_name: @body_name), class: "atlas-meetings-banner-clear" %>
+    </p>
+  <% end %>
+
+  <% if @matters.any? %>
+    <%= render "public/shared/atlas_section_heading",
+               title: "Matters heard by",
+               em: @body_name,
+               label: pluralize(@matters.length, "matter"),
+               level: 2 %>
+    <section class="atlas-matters-results" aria-label="Matters">
+      <% @matters.each do |matter| %>
+        <article class="atlas-matter-row">
+          <% if matter.agenda_date %>
+            <%= render "public/shared/atlas_date_plate",
+                       date: matter.agenda_date,
+                       size: :sm,
+                       aria_label: "Agenda date #{matter.agenda_date.strftime('%-d %B %Y')}" %>
+          <% else %>
+            <div></div>
+          <% end %>
+
+          <div class="atlas-matter-row-body">
+            <span class="atlas-matter-row-code"><%= matter.display_name %></span>
+            <h2><%= link_to matter.descriptive_title.presence || matter.display_name, public_matter_path(matter) %></h2>
+            <div class="atlas-matter-row-meta">
+              <% if matter.matter_type_name.present? %><span><%= matter.matter_type_name %></span><% end %>
+              <% if matter.matter_status_name.present? %><span><%= matter.matter_status_name %></span><% end %>
+            </div>
+          </div>
+
+          <dl class="atlas-matter-row-facts">
+            <div>
+              <dt>Agenda date</dt>
+              <dd class="<%= 'unknown' unless matter.agenda_date %>"><%= matter.agenda_date&.strftime("%d %b %Y") || "Unknown" %></dd>
+            </div>
+            <div>
+              <dt>Attachments</dt>
+              <dd><%= matter.attachments.size %></dd>
+            </div>
+          </dl>
+        </article>
+      <% end %>
+    </section>
+  <% end %>
+
+  <% if @empty %>
+    <div class="atlas-empty-state">
+      <h3>No records for <%= @body_name %> yet</h3>
+      <p>No meetings of <%= @body_name %> have been ingested yet. Check back soon, or browse <%= link_to "all meetings", public_meetings_path %>.</p>
+    </div>
+  <% end %>
+
+  <p class="atlas-meetings-banner">
+    <%= link_to "All bodies", bodies_path %> ·
+    <%= link_to "Browse all meetings", public_meetings_path %> ·
+    <%= link_to "Browse all matters", public_matters_path %>
+  </p>
+
+  <%= render "public/shared/atlas_footer" %>
+</main>

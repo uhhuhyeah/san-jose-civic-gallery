@@ -1,0 +1,47 @@
+<% content_for(:title) { "Bodies" } %>
+<% content_for(:description) { "Browse #{current_jurisdiction.short_name} records by governing body: meeting agendas, agenda items, linked matters, and official source links for each body." } %>
+<% content_for(:robots) { "noindex,follow" } if @bodies.empty? %>
+<% content_for :body_class, "atlas-shell" %>
+<% content_for :head do %>
+  <%= stylesheet_link_tag "atlas", "data-turbo-track": "reload" %>
+<% end %>
+
+<main class="atlas-wrap" id="main">
+  <%= render "public/shared/atlas_topbar", active: :meetings %>
+
+  <nav class="atlas-crumbs" aria-label="Breadcrumb">
+    <span>Bodies</span>
+  </nav>
+
+  <header class="atlas-meetings-header">
+    <p class="atlas-eyebrow">Official Records</p>
+    <h1>Bodies</h1>
+    <p class="atlas-meetings-header-lede">Governing bodies of <%= current_jurisdiction.short_name %> with meeting records on file. Each body page gathers its meetings and the matters heard by it.</p>
+  </header>
+
+  <% if @bodies.any? %>
+    <section aria-label="Bodies with meeting records">
+      <div class="atlas-pulse-grid" role="list">
+        <% @bodies.each do |body| %>
+          <%= render "public/shared/atlas_body_tile",
+                     name: body[:name],
+                     count: body[:event_count],
+                     label: "Meetings on record",
+                     href: body_path(body[:url_slug]),
+                     aria_label: "#{body[:name]}: #{body[:event_count]} meetings on record" %>
+        <% end %>
+      </div>
+    </section>
+  <% else %>
+    <div class="atlas-empty-state">
+      <h3>No bodies have meeting records yet</h3>
+      <p>No meetings have been ingested yet. Check back soon, or browse <%= link_to "all matters", public_matters_path %> directly.</p>
+    </div>
+  <% end %>
+
+  <p class="atlas-meetings-banner">
+    Looking for a specific meeting? <%= link_to "Browse all meetings", public_meetings_path %>.
+  </p>
+
+  <%= render "public/shared/atlas_footer" %>
+</main>
