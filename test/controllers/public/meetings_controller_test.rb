@@ -49,6 +49,37 @@ module Public
       assert_not_includes response.body, "Planning meeting"
     end
 
+    test "links to the selected month's published roundup" do
+      period = Civic::RoundupPeriod.for_month(jurisdiction: Civic::Jurisdiction.default, year: 2026, month: 5)
+      Generated::Artifact.create!(
+        target: period,
+        kind: Generated::SummarizeRoundup::KIND,
+        model_identifier: "test",
+        prompt_version: Generated::Prompts::MonthlyRoundupV1::VERSION,
+        input_sha256: "meetings-roundup-sha",
+        status: "succeeded",
+        generated_at: Time.current,
+        content: { "headline" => "May in San Jose", "storyline" => "A monthly recap." }
+      )
+
+      get public_meetings_url(month: "2026-05")
+
+      assert_response :success
+      assert_select "aside.atlas-meetings-roundup-cta" do
+        assert_select "a[href=?]", roundup_path(period), text: "Read the recap"
+        assert_select "p", text: /May 2026/
+      end
+    end
+
+    test "does not link to a month without a published roundup" do
+      Civic::RoundupPeriod.for_month(jurisdiction: Civic::Jurisdiction.default, year: 2026, month: 6)
+
+      get public_meetings_url(month: "2026-06")
+
+      assert_response :success
+      assert_select "aside.atlas-meetings-roundup-cta", false
+    end
+
     test "meetings index returns 304 when client ETag matches" do
       get public_meetings_url(month: "2026-05")
       assert_response :success
