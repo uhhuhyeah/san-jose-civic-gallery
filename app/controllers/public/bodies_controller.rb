@@ -11,6 +11,8 @@ module Public
   # `find` is deterministic). The unreachable duplicate remains reachable via
   # /public/meetings?body_name=<name>.
   class BodiesController < ApplicationController
+    include PublicRecordsInCachedOrder
+
     MEETINGS_LIMIT = 25
     MATTERS_LIMIT = 50
     INDEX_CACHE_TTL = 5.minutes
@@ -49,13 +51,7 @@ module Public
     # Distinct body names, same query as MeetingsController#cached_filter_options.
     def cached_body_names
       Rails.cache.fetch([ index_cache_version, "body-names" ], expires_in: INDEX_CACHE_TTL) do
-        Civic::Event
-          .current_from_source
-          .for_jurisdiction(current_jurisdiction)
-          .where.not(body_name: [ nil, "" ])
-          .distinct
-          .order(:body_name)
-          .pluck(:body_name)
+        Public::LandingPageEligibility.body_names(current_jurisdiction)
       end
     end
 
@@ -64,10 +60,8 @@ module Public
     # thin (noindex) landing page.
     def cached_body_counts
       Rails.cache.fetch([ index_cache_version, "body-counts" ], expires_in: INDEX_CACHE_TTL) do
-        counts = Civic::Event
-          .current_from_source
-          .for_jurisdiction(current_jurisdiction)
-          .where.not(body_name: [ nil, "" ])
+        counts = Public::LandingPageEligibility
+          .body_scope(current_jurisdiction)
           .group(:body_name)
           .count
 
@@ -105,11 +99,6 @@ module Public
           .limit(MATTERS_LIMIT)
           .pluck(:id)
       end
-    end
-
-    def records_in_cached_order(ids, scope)
-      records_by_id = scope.where(id: ids).index_by(&:id)
-      ids.filter_map { |id| records_by_id[id] }
     end
   end
 end

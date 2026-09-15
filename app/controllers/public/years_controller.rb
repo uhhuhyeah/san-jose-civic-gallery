@@ -3,17 +3,17 @@ module Public
   # years are an open, low-value set whose members are discoverable from the
   # sitemap and from meeting pages, so only the leaf pages exist.
   class YearsController < ApplicationController
+    include PublicRecordsInCachedOrder
+
     EVENTS_LIMIT = 25
     MATTERS_LIMIT = 50
     INDEX_CACHE_TTL = 5.minutes
 
     # Legistar data for the default jurisdiction does not predate 2000, and
     # agendas are sometimes published a year ahead, so accept next year too.
-    MIN_YEAR = 2000
-
     def show
       @year = Integer(params[:year], 10)
-      unless @year.between?(MIN_YEAR, Date.current.year + 1)
+      unless Public::LandingPageEligibility.valid_year?(@year)
         head :not_found
         return
       end
@@ -67,11 +67,6 @@ module Public
           .limit(MATTERS_LIMIT)
           .pluck(:id)
       end
-    end
-
-    def records_in_cached_order(ids, scope)
-      records_by_id = scope.where(id: ids).index_by(&:id)
-      ids.filter_map { |id| records_by_id[id] }
     end
   end
 end

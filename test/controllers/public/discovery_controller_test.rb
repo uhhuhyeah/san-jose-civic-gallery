@@ -158,6 +158,43 @@ module Public
       assert_not_includes response.body, public_event_url(empty)
     end
 
+    test "every sitemap URL resolves successfully" do
+      Civic::Matter.create!(
+        legistar_matter_id: 97_301,
+        matter_file: "26-973",
+        body_name: "Matter Only Commission",
+        agenda_date: Date.current
+      )
+      Civic::Event.create!(
+        legistar_event_id: 97_302,
+        body_name: "Historical Commission",
+        event_date: Date.new(1999, 12, 31)
+      )
+      legacy_matter = Civic::Matter.create!(
+        legistar_matter_id: 97_303,
+        matter_file: "26-974",
+        agenda_date: Date.current
+      )
+      Civic::MatterTheme.insert_all!(
+        [ {
+          civic_matter_id: legacy_matter.id,
+          theme_slug: "legacy_topic",
+          rank: 1,
+          created_at: Time.current,
+          updated_at: Time.current
+        } ]
+      )
+
+      host! SANJOSE_HOST
+      get "/sitemap.xml"
+      assert_response :success
+
+      response.body.scan(%r{<loc>([^<]+)</loc>}).flatten.each do |url|
+        get URI.parse(url).request_uri
+        assert_response :success, "Expected sitemap URL #{url} to resolve successfully"
+      end
+    end
+
     test "noindex result variants suppress the canonical link" do
       host! SANJOSE_HOST
 

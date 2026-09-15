@@ -78,16 +78,8 @@ module Public
           .group("civic_matter_themes.theme_slug")
           .maximum(:updated_at)
 
-        body_event_updated_at = Civic::Event
-          .current_from_source
-          .for_jurisdiction(current_jurisdiction)
-          .where.not(body_name: [ nil, "" ])
-          .group(:body_name)
-          .maximum(:updated_at)
-
-        body_matter_updated_at = Civic::Matter
-          .for_jurisdiction(current_jurisdiction)
-          .where.not(body_name: [ nil, "" ])
+        body_event_updated_at = Public::LandingPageEligibility
+          .body_scope(current_jurisdiction)
           .group(:body_name)
           .maximum(:updated_at)
 
@@ -107,7 +99,6 @@ module Public
         {
           theme_updated_at: theme_updated_at,
           body_event_updated_at: body_event_updated_at,
-          body_matter_updated_at: body_matter_updated_at,
           years: (event_years + agenda_years + intro_years).compact.uniq.sort
         }
       end.then { |data| landing_sitemap_rows_for(data) }
@@ -116,23 +107,27 @@ module Public
     def landing_sitemap_rows_for(data)
       rows = []
 
-      if data[:theme_updated_at].any?
+      eligible_topics = data[:theme_updated_at].select do |slug, _timestamp|
+        Public::LandingPageEligibility.topic_slug?(slug, current_jurisdiction)
+      end
+      if eligible_topics.any?
         rows << [ topics_url, Date.current ]
-        data[:theme_updated_at].each do |slug, timestamp|
+        eligible_topics.each do |slug, timestamp|
           rows << [ topic_url(Civic::ThemeTaxonomy.url_slug_for(slug)), timestamp ]
         end
       end
 
-      body_names = (data[:body_event_updated_at].keys | data[:body_matter_updated_at].keys).sort
+      body_names = data[:body_event_updated_at].keys.sort
       if body_names.any?
         rows << [ bodies_url, Date.current ]
         body_names.each do |name|
-          timestamp = [ data[:body_event_updated_at][name], data[:body_matter_updated_at][name] ].compact.max
-          rows << [ body_url(name.parameterize), timestamp ]
+          rows << [ body_url(name.parameterize), data[:body_event_updated_at][name] ]
         end
       end
 
       data[:years].each do |year|
+        next unless Public::LandingPageEligibility.valid_year?(year)
+
         rows << [ year_url(year), nil ]
       end
 

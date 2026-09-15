@@ -5,6 +5,8 @@ module Public
   # scoped to the request's jurisdiction: the theme vocabularies themselves
   # differ per jurisdiction, so a slug valid in one host 404s on another.
   class TopicsController < ApplicationController
+    include PublicRecordsInCachedOrder
+
     MATTERS_LIMIT = 50
     MEETINGS_LIMIT = 10
     INDEX_CACHE_TTL = 5.minutes
@@ -17,7 +19,7 @@ module Public
 
     def show
       @theme = Civic::ThemeTaxonomy.slug_from_url(params[:slug])
-      unless Civic::ThemeTaxonomy.valid_slug?(@theme, current_jurisdiction)
+      unless Public::LandingPageEligibility.topic_slug?(@theme, current_jurisdiction)
         head :not_found
         return
       end
@@ -110,11 +112,6 @@ module Public
           .limit(MEETINGS_LIMIT)
           .pluck(:id)
       end
-    end
-
-    def records_in_cached_order(ids, scope)
-      records_by_id = scope.where(id: ids).index_by(&:id)
-      ids.filter_map { |id| records_by_id[id] }
     end
   end
 end
