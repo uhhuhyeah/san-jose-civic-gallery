@@ -33,6 +33,9 @@ module Public
       assert_includes response.body, "This guide applies only to #{SJUSD_HOST}"
       assert_includes response.body, "[full guide](http://#{SJUSD_HOST}/llms-full.txt)"
       assert_includes response.body, "## Civic Gallery Hosts"
+      assert_includes response.body, "[San Jose Civic Gallery](https://#{SANJOSE_HOST}/)"
+      assert_includes response.body, "[San Jose Unified School District Civic Gallery](https://#{SJUSD_HOST}/) (this host)"
+      assert_includes response.body, "[Santa Clara County Civic Gallery](https://santaclaracounty.civicgallery.org/)"
       assert_includes response.body, "Official public records are authoritative"
       assert_includes response.body, "[Topics](http://#{SJUSD_HOST}/topics)"
       assert_includes response.body, "[Bodies](http://#{SJUSD_HOST}/bodies)"
@@ -60,6 +63,8 @@ module Public
       assert_includes response.body, "## Citation Guidance"
       assert_includes response.body, "sanjose.legistar.com"
       assert_not_includes response.body, "simbli.eboardsolutions.com"
+      assert_includes response.body, "[San Jose Civic Gallery](https://#{SANJOSE_HOST}/) (this host)"
+      assert_includes response.body, "[San Jose Unified School District Civic Gallery](https://#{SJUSD_HOST}/)"
     end
 
     test "sitemap.xml includes only the current host's jurisdiction records" do

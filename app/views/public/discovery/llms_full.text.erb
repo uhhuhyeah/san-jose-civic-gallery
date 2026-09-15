@@ -35,6 +35,4 @@ When describing how a record was discovered or linking readers to Civic Gallery'
 
 These hosts are separate corpora. Their records, source systems, coverage, and terminology may differ.
 
-<% Civic::Jurisdiction.order(:name).each do |jurisdiction| %>
-- [<%= jurisdiction.site_title %>](https://<%= jurisdiction.primary_host %>/)<%= " (this host)" if jurisdiction == current_jurisdiction %>
-<% end %>
+<%= render "public/discovery/jurisdiction_hosts" %>
