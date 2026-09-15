@@ -74,6 +74,16 @@
     </div>
   <% end %>
 
+  <% if @roundup_period %>
+    <aside class="atlas-meetings-roundup-cta" aria-label="Monthly recap">
+      <div>
+        <p class="atlas-eyebrow">Monthly recap</p>
+        <p>An automated overview of decisions, new business, and meeting highlights from <%= @roundup_period.label %>.</p>
+      </div>
+      <%= link_to "Read the recap", roundup_path(@roundup_period) %>
+    </aside>
+  <% end %>
+
   <%# ---------- RESULTS ---------- %>
   <% if @events.any? %>
     <p class="atlas-meetings-count">

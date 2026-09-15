@@ -13,6 +13,7 @@ module Public
       @year_options = options[:year_options]
 
       @events = records_in_cached_order(cached_event_ids, Civic::Event.for_jurisdiction(current_jurisdiction).includes(event_items: { matter: :attachments }))
+      @roundup_period = published_roundup_period
     end
 
     private
@@ -86,6 +87,17 @@ module Public
         end
         scope.limit(100).map(&:id)
       end
+    end
+
+    # A roundup is available only after its generated artifact has succeeded.
+    # Looking up an existing period, rather than calling `for_month`, keeps a
+    # public index request read-only for current and unpublished months.
+    def published_roundup_period
+      published_period_ids = Generated::Artifact.succeeded.for_kind(Generated::SummarizeRoundup::KIND)
+        .where(target_type: "Civic::RoundupPeriod").select(:target_id)
+
+      Civic::RoundupPeriod.for_jurisdiction(current_jurisdiction)
+        .where(period_start: @month, id: published_period_ids).first
     end
 
     def records_in_cached_order(ids, scope)

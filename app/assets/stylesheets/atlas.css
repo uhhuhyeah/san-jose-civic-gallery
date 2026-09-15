@@ -2362,6 +2362,45 @@
   text-decoration: none;
 }
 
+/* Published recap for the selected month. This remains absent while a month
+ * is in progress, or whenever a roundup has not been generated. */
+.atlas-shell .atlas-meetings-roundup-cta {
+  margin: -14px 0 36px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  background: var(--atlas-paper-deep);
+  border-left: 3px solid var(--atlas-accent);
+  border-radius: var(--atlas-r-lg);
+}
+.atlas-shell .atlas-meetings-roundup-cta .atlas-eyebrow {
+  margin: 0 0 4px;
+  color: var(--atlas-oxblood);
+}
+.atlas-shell .atlas-meetings-roundup-cta p:last-child {
+  margin: 0;
+  font-family: var(--atlas-serif);
+  font-size: 16px;
+  line-height: 1.35;
+  color: var(--atlas-ink-soft);
+}
+.atlas-shell .atlas-meetings-roundup-cta a {
+  flex: 0 0 auto;
+  font-family: var(--atlas-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--atlas-oxblood);
+  border-bottom: 1px solid var(--atlas-oxblood);
+  padding-bottom: 1px;
+}
+.atlas-shell .atlas-meetings-roundup-cta a:hover {
+  color: var(--atlas-oxblood-deep);
+  text-decoration: none;
+}
+
 /* Results count line. */
 .atlas-shell .atlas-meetings-count {
   font-family: var(--atlas-mono);
@@ -3832,6 +3871,11 @@
     flex-direction: column;
     gap: 8px;
   }
+  .atlas-shell .atlas-meetings-roundup-cta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
   .atlas-shell .atlas-matter-row {
     grid-template-columns: 1fr;
     row-gap: 8px;
@@ -3879,6 +3923,7 @@
   .atlas-shell .atlas-matters-filter,
   .atlas-shell .atlas-meetings-filter,
   .atlas-shell .atlas-meetings-monthnav,
+  .atlas-shell .atlas-meetings-roundup-cta,
   .atlas-shell .atlas-rail,
   .atlas-shell .atlas-papers-toc,
   .atlas-shell .atlas-pulse-grid,
