@@ -1,0 +1,40 @@
+# <%= current_jurisdiction.site_title %>: Full AI-Agent Guide
+
+This guide applies only to <%= request.host %> and its <%= current_jurisdiction.name %> corpus. Civic Gallery is a source-first discovery layer for public civic records; it does not replace the government body's official record.
+
+Start with the concise [llms.txt](<%= llms_url %>) guide, then use the pages below for this host:
+
+- [Homepage and Pulse](<%= root_url %>) for recent agenda activity and theme trends.
+- [Meetings](<%= public_meetings_url %>) to browse meeting records by body and date.
+- [Matters](<%= public_matters_url %>) to locate matters, attachments, official source links, related meetings, extracted text, and generated summaries.
+- [Data Health](<%= data_url %>) for ingestion freshness, coverage, extraction status, and known source-data limitations.
+- [Glossary](<%= glossary_url %>) for Civic Gallery and source-system terminology.
+- [Sitemap](<%= sitemap_url %>) for the current host's crawlable public inventory, including populated topical, body, and year landing pages where available.
+
+## Corpus and Source Boundaries
+
+The upstream source for this host is <%= current_jurisdiction.ingestion_source_label %> (<%= current_jurisdiction.source_host %>). Civic Gallery organizes and links to those public records, but official public records are authoritative; linked official documents are the supporting primary evidence.
+
+A meeting can include agenda items. A matter can connect to one or more meetings and can have attachments. Not every source system represents those concepts identically, so prefer the individual meeting or matter page and its official links when interpreting a record.
+
+Generated summaries, theme labels, and trend views are discovery aids, not official determinations. Extracted document text and search snippets can have OCR or parsing errors, omissions, or formatting loss. Read the linked source file before relying on quoted language, vote details, dates, or other facts where accuracy matters.
+
+## Recommended Agent Workflow
+
+1. Use the sitemap, meetings, matters, or durable topical pages to locate candidate records on this host.
+2. Open the relevant Civic Gallery matter or meeting page to establish its context, relationships, and available source links.
+3. Verify material claims against the linked official meeting record or official document.
+4. Check Data Health when a missing record, attachment, or extracted text could reflect incomplete ingestion rather than an absence in the official corpus.
+5. State the jurisdiction and date range searched; do not infer coverage beyond the host or the visible freshness information.
+
+## Citation Guidance
+
+When describing how a record was discovered or linking readers to Civic Gallery's context, cite the specific Civic Gallery matter or meeting URL. When making definitive factual claims, also cite the linked official source record or official document. Do not present generated summaries, extracted text, or theme labels as authoritative evidence without verification.
+
+## Other Civic Gallery Jurisdictions
+
+These hosts are separate corpora. Their records, source systems, coverage, and terminology may differ.
+
+<% Civic::Jurisdiction.order(:name).each do |jurisdiction| %>
+- [<%= jurisdiction.site_title %>](https://<%= jurisdiction.primary_host %>/)<%= " (this host)" if jurisdiction == current_jurisdiction %>
+<% end %>
