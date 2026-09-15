@@ -45,6 +45,7 @@ the near-duplicate SEO signal.
 | `app/models/public/cache_version.rb` | Added `topics_index`, `topic_landing`, `bodies_index`, `body_landing`, `year_landing`, and `landing_sitemap` methods. Each follows the existing pattern: `compose` with jurisdiction slug and `data_version`, plus a page-specific discriminator. |
 | `app/models/civic/theme_taxonomy.rb` | Added `url_slug_for(slug)` (underscore-to-hyphen) and `slug_from_url(url_slug)` (hyphen-to-underscore) class methods. Centralized the bidirectional mapping so stored slugs (underscored) are never changed. |
 | `app/controllers/public/discovery_controller.rb` | Added `SITEMAP_CACHE_TTL`, `landing_sitemap_urls` private method, and `landing_sitemap_rows_for` helper. Makes four cached aggregate queries (theme updated_at, body event updated_at, body matter updated_at, distinct years) and renders only populated leaf URLs. The hub URLs (`/topics`, `/bodies`) are included only when they have at least one populated leaf. Empty/noindexed variants are excluded. |
+| `app/views/public/discovery/llms.text.erb` | Added the durable Topics and Bodies hubs to the AI-oriented discovery guide, directing agents to crawlable paths into official matters and meetings. |
 | `app/views/public/matters/index.html.erb` | Added a `content_for(:canonical_url)` line that points to the topic hub when a `theme` param is present and `q` is blank. This resolves the near-duplicate SEO signal: a theme-filtered listing canonicals to its hub instead of the unparameterized `/public/matters`. The `?q=` noindex behavior is unchanged. |
 | `test/controllers/public/discovery_controller_test.rb` | Extended the cross-jurisdiction sitemap test to assert landing-page URLs are jurisdiction-scoped: San Jose's sitemap includes `topics/public-safety` and `bodies/city-council`; SJUSD's includes `topics/curriculum-instruction` and `bodies/board-of-education`. Asserts empty themes (arts-culture) are excluded. Requires `matter_themes` records on both jurisdictions' fixture matters. |
 | `test/controllers/public/matters_controller_test.rb` | Added two tests: (1) `?theme=housing` canonicals to `/topics/housing` with no robots meta, (2) `?q=housing&theme=housing` stays `noindex,follow` with no canonical and `og:url` = the unparameterized path. |
@@ -62,6 +63,9 @@ the near-duplicate SEO signal.
 - **Sitemap:** every populated landing page appears in `/sitemap.xml` with its
   latest relevant timestamp. Hubs appear only when they have at least one
   populated leaf.
+- **AI discovery:** `/llms.txt` names the Topics and Bodies hubs as stable
+  navigation paths into the civic-record corpus. Year leaves remain discoverable
+  from the sitemap because there is intentionally no year hub.
 
 ## How to verify
 

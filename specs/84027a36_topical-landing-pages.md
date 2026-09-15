@@ -273,7 +273,7 @@ Map each test to an acceptance criterion:
   `kind_noun`, `all_scope_label` — never literal "San Jose" or "city council".
 - `content_for(:robots)` containing `noindex` makes the layout omit the canonical tag; never set
   `canonical_url` on a noindexed variant.
-- Do NOT touch `llms.text.erb` (open issue #153), `robots.txt`, `test_helper.rb`
+- Do NOT touch `robots.txt`, `test_helper.rb`
   (`parallelize(workers: 1)`), any migration (none needed), the ThemeTaxonomy vocabularies, or
   the matters search pipeline.
 - Sitemap timestamps must be Time/Date/nil, never String (`timestamp.to_date.iso8601` is called
@@ -283,7 +283,7 @@ Map each test to an acceptance criterion:
 
 - Repointing the ~8 existing `public_matters_path(theme: ...)` internal link sites (mention in
   PR body as follow-up).
-- A `/years` index page, llms.txt changes, robots.txt changes, any new gems, any migration.
+- A `/years` index page, robots.txt changes, any new gems, any migration.
 - New atlas topbar `active:` states and new stylesheet work beyond reusing existing atlas
   partials/classes.
 
