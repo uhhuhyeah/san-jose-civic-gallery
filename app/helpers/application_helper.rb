@@ -26,6 +26,22 @@ module ApplicationHelper
     content_for(:canonical_url).presence || request.base_url + request.path
   end
 
+  def web_mcp_page_context
+    @web_mcp_page_context ||= Public::WebMcpPageContext.new(
+      request: request,
+      jurisdiction: current_jurisdiction,
+      controller_path: controller.controller_path,
+      action_name: controller.action_name,
+      page_title: page_title,
+      canonical_url: canonical_url,
+      routes: self
+    ).to_h
+  end
+
+  def web_mcp_page_context_json
+    web_mcp_page_context.to_json
+  end
+
   def page_robots
     content_for(:robots).presence
   end

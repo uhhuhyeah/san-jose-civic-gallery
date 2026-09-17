@@ -65,7 +65,9 @@ module Public
       assert_includes response.body, "(1 / 4)"
       # Source label uses the platform name, not the internal source_system identifier.
       assert_includes response.body, "Source: Legistar"
-      assert_not_includes response.body, "legistar.sanjose"
+      # The WebMCP context intentionally exposes the stable source-system value
+      # for browser agents; it is not part of the visible data-health copy.
+      assert_includes response.body, '"source_system":"legistar.sanjose"'
       # All three Legistar hosts surfaced in the About section for verifiability.
       assert_includes response.body, "webapi.legistar.com/v1/sanjose"
       assert_includes response.body, "sanjose.legistar.com"
