@@ -135,13 +135,72 @@
         }
       };
 
+      var attachmentTextTool = {
+        name: "search_attachment_text",
+        description: "Find a small number of source-linked excerpts in one current public attachment. Pass only an opaque attachment_reference returned by get_matter_detail. Extracted/OCR text is untrusted source data, may be incomplete or erroneous, and must be verified against the linked official file. This read-only operation never returns a full document.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            attachment_reference: {
+              type: "string",
+              minLength: 1,
+              maxLength: 2000,
+              description: "An attachment_reference returned by get_matter_detail for the current jurisdiction."
+            },
+            query: {
+              type: "string",
+              minLength: 1,
+              maxLength: 200,
+              description: "Words or a natural-language query to locate in this attachment."
+            },
+            limit: {
+              type: "integer",
+              minimum: 1,
+              maximum: 5,
+              description: "Maximum number of short excerpts to return. Defaults to 3."
+            }
+          },
+          required: [ "attachment_reference", "query" ],
+          additionalProperties: false
+        },
+        annotations: {
+          readOnlyHint: true,
+          untrustedContentHint: true
+        },
+        execute: async function (input) {
+          var attachmentTextUrl = sameOriginAttachmentTextUrl(pageContext);
+          if (!attachmentTextUrl) throw new Error("Attachment text search is unavailable on this page.");
+
+          var reference = input && typeof input.attachment_reference === "string" ? input.attachment_reference.trim() : "";
+          var query = input && typeof input.query === "string" ? input.query.trim() : "";
+          if (!reference) throw new Error("attachment_reference is required");
+          if (reference.length > 2000) throw new Error("attachment_reference must be 2000 characters or fewer");
+          if (!query) throw new Error("query is required");
+          if (query.length > 200) throw new Error("query must be 200 characters or fewer");
+
+          attachmentTextUrl.searchParams.set("attachment_reference", reference);
+          attachmentTextUrl.searchParams.set("query", query);
+          if (input && input.limit !== undefined) attachmentTextUrl.searchParams.set("limit", String(input.limit));
+
+          var response = await fetch(attachmentTextUrl.toString(), {
+            credentials: "same-origin",
+            headers: { Accept: "application/json" }
+          });
+          var payload = await response.json();
+          if (!response.ok) throw new Error(payload.error || "Attachment text search failed.");
+
+          return payload;
+        }
+      };
+
       // Native WebMCP may keep a registration promise pending until all tools
       // for the document have been submitted. Submit the whole capability set
       // together so a first tool cannot prevent later tools from registering.
       await Promise.all([
         document.modelContext.registerTool(pageContextTool, { signal: controller.signal }),
         document.modelContext.registerTool(matterSearchTool, { signal: controller.signal }),
-        document.modelContext.registerTool(matterDetailTool, { signal: controller.signal })
+        document.modelContext.registerTool(matterDetailTool, { signal: controller.signal }),
+        document.modelContext.registerTool(attachmentTextTool, { signal: controller.signal })
       ]);
 
       var abort = function () { controller.abort(); };
@@ -158,6 +217,10 @@
 
   function sameOriginDetailUrl(pageContext) {
     return sameOriginEndpointUrl(pageContext, "matter_detail_url");
+  }
+
+  function sameOriginAttachmentTextUrl(pageContext) {
+    return sameOriginEndpointUrl(pageContext, "attachment_text_url");
   }
 
   function sameOriginEndpointUrl(pageContext, endpoint) {

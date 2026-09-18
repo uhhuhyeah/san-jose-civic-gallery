@@ -25,6 +25,14 @@ module Public
                with: :log_search_rate_limit_exceeded,
                store: PublicRateLimitedSearch::RATE_LIMIT_STORE
 
+    rate_limit to: PublicRateLimitedSearch::SEARCH_RATE_LIMIT,
+               within: PublicRateLimitedSearch::SEARCH_RATE_WINDOW,
+               only: :webmcp_attachment_text,
+               if: :webmcp_attachment_text_request?,
+               by: :rate_limit_identity,
+               with: :log_search_rate_limit_exceeded,
+               store: PublicRateLimitedSearch::RATE_LIMIT_STORE
+
     def index
       @query = params[:q].to_s.strip
       @theme = normalized_theme
@@ -93,10 +101,31 @@ module Public
       render json: { error: "matter reference is invalid or unavailable" }, status: :unprocessable_entity
     end
 
+    # The backing endpoint for the browser-bound attachment evidence tool.
+    # Attachment references are signed handles emitted by webmcp_detail; this
+    # action never accepts a URL, database id, or extracted-text id.
+    def webmcp_attachment_text
+      result = WebMcpAttachmentTextSearch.call(
+        attachment_reference: params[:attachment_reference],
+        query: params[:query],
+        limit: params[:limit],
+        jurisdiction: current_jurisdiction,
+        routes: self
+      )
+
+      render json: result
+    rescue WebMcpAttachmentTextSearch::InvalidInput, WebMcpAttachmentTextSearch::InvalidReference => error
+      render json: { error: error.message }, status: :unprocessable_entity
+    end
+
     private
 
     def webmcp_detail_reference?
       params[:reference].present?
+    end
+
+    def webmcp_attachment_text_request?
+      params[:attachment_reference].present? || params[:query].present?
     end
 
     SHOW_CACHE_TTL = 10.minutes

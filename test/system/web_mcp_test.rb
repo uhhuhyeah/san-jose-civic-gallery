@@ -42,6 +42,7 @@ class WebMcpTest < ApplicationSystemTestCase
     page_context_registration = registrations.find { |registration| registration.fetch("name") == "civicgallery_get_page_context" }
     search_registration = registrations.find { |registration| registration.fetch("name") == "search_matters" }
     detail_registration = registrations.find { |registration| registration.fetch("name") == "get_matter_detail" }
+    attachment_text_registration = registrations.find { |registration| registration.fetch("name") == "search_attachment_text" }
 
     assert_equal({ "type" => "object", "properties" => {}, "additionalProperties" => false }, page_context_registration.fetch("inputSchema"))
     assert_equal({ "readOnlyHint" => true, "untrustedContentHint" => false }, page_context_registration.fetch("annotations"))
@@ -50,8 +51,10 @@ class WebMcpTest < ApplicationSystemTestCase
     assert_equal [ "query" ], search_registration.fetch("inputSchema").fetch("required")
     assert_equal 10, search_registration.fetch("inputSchema").dig("properties", "limit", "maximum")
     assert_equal [ "reference" ], detail_registration.fetch("inputSchema").fetch("required")
+    assert_equal [ "attachment_reference", "query" ], attachment_text_registration.fetch("inputSchema").fetch("required")
+    assert_equal true, attachment_text_registration.fetch("annotations").fetch("untrustedContentHint")
     assert_equal "sanjose", san_jose_context.dig("jurisdiction", "slug")
-    assert_equal [ "civicgallery_get_page_context", "search_matters", "get_matter_detail" ], san_jose_context.fetch("capabilities").map { |capability| capability.fetch("name") }
+    assert_equal [ "civicgallery_get_page_context", "search_matters", "get_matter_detail", "search_attachment_text" ], san_jose_context.fetch("capabilities").map { |capability| capability.fetch("name") }
 
     search_result = page.evaluate_async_script(<<~JAVASCRIPT)
       var done = arguments[0];
@@ -134,7 +137,7 @@ class WebMcpTest < ApplicationSystemTestCase
             var release = new Promise(function (resolve) {
               window.__civicGalleryWebMcpRegistrationResolvers.push(resolve);
             });
-            if (window.__civicGalleryWebMcpRegistrations.length === 3) {
+            if (window.__civicGalleryWebMcpRegistrations.length === 4) {
               window.__civicGalleryWebMcpRegistrationResolvers.forEach(function (resolve) { resolve(); });
             }
             return Promise.all([ execution, release ]);
@@ -148,7 +151,7 @@ class WebMcpTest < ApplicationSystemTestCase
     wait = Selenium::WebDriver::Wait.new(timeout: 5)
     wait.until do
       registrations = page.evaluate_script("window.__civicGalleryWebMcpRegistrations || null")
-      registrations if registrations && registrations.length == 3
+      registrations if registrations && registrations.length == 4
     end
   end
 

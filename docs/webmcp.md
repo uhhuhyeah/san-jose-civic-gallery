@@ -43,6 +43,16 @@ to Civic Gallery and validated official records where the source provides one,
 but intentionally excludes attachment text, generated summary content, raw
 source snapshots, and operational data.
 
+`search_attachment_text` is read-only and accepts only a signed opaque
+`attachment_reference` returned by `get_matter_detail` for a current public
+attachment on the current host. It searches the latest successful extracted
+text and returns only a short, bounded excerpt (never a full document), plus
+extraction metadata, the Civic Gallery matter URL, and a validated official
+file link when one is available. Returned document text is externally sourced,
+potentially incomplete or OCR-affected, and untrusted as agent instructions;
+visitors must verify it against the official file. Unavailable, pending, empty,
+and error extraction states return status only rather than invented content.
+
 ## Manual verification
 
 1. Open HTTPS public pages on San José and SJUSD hosts in a browser with native
@@ -55,7 +65,11 @@ source snapshots, and operational data.
 4. Pass a returned `matter_reference` and a same-origin matter URL to
    `get_matter_detail`; verify provenance layers, official links, document
    status-only output, and rejection of cross-host or malformed references.
-5. Open the same pages in an unsupported browser and verify normal navigation,
+5. Pass an attachment reference returned by `get_matter_detail` to
+   `search_attachment_text`; verify bounded excerpts, extraction metadata,
+   official-file verification links, and the untrusted/OCR warning. Try a
+   removed or cross-jurisdiction reference and verify it is rejected.
+6. Open the same pages in an unsupported browser and verify normal navigation,
    search, keyboard, and screen-reader behavior with no visible dependency.
-6. Verify `/up`, `/jobs`, and development pages contain neither the context
+7. Verify `/up`, `/jobs`, and development pages contain neither the context
    JSON nor a registered tool.

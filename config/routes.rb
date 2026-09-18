@@ -27,6 +27,7 @@ Rails.application.routes.draw do
     resources :events, only: [ :show ]
     get "matters/webmcp-search", to: "matters#webmcp_search", as: :webmcp_matter_search
     get "matters/webmcp-detail", to: "matters#webmcp_detail", as: :webmcp_matter_detail
+    get "matters/webmcp-attachment-text", to: "matters#webmcp_attachment_text", as: :webmcp_attachment_text
     resources :matters, only: [ :index, :show ]
   end
 
