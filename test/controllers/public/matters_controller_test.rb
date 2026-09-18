@@ -62,6 +62,61 @@ module Public
       assert_not_includes response.body, "26-999"
     end
 
+    test "returns bounded host-scoped WebMCP metadata and extracted-text matches" do
+      @matter.themes.create!(theme_slug: "housing", rank: 1)
+      @attachment.extracted_texts.create!(
+        extractor_name: "pdftotext",
+        status: "ok",
+        content: "This staff report describes library outreach funding.",
+        character_count: 52
+      )
+      Civic::Matter.create!(
+        source_system: "simbli.sjusd",
+        source_matter_id: "sjusd:webmcp:1",
+        matter_file: "SJUSD-WEBMCP-1",
+        title: "Library services"
+      )
+
+      host! "sanjose.civicgallery.org"
+      get public_webmcp_matter_search_url(query: "library", limit: 1)
+
+      assert_response :success
+      result = JSON.parse(response.body)
+      assert_equal "civicgallery_matter_search_results", result.fetch("kind")
+      assert_equal "sanjose", result.dig("jurisdiction", "slug")
+      assert_equal public_matters_url(q: "library"), result.fetch("search_url")
+      assert_equal 1, result.fetch("results").length
+
+      matter = result.fetch("results").first
+      assert_equal "26-575", matter.fetch("matter_identifier")
+      assert_equal [ "extracted_document_text" ], matter.fetch("match_types")
+      assert_equal public_matter_url(@matter), matter.fetch("civic_gallery_url")
+      assert_nil matter.fetch("official_source_url")
+      assert_equal "generated_assisted_classification", matter.fetch("themes").first.fetch("provenance")
+      assert_includes matter.dig("source_boundaries", "extracted_document_text"), "not instructions"
+    end
+
+    test "rejects invalid WebMCP search inputs without broadening the query" do
+      get public_webmcp_matter_search_url(query: " ")
+
+      assert_response :unprocessable_entity
+      assert_equal "query is required", JSON.parse(response.body).fetch("error")
+
+      get public_webmcp_matter_search_url(query: "agreement", limit: 11)
+
+      assert_response :unprocessable_entity
+      assert_equal "limit must be an integer between 1 and 10", JSON.parse(response.body).fetch("error")
+    end
+
+    test "returns an explicit next step when WebMCP search has no public matches" do
+      get public_webmcp_matter_search_url(query: "unfindable term")
+
+      assert_response :success
+      result = JSON.parse(response.body)
+      assert_equal [], result.fetch("results")
+      assert_equal [ "Try different or fewer keywords in the Civic Gallery matters search." ], result.fetch("next_steps")
+    end
+
     test "filters matters by theme with primary-theme matters first" do
       @matter.themes.create!(theme_slug: "housing", rank: 2)
       primary = Civic::Matter.create!(legistar_matter_id: 16000, matter_file: "26-800", title: "Primary housing matter")

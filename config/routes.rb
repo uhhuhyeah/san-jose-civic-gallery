@@ -25,6 +25,7 @@ Rails.application.routes.draw do
   namespace :public do
     get "meetings", to: "meetings#index"
     resources :events, only: [ :show ]
+    get "matters/webmcp-search", to: "matters#webmcp_search", as: :webmcp_matter_search
     resources :matters, only: [ :index, :show ]
   end
 

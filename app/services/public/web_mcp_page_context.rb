@@ -2,6 +2,7 @@ module Public
   class WebMcpPageContext
     CONTRACT_VERSION = "1.0"
     TOOL_NAME = "civicgallery_get_page_context"
+    MATTER_SEARCH_TOOL_NAME = "search_matters"
 
     PAGE_KINDS = {
       [ "public/pulse", "show" ] => "pulse",
@@ -53,8 +54,11 @@ module Public
           llms_full_url: @routes.llms_full_url,
           data_health_url: @routes.data_url
         },
+        endpoints: {
+          matter_search_url: @routes.public_webmcp_matter_search_url
+        },
         source_boundaries: SOURCE_BOUNDARIES,
-        capabilities: [ capability_context ]
+        capabilities: [ capability_context, matter_search_capability_context ]
       }
     end
 
@@ -78,6 +82,14 @@ module Public
     def capability_context
       {
         name: TOOL_NAME,
+        status: "available",
+        read_only: true
+      }
+    end
+
+    def matter_search_capability_context
+      {
+        name: MATTER_SEARCH_TOOL_NAME,
         status: "available",
         read_only: true
       }
