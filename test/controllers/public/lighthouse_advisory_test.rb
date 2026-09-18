@@ -67,7 +67,7 @@ module Public
       assert_equal "sanjose", context.dig("jurisdiction", "slug")
       assert_equal "legistar.sanjose", context.dig("jurisdiction", "source_system")
       assert_equal "pulse", context.dig("page", "kind")
-      assert_equal [ "civicgallery_get_page_context", "search_matters", "get_matter_detail" ], context.fetch("capabilities").pluck("name")
+      assert_equal [ "civicgallery_get_page_context", "search_matters", "get_matter_detail", "search_attachment_text" ], context.fetch("capabilities").pluck("name")
     end
 
     test "WebMCP context follows the SJUSD host" do
