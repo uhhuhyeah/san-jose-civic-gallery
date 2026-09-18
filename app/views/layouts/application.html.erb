@@ -33,6 +33,10 @@
         via `content_for :head`. Naming the bundle explicitly (rather than `:app`)
         keeps atlas.css from auto-loading on non-Atlas pages. %>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <% if public_read_only_request? %>
+      <script id="civicgallery-webmcp-context" type="application/json"><%= raw(json_escape(web_mcp_page_context_json)) %></script>
+      <%= javascript_include_tag "webmcp", type: "module", "data-turbo-track": "reload" %>
+    <% end %>
     <%= Sentry.get_trace_propagation_meta.html_safe %>
     <%= tag.script nil, "data-goatcounter": "https://#{current_jurisdiction.slug}civicgallery.goatcounter.com/count",
                         async: true, src: "//gc.zgo.at/count.js" if Rails.env.production? %>

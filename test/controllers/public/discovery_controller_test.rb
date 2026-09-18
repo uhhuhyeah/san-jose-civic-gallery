@@ -61,6 +61,8 @@ module Public
       assert_includes response.body, "## Corpus and Source Boundaries"
       assert_includes response.body, "## Recommended Agent Workflow"
       assert_includes response.body, "## Citation Guidance"
+      assert_includes response.body, "optional, browser-bound page-context capability"
+      assert_includes response.body, "this capability does not search records"
       assert_includes response.body, "sanjose.legistar.com"
       assert_not_includes response.body, "simbli.eboardsolutions.com"
       assert_includes response.body, "[San Jose Civic Gallery](https://#{SANJOSE_HOST}/) (this host)"
