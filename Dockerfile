@@ -63,15 +63,31 @@ RUN bundle install && \
     # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
     bundle exec bootsnap precompile -j 1 --gemfile
 
-# Copy application code
-COPY . .
-
 # Install the Simbli fetcher's Node deps and the Chromium browser. Browsers
 # land under PLAYWRIGHT_BROWSERS_PATH (inside /rails) so they are carried into
 # the final image by the /rails copy; the system libraries were installed in
 # the base stage.
+#
+# This runs before the application code is copied so the layer is keyed on
+# package.json alone. Otherwise every source change re-runs a ~340 MB Chromium
+# download on each deploy.
+#
+# The download and unpack has no timeout of its own and has been seen to wedge
+# at zero CPU partway through unpacking, hanging the deploy indefinitely. Cap
+# each attempt and retry from a clean browser directory so a stalled download
+# fails loudly instead of parking forever.
+COPY lib/simbli/package.json ./lib/simbli/
 RUN cd lib/simbli && npm install --no-audit --no-fund && \
-    npx playwright install chromium
+    for attempt in 1 2 3; do \
+      rm -rf "${PLAYWRIGHT_BROWSERS_PATH}" && \
+      timeout -k 30 600 npx playwright install chromium && exit 0; \
+      echo "playwright install chromium failed or hung (attempt $attempt/3)"; \
+      sleep 5; \
+    done; \
+    echo "playwright install chromium failed after 3 attempts"; exit 1
+
+# Copy application code
+COPY . .
 
 # Precompile bootsnap code for faster boot times.
 # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
