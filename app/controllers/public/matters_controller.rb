@@ -7,6 +7,16 @@ module Public
     # Override in tests to inject a fake embedding client.
     class_attribute :semantic_search_client_factory, default: -> { Search::EmbeddingClient.new }
 
+    # Keep the browser-bound endpoint independently throttled. The shared
+    # concern also serves MeetingsController, where this action does not exist.
+    rate_limit to: PublicRateLimitedSearch::SEARCH_RATE_LIMIT,
+               within: PublicRateLimitedSearch::SEARCH_RATE_WINDOW,
+               only: :webmcp_search,
+               if: :search_query?,
+               by: :rate_limit_identity,
+               with: :log_search_rate_limit_exceeded,
+               store: PublicRateLimitedSearch::RATE_LIMIT_STORE
+
     def index
       @query = params[:q].to_s.strip
       @theme = normalized_theme
@@ -39,6 +49,24 @@ module Public
       @matter_cache_version = Public::CacheVersion.matter_show(@matter, jurisdiction: current_jurisdiction)
       load_matter_atlas_context
       stale?(etag: @matter_cache_version, public: true)
+    end
+
+    # Browser-bound WebMCP calls use a small, structured representation of the
+    # same public keyword and extracted-text search corpus as the matters
+    # index. This is intentionally not a general JSON API: the endpoint exists
+    # only as the backing operation for the registered, same-origin WebMCP
+    # tool, has bounded inputs and output, and never uses semantic search.
+    def webmcp_search
+      result = WebMcpMatterSearch.call(
+        query: params[:query],
+        limit: params[:limit],
+        jurisdiction: current_jurisdiction,
+        routes: self
+      )
+
+      render json: result
+    rescue WebMcpMatterSearch::InvalidInput => error
+      render json: { error: error.message }, status: :unprocessable_entity
     end
 
     private

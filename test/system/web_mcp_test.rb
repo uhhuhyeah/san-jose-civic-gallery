@@ -29,25 +29,48 @@ class WebMcpTest < ApplicationSystemTestCase
   end
 
   test "supported browsers discover the context tool and keep it host-scoped" do
+    matter = Civic::Matter.create!(
+      legistar_matter_id: 190_001,
+      matter_file: "26-190",
+      title: "Library outreach agreement"
+    )
     install_fake_webmcp
 
     visit "/"
-    registration = wait_for_registration
+    registrations = wait_for_registration
     san_jose_context = page_context
+    page_context_registration = registrations.find { |registration| registration.fetch("name") == "civicgallery_get_page_context" }
+    search_registration = registrations.find { |registration| registration.fetch("name") == "search_matters" }
 
-    assert_equal "civicgallery_get_page_context", registration.fetch("name")
-    assert_equal({ "type" => "object", "properties" => {}, "additionalProperties" => false }, registration.fetch("inputSchema"))
-    assert_equal({ "readOnlyHint" => true, "untrustedContentHint" => false }, registration.fetch("annotations"))
-    assert_equal true, registration.fetch("hasSignal")
-    assert_equal san_jose_context, registration.fetch("result")
+    assert_equal({ "type" => "object", "properties" => {}, "additionalProperties" => false }, page_context_registration.fetch("inputSchema"))
+    assert_equal({ "readOnlyHint" => true, "untrustedContentHint" => false }, page_context_registration.fetch("annotations"))
+    assert_equal true, page_context_registration.fetch("hasSignal")
+    assert_equal san_jose_context, page_context_registration.fetch("result")
+    assert_equal [ "query" ], search_registration.fetch("inputSchema").fetch("required")
+    assert_equal 10, search_registration.fetch("inputSchema").dig("properties", "limit", "maximum")
     assert_equal "sanjose", san_jose_context.dig("jurisdiction", "slug")
+    assert_equal [ "civicgallery_get_page_context", "search_matters" ], san_jose_context.fetch("capabilities").map { |capability| capability.fetch("name") }
+
+    search_result = page.evaluate_async_script(<<~JAVASCRIPT)
+      var done = arguments[0];
+      var tool = window.__civicGalleryWebMcpTools.find(function (candidate) {
+        return candidate.name === "search_matters";
+      });
+      tool.execute({ query: "library", limit: 1 }).then(done, function (error) {
+        done({ error: error.message });
+      });
+    JAVASCRIPT
+    assert_nil search_result["error"]
+    assert_equal "civicgallery_matter_search_results", search_result.fetch("kind")
+    assert_equal [ matter.matter_file ], search_result.fetch("results").pluck("matter_identifier")
 
     port = Capybara.current_session.server.port
     page.driver.browser.navigate.to("http://sjusd.civicgallery.org:#{port}/")
-    sjusd_registration = wait_for_registration
+    sjusd_registrations = wait_for_registration
     sjusd_context = page_context
+    sjusd_page_context_registration = sjusd_registrations.find { |registration| registration.fetch("name") == "civicgallery_get_page_context" }
 
-    assert_equal sjusd_context, sjusd_registration.fetch("result")
+    assert_equal sjusd_context, sjusd_page_context_registration.fetch("result")
     assert_equal "sjusd", sjusd_context.dig("jurisdiction", "slug")
     assert_equal "simbli.sjusd", sjusd_context.dig("jurisdiction", "source_system")
     assert_not_equal san_jose_context.dig("jurisdiction", "slug"), sjusd_context.dig("jurisdiction", "slug")
@@ -77,14 +100,19 @@ class WebMcpTest < ApplicationSystemTestCase
         configurable: true,
         value: {
           registerTool: function (tool, options) {
-            window.__civicGalleryWebMcpRegistration = {
+            window.__civicGalleryWebMcpRegistrations = window.__civicGalleryWebMcpRegistrations || [];
+            window.__civicGalleryWebMcpTools = window.__civicGalleryWebMcpTools || [];
+            var registration = {
               name: tool.name,
               inputSchema: tool.inputSchema,
               annotations: tool.annotations,
               hasSignal: Boolean(options && options.signal)
             };
+            window.__civicGalleryWebMcpRegistrations.push(registration);
+            window.__civicGalleryWebMcpTools.push(tool);
+            if (tool.name !== "civicgallery_get_page_context") return Promise.resolve();
             return Promise.resolve(tool.execute({})).then(function (result) {
-              window.__civicGalleryWebMcpRegistration.result = result;
+              registration.result = result;
               return result;
             });
           }
@@ -96,7 +124,8 @@ class WebMcpTest < ApplicationSystemTestCase
   def wait_for_registration
     wait = Selenium::WebDriver::Wait.new(timeout: 5)
     wait.until do
-      page.evaluate_script("window.__civicGalleryWebMcpRegistration || null")
+      registrations = page.evaluate_script("window.__civicGalleryWebMcpRegistrations || null")
+      registrations if registrations && registrations.length == 2
     end
   end
 
