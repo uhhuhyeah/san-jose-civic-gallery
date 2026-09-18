@@ -32,6 +32,10 @@
 
 # Ignore assets.
 /node_modules/
+# The Simbli fetcher's deps and browsers are installed inside the image; keep
+# any local copies out of the build context so they cannot overwrite them.
+/lib/simbli/node_modules/
+/.playwright-browsers/
 /app/assets/builds/*
 !/app/assets/builds/.keep
 /public/assets
