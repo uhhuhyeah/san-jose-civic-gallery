@@ -17,6 +17,14 @@ module Public
                with: :log_search_rate_limit_exceeded,
                store: PublicRateLimitedSearch::RATE_LIMIT_STORE
 
+    rate_limit to: PublicRateLimitedSearch::SEARCH_RATE_LIMIT,
+               within: PublicRateLimitedSearch::SEARCH_RATE_WINDOW,
+               only: :webmcp_detail,
+               if: :webmcp_detail_reference?,
+               by: :rate_limit_identity,
+               with: :log_search_rate_limit_exceeded,
+               store: PublicRateLimitedSearch::RATE_LIMIT_STORE
+
     def index
       @query = params[:q].to_s.strip
       @theme = normalized_theme
@@ -69,7 +77,27 @@ module Public
       render json: { error: error.message }, status: :unprocessable_entity
     end
 
+    # This endpoint is only the same-origin backing operation for the browser
+    # tool. Its resolver accepts a signed search result reference or an exact
+    # URL to this host's normal public matter page.
+    def webmcp_detail
+      result = WebMcpMatterDetail.call(
+        reference: params[:reference],
+        jurisdiction: current_jurisdiction,
+        request: request,
+        routes: self
+      )
+
+      render json: result
+    rescue WebMcpMatterDetail::InvalidReference
+      render json: { error: "matter reference is invalid or unavailable" }, status: :unprocessable_entity
+    end
+
     private
+
+    def webmcp_detail_reference?
+      params[:reference].present?
+    end
 
     SHOW_CACHE_TTL = 10.minutes
     SIBLING_MATTERS_LIMIT = 4

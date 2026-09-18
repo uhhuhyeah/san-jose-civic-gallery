@@ -2,7 +2,7 @@
 
 Civic Gallery has an optional browser-native WebMCP enhancement on public HTML
 pages. A compatible browser may discover the current page's
-`civicgallery_get_page_context` and `search_matters` tools through
+`civicgallery_get_page_context`, `search_matters`, and `get_matter_detail` tools through
 `document.modelContext`; an unsupported browser simply skips registration and
 renders the normal site. WebMCP requires a browser-supported secure context
 such as HTTPS.
@@ -34,6 +34,15 @@ source-linked HTML pages. Those machine-readable and human-facing discovery
 paths remain useful in every browser and remain the recommended workflow. A
 future headless MCP service would be a separate transport and design.
 
+`get_matter_detail` is read-only and accepts either the signed opaque
+`matter_reference` returned by `search_matters` or an exact same-origin public
+matter URL. It resolves only records belonging to the current host's
+jurisdiction. The compact result separates official matter and meeting metadata
+from extracted-document availability and generated-assistance status. It links
+to Civic Gallery and validated official records where the source provides one,
+but intentionally excludes attachment text, generated summary content, raw
+source snapshots, and operational data.
+
 ## Manual verification
 
 1. Open HTTPS public pages on San José and SJUSD hosts in a browser with native
@@ -43,7 +52,10 @@ future headless MCP service would be a separate transport and design.
 3. Invoke `search_matters` with a keyword query and a document-text query;
    verify host scoping, result bounds, match provenance, Civic Gallery links,
    and zero-result behavior.
-4. Open the same pages in an unsupported browser and verify normal navigation,
+4. Pass a returned `matter_reference` and a same-origin matter URL to
+   `get_matter_detail`; verify provenance layers, official links, document
+   status-only output, and rejection of cross-host or malformed references.
+5. Open the same pages in an unsupported browser and verify normal navigation,
    search, keyboard, and screen-reader behavior with no visible dependency.
-5. Verify `/up`, `/jobs`, and development pages contain neither the context
+6. Verify `/up`, `/jobs`, and development pages contain neither the context
    JSON nor a registered tool.

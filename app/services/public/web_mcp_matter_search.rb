@@ -102,6 +102,7 @@ module Public
 
       {
         matter_identifier: matter.display_name,
+        matter_reference: WebMcpMatterReference.generate(matter),
         title: matter.descriptive_title.presence || matter.display_name,
         agenda_date: matter.agenda_date&.iso8601,
         body_name: matter.body_name,

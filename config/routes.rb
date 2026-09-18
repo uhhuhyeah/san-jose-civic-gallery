@@ -26,6 +26,7 @@ Rails.application.routes.draw do
     get "meetings", to: "meetings#index"
     resources :events, only: [ :show ]
     get "matters/webmcp-search", to: "matters#webmcp_search", as: :webmcp_matter_search
+    get "matters/webmcp-detail", to: "matters#webmcp_detail", as: :webmcp_matter_detail
     resources :matters, only: [ :index, :show ]
   end
 
