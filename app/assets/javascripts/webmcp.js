@@ -30,7 +30,7 @@
 
     var controller = new AbortController();
     try {
-      await document.modelContext.registerTool({
+      var pageContextTool = {
         name: "civicgallery_get_page_context",
         description: "Get the current Civic Gallery public-page and jurisdiction context, available Civic Gallery agent capabilities, discovery links, and source provenance rules. This operation is read-only and never searches records.",
         inputSchema: {
@@ -45,9 +45,9 @@
         execute: async function () {
           return pageContext;
         }
-      }, { signal: controller.signal });
+      };
 
-      await document.modelContext.registerTool({
+      var matterSearchTool = {
         name: "search_matters",
         description: "Search public matters in the current Civic Gallery jurisdiction by keyword or natural-language query. Results are bounded and identify whether each match came from official record metadata or extracted document text. This operation is read-only and never uses semantic or embedding search.",
         inputSchema: {
@@ -93,7 +93,15 @@
 
           return payload;
         }
-      }, { signal: controller.signal });
+      };
+
+      // Native WebMCP may keep a registration promise pending until all tools
+      // for the document have been submitted. Submit the whole capability set
+      // together so a first tool cannot prevent later tools from registering.
+      await Promise.all([
+        document.modelContext.registerTool(pageContextTool, { signal: controller.signal }),
+        document.modelContext.registerTool(matterSearchTool, { signal: controller.signal })
+      ]);
 
       var abort = function () { controller.abort(); };
       window.addEventListener("pagehide", abort, { once: true });

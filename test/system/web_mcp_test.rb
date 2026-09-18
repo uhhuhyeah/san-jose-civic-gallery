@@ -102,6 +102,7 @@ class WebMcpTest < ApplicationSystemTestCase
           registerTool: function (tool, options) {
             window.__civicGalleryWebMcpRegistrations = window.__civicGalleryWebMcpRegistrations || [];
             window.__civicGalleryWebMcpTools = window.__civicGalleryWebMcpTools || [];
+            window.__civicGalleryWebMcpRegistrationResolvers = window.__civicGalleryWebMcpRegistrationResolvers || [];
             var registration = {
               name: tool.name,
               inputSchema: tool.inputSchema,
@@ -110,11 +111,17 @@ class WebMcpTest < ApplicationSystemTestCase
             };
             window.__civicGalleryWebMcpRegistrations.push(registration);
             window.__civicGalleryWebMcpTools.push(tool);
-            if (tool.name !== "civicgallery_get_page_context") return Promise.resolve();
-            return Promise.resolve(tool.execute({})).then(function (result) {
-              registration.result = result;
-              return result;
+            var execution = tool.name === "civicgallery_get_page_context" ?
+              Promise.resolve(tool.execute({})).then(function (result) {
+                registration.result = result;
+              }) : Promise.resolve();
+            var release = new Promise(function (resolve) {
+              window.__civicGalleryWebMcpRegistrationResolvers.push(resolve);
             });
+            if (window.__civicGalleryWebMcpRegistrations.length === 2) {
+              window.__civicGalleryWebMcpRegistrationResolvers.forEach(function (resolve) { resolve(); });
+            }
+            return Promise.all([ execution, release ]);
           }
         }
       });
