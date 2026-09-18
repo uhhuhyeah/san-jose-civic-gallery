@@ -95,12 +95,53 @@
         }
       };
 
+      var matterDetailTool = {
+        name: "get_matter_detail",
+        description: "Retrieve verification-oriented public detail for one matter in the current Civic Gallery jurisdiction. Pass either the opaque matter_reference returned by search_matters or an exact same-origin Civic Gallery matter URL. This read-only operation returns record metadata, linked meeting context, official links, and document availability status; it never returns attachment text or generated summary content.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            reference: {
+              type: "string",
+              minLength: 1,
+              maxLength: 2000,
+              description: "A matter_reference from search_matters or an exact same-origin Civic Gallery public matter URL."
+            }
+          },
+          required: [ "reference" ],
+          additionalProperties: false
+        },
+        annotations: {
+          readOnlyHint: true,
+          untrustedContentHint: false
+        },
+        execute: async function (input) {
+          var detailUrl = sameOriginDetailUrl(pageContext);
+          if (!detailUrl) throw new Error("Matter detail is unavailable on this page.");
+
+          var reference = input && typeof input.reference === "string" ? input.reference.trim() : "";
+          if (!reference) throw new Error("reference is required");
+          if (reference.length > 2000) throw new Error("reference must be 2000 characters or fewer");
+
+          detailUrl.searchParams.set("reference", reference);
+          var response = await fetch(detailUrl.toString(), {
+            credentials: "same-origin",
+            headers: { Accept: "application/json" }
+          });
+          var payload = await response.json();
+          if (!response.ok) throw new Error(payload.error || "Matter detail lookup failed.");
+
+          return payload;
+        }
+      };
+
       // Native WebMCP may keep a registration promise pending until all tools
       // for the document have been submitted. Submit the whole capability set
       // together so a first tool cannot prevent later tools from registering.
       await Promise.all([
         document.modelContext.registerTool(pageContextTool, { signal: controller.signal }),
-        document.modelContext.registerTool(matterSearchTool, { signal: controller.signal })
+        document.modelContext.registerTool(matterSearchTool, { signal: controller.signal }),
+        document.modelContext.registerTool(matterDetailTool, { signal: controller.signal })
       ]);
 
       var abort = function () { controller.abort(); };
@@ -112,7 +153,15 @@
   }
 
   function sameOriginSearchUrl(pageContext) {
-    var value = pageContext && pageContext.endpoints && pageContext.endpoints.matter_search_url;
+    return sameOriginEndpointUrl(pageContext, "matter_search_url");
+  }
+
+  function sameOriginDetailUrl(pageContext) {
+    return sameOriginEndpointUrl(pageContext, "matter_detail_url");
+  }
+
+  function sameOriginEndpointUrl(pageContext, endpoint) {
+    var value = pageContext && pageContext.endpoints && pageContext.endpoints[endpoint];
     if (!value) return null;
 
     try {

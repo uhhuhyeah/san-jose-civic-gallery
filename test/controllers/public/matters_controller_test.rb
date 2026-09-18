@@ -117,6 +117,76 @@ module Public
       assert_equal [ "Try different or fewer keywords in the Civic Gallery matters search." ], result.fetch("next_steps")
     end
 
+    test "returns provenance-preserving WebMCP detail for a signed search reference" do
+      @matter.themes.create!(theme_slug: "housing", rank: 1)
+      @attachment.extracted_texts.create!(
+        extractor_name: "pdftotext",
+        status: "error",
+        content: nil,
+        character_count: 0
+      )
+
+      host! "sanjose.civicgallery.org"
+      get public_webmcp_matter_search_url(query: "agreement", limit: 1)
+      reference = JSON.parse(response.body).fetch("results").first.fetch("matter_reference")
+
+      get public_webmcp_matter_detail_url(reference: reference)
+
+      assert_response :success
+      result = JSON.parse(response.body)
+      assert_equal "civicgallery_matter_detail", result.fetch("kind")
+      assert_equal "sanjose", result.dig("jurisdiction", "slug")
+      assert_equal "26-575", result.dig("matter", "matter_identifier")
+      assert_equal public_matter_url(@matter), result.dig("matter", "civic_gallery_url")
+      assert_equal "official_record_metadata", result.dig("matter", "provenance")
+      assert_equal "generated_assisted_classification", result.dig("matter", "themes", 0, "provenance")
+
+      meeting = result.dig("matter", "meetings", 0)
+      assert_equal public_event_url(@event), meeting.fetch("civic_gallery_url")
+      assert_nil meeting.fetch("official_source_url")
+
+      attachment = result.dig("matter", "attachments", 0)
+      assert_equal "https://sanjose.legistar.com/View.ashx?M=F&ID=1", attachment.fetch("official_source_url")
+      assert_equal "not_imported", attachment.fetch("file_status")
+      assert_equal "not_imported", attachment.fetch("extraction_status")
+      assert_equal "not_available", attachment.fetch("generated_summary_status")
+      assert_includes result.dig("source_boundaries", "extracted_document_status"), "intentionally excluded"
+      assert_not_includes response.body, "This staff report"
+    end
+
+    test "accepts only an exact same-origin public matter URL for WebMCP detail" do
+      host! "sanjose.civicgallery.org"
+      get public_webmcp_matter_detail_url(reference: public_matter_url(@matter))
+
+      assert_response :success
+      assert_equal @matter.display_name, JSON.parse(response.body).dig("matter", "matter_identifier")
+
+      get public_webmcp_matter_detail_url(reference: "https://sjusd.civicgallery.org/public/matters/#{@matter.id}")
+
+      assert_response :unprocessable_entity
+      assert_equal "matter reference is invalid or unavailable", JSON.parse(response.body).fetch("error")
+    end
+
+    test "rejects malformed, cross-jurisdiction, and unavailable WebMCP detail references" do
+      host! "sanjose.civicgallery.org"
+
+      get public_webmcp_matter_detail_url(reference: "not-a-reference")
+      assert_response :unprocessable_entity
+
+      host! "sjusd.civicgallery.org"
+      sjusd_matter = Civic::Matter.create!(
+        source_system: "simbli.sjusd",
+        source_matter_id: "sjusd:webmcp:detail",
+        matter_file: "SJUSD-DETAIL",
+        title: "School matter"
+      )
+      sjusd_reference = Public::WebMcpMatterReference.generate(sjusd_matter)
+
+      host! "sanjose.civicgallery.org"
+      get public_webmcp_matter_detail_url(reference: sjusd_reference)
+      assert_response :unprocessable_entity
+    end
+
     test "filters matters by theme with primary-theme matters first" do
       @matter.themes.create!(theme_slug: "housing", rank: 2)
       primary = Civic::Matter.create!(legistar_matter_id: 16000, matter_file: "26-800", title: "Primary housing matter")
