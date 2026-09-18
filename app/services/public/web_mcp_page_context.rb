@@ -1,8 +1,17 @@
 module Public
   class WebMcpPageContext
     CONTRACT_VERSION = "1.0"
+    # Bump when the registered WebMCP tools or their browser asset changes.
+    # Public HTML cache validators include this value because Sprockets asset
+    # digests are not template dependencies and therefore do not otherwise
+    # invalidate a cached layout that advertises a new capability.
+    ASSET_VERSION = "2"
     TOOL_NAME = "civicgallery_get_page_context"
     MATTER_SEARCH_TOOL_NAME = "search_matters"
+
+    def self.cache_version
+      "webmcp/#{CONTRACT_VERSION}/#{ASSET_VERSION}"
+    end
 
     PAGE_KINDS = {
       [ "public/pulse", "show" ] => "pulse",

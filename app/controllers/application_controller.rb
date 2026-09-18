@@ -6,6 +6,7 @@ class ApplicationController < ActionController::Base
 
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
+  etag { Public::WebMcpPageContext.cache_version if public_read_only_request? }
 
   before_action :skip_session_for_public_anonymous_get, if: :public_read_only_request?
   after_action :set_public_cache_headers, if: :public_read_only_request?
