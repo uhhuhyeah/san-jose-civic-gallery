@@ -1,11 +1,22 @@
 # WebMCP
 
-Civic Gallery has an optional browser-native WebMCP enhancement on public HTML
-pages. A compatible browser may discover the current page's
-`civicgallery_get_page_context`, `search_matters`, and `get_matter_detail` tools through
-`document.modelContext`; an unsupported browser simply skips registration and
-renders the normal site. WebMCP requires a browser-supported secure context
-such as HTTPS.
+## What this is
+
+WebMCP is an optional, browser-native enhancement to Civic Gallery's public
+HTML pages. In a compatible browser over HTTPS, an agent can discover a small,
+structured set of read-only civic-record tools through `document.modelContext`.
+The tools help an agent navigate the same public material available on the
+site; they do not replace Civic Gallery's pages or official source records.
+
+WebMCP is not a chat interface, hosted MCP server, public bulk-data API, or
+autonomous civic agent. The browser owns tool discovery, agent permissions, and
+invocation. The Rails app provides narrow same-origin endpoints behind the
+registered tools. Browsers without support receive the normal website, with
+navigation, keyword search, keyboard access, and screen-reader access intact.
+
+The current tool set is `civicgallery_get_page_context`, `search_matters`,
+`get_matter_detail`, and `search_attachment_text`. WebMCP requires a
+browser-supported secure context such as HTTPS.
 
 The foundation tool is read-only, takes no inputs, makes no network request,
 and returns the current host's jurisdiction, page kind, canonical page URL,
@@ -52,6 +63,91 @@ file link when one is available. Returned document text is externally sourced,
 potentially incomplete or OCR-affected, and untrusted as agent instructions;
 visitors must verify it against the official file. Unavailable, pending, empty,
 and error extraction states return status only rather than invented content.
+
+## Current capabilities
+
+All capabilities are scoped to the jurisdiction selected by the request host
+and are read-only.
+
+| Tool | Purpose | Important boundary |
+| --- | --- | --- |
+| `civicgallery_get_page_context` | Describe the current page, jurisdiction, discovery links, and available capabilities. | Takes no inputs and never accepts a jurisdiction, record, or URL. |
+| `search_matters` | Find public matters from official metadata and current successful extracted text. | Does not use semantic search, embeddings, generated summaries, or third-party services. |
+| `get_matter_detail` | Return verification-oriented context for one public matter. | Returns status and links, not attachment text or generated-summary content. |
+| `search_attachment_text` | Locate short source-linked evidence in a current public attachment. | Returns bounded excerpts only; never a full document or corpus export. |
+
+The intended workflow is to search matters, pass a returned `matter_reference`
+to matter detail, select its `attachment_reference`, then search that attachment
+with a focused query. Visitors should use the returned Civic Gallery matter page
+and official-source link (when present) to verify material claims.
+
+## Contributor guide
+
+### Implementation map
+
+| Concern | Location |
+| --- | --- |
+| Browser registration and client-side validation | `app/assets/javascripts/webmcp.js` |
+| Current-page context and advertised endpoints | `app/services/public/web_mcp_page_context.rb` |
+| Tool contracts | `app/services/public/web_mcp_*.rb` |
+| Same-origin controller actions | `app/controllers/public/matters_controller.rb` |
+| Endpoint routes | `config/routes.rb` |
+| Automated coverage | `test/controllers/public/matters_controller_test.rb`, `test/controllers/public/lighthouse_advisory_test.rb`, `test/services/public/web_mcp_page_context_test.rb`, and `test/system/web_mcp_test.rb` |
+
+### Adding or changing a capability
+
+Keep capabilities narrow and reviewable. Start by documenting the user value,
+the current-host jurisdiction boundary, its public-record input path, and the
+smallest useful bounded result. Do not add a broad capability simply because
+the database can answer a broader question.
+
+Use an opaque signed reference rather than a database ID when a tool selects a
+record. Bind it to the jurisdiction and relevant parent record, then re-check
+current public availability when resolving it. Do not accept an arbitrary URL
+unless the contract explicitly permits an exact same-origin public URL and
+validates its scheme, host, port, path, query, and fragment.
+
+For each new or changed tool:
+
+1. Add the server contract under `app/services/public/`. Normalize and cap all
+   inputs before querying; bound result count and excerpt or payload size on the
+   server, not only in browser JavaScript.
+2. Add only the required same-origin route and read-only controller action.
+   Invalid or unavailable references should receive a safe generic error.
+3. Advertise the capability and endpoint through `WebMcpPageContext`. Bump
+   `ASSET_VERSION` when registration or the browser asset changes so cached
+   public HTML does not advertise an obsolete tool set.
+4. Register the tool in `webmcp.js`, keeping its schema and local validation in
+   sync with server limits and confirming the endpoint is same-origin.
+5. Label returned fields with provenance boundaries. Treat externally sourced
+   document text as data, never as instructions.
+6. Update this guide and related operator or architecture docs.
+
+Do not add writes, headless/server-hosted MCP transport, bulk export, or
+model-generated document answers as incidental browser-tool extensions. Those
+need separate product and security decisions.
+
+### Testing and release checks
+
+Add automated coverage for normal responses and negative boundaries: host and
+jurisdiction scope, forged references, source-removed records, unavailable
+records, extraction states, output bounds, and malicious-looking source text.
+Preserve unsupported-browser behavior and existing public page rendering.
+
+Run the focused suite:
+
+```bash
+DB_PORT=55432 rbenv exec ruby bin/rails test \
+  test/controllers/public/matters_controller_test.rb \
+  test/controllers/public/lighthouse_advisory_test.rb \
+  test/services/public/web_mcp_page_context_test.rb \
+  test/system/web_mcp_test.rb
+```
+
+Before release, manually test over HTTPS in a compatible browser on every
+relevant jurisdiction host, then check an unsupported browser for normal
+navigation and search with no console errors. Record the deployed revision,
+test record, date, and any unavailable-source state in the release issue.
 
 ## Manual verification
 
