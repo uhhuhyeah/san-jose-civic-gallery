@@ -10,6 +10,8 @@ This repository is intentionally documented in a compact way so contributors and
 - `multi-jurisdiction.md`: how a second jurisdiction (SJUSD via Simbli) was
   added, the architectural changes, and the tradeoffs and tech debt taken on
 - `schema-guide.md`: source-system and app-schema contributor guide
+- `webmcp.md`: what the browser-native WebMCP enhancement exposes, its trust
+  boundaries, and how contributors can safely extend it
 - `document-backfill.md`: operator workflow for importing and extracting
   historical matter attachments
 - `manual-attachment-upload.md`: operator playbook for hand-uploading
