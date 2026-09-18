@@ -112,11 +112,12 @@ module Public
     end
 
     def attachments_for(matter)
-      matter.attachments.includes(:extracted_texts, :generated_artifacts).first(MAX_ATTACHMENTS).map do |attachment|
+      matter.attachments.current_from_source.includes(:extracted_texts, :generated_artifacts).first(MAX_ATTACHMENTS).map do |attachment|
         latest_text = attachment.latest_extracted_text
         {
           name: attachment.name,
           file_name: attachment.file_name,
+          attachment_reference: WebMcpMatterAttachmentReference.generate(attachment),
           official_source_url: official_source_url(attachment.hyperlink),
           file_status: file_status(attachment),
           extraction_status: attachment.extraction_status,

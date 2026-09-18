@@ -5,10 +5,11 @@ module Public
     # Public HTML cache validators include this value because Sprockets asset
     # digests are not template dependencies and therefore do not otherwise
     # invalidate a cached layout that advertises a new capability.
-    ASSET_VERSION = "3"
+    ASSET_VERSION = "4"
     TOOL_NAME = "civicgallery_get_page_context"
     MATTER_SEARCH_TOOL_NAME = "search_matters"
     MATTER_DETAIL_TOOL_NAME = "get_matter_detail"
+    ATTACHMENT_TEXT_TOOL_NAME = "search_attachment_text"
 
     def self.cache_version
       "webmcp/#{CONTRACT_VERSION}/#{ASSET_VERSION}"
@@ -66,10 +67,11 @@ module Public
         },
         endpoints: {
           matter_search_url: @routes.public_webmcp_matter_search_url,
-          matter_detail_url: @routes.public_webmcp_matter_detail_url
+          matter_detail_url: @routes.public_webmcp_matter_detail_url,
+          attachment_text_url: @routes.public_webmcp_attachment_text_url
         },
         source_boundaries: SOURCE_BOUNDARIES,
-        capabilities: [ capability_context, matter_search_capability_context, matter_detail_capability_context ]
+        capabilities: [ capability_context, matter_search_capability_context, matter_detail_capability_context, attachment_text_capability_context ]
       }
     end
 
@@ -109,6 +111,14 @@ module Public
     def matter_detail_capability_context
       {
         name: MATTER_DETAIL_TOOL_NAME,
+        status: "available",
+        read_only: true
+      }
+    end
+
+    def attachment_text_capability_context
+      {
+        name: ATTACHMENT_TEXT_TOOL_NAME,
         status: "available",
         read_only: true
       }
