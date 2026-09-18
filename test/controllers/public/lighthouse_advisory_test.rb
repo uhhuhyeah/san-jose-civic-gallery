@@ -40,6 +40,22 @@ module Public
       assert_includes cache_control, "stale-while-revalidate=60"
     end
 
+    test "public page cache validators include the WebMCP asset version" do
+      get root_url
+      original_etag = response.headers.fetch("ETag")
+
+      original_cache_version = Public::WebMcpPageContext.method(:cache_version)
+      Public::WebMcpPageContext.define_singleton_method(:cache_version) { "webmcp/test-bump" }
+      begin
+        get root_url, headers: { "If-None-Match" => original_etag }
+      ensure
+        Public::WebMcpPageContext.define_singleton_method(:cache_version, original_cache_version)
+      end
+
+      assert_response :success
+      assert_not_equal original_etag, response.headers.fetch("ETag")
+    end
+
     test "public HTML pages expose host-scoped WebMCP context" do
       get root_url
 
