@@ -126,6 +126,10 @@ class PublicMatterDiscoveryTest < ApplicationSystemTestCase
       click_on "Search"
     end
 
+    # The clear link only exists on the filtered response. Waiting for it
+    # ensures the GET navigation has replaced the pre-search document before
+    # checking the result text.
+    assert_selector ".atlas-matters-filter-clear", text: "CLEAR"
     assert_text "26-575"
     assert_no_text "26-999"
   end
@@ -137,6 +141,7 @@ class PublicMatterDiscoveryTest < ApplicationSystemTestCase
       click_on "Search"
     end
 
+    assert_selector ".atlas-matters-filter-clear", text: "CLEAR"
     assert_text "26-575"
     # Doc-hits label and the attachment link are uppercased via CSS
     # text-transform; assert against the rendered casing.
