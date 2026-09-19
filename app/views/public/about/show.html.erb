@@ -1,0 +1,46 @@
+<% content_for(:title) { "About" } %>
+<% content_for(:description) { "Learn why Civic Gallery exists, how it handles public records, and where to follow the project." } %>
+<% content_for :body_class, "atlas-shell" %>
+<% content_for :head do %>
+  <%= stylesheet_link_tag "atlas", "data-turbo-track": "reload" %>
+<% end %>
+
+<main class="atlas-wrap" id="main">
+  <%= render "public/shared/atlas_topbar" %>
+
+  <header class="atlas-about-header">
+    <p class="atlas-eyebrow">About Civic Gallery</p>
+    <h1>Public records<br><em>deserve a better map.</em></h1>
+    <p>
+      Civic Gallery makes local public records easier to find, follow, and verify.
+      It organizes meetings, matters, and documents, while keeping the official
+      public record in view as the source of truth.
+    </p>
+  </header>
+
+  <section class="atlas-about-grid" aria-label="About Civic Gallery">
+    <article>
+      <h2>Source-first by design</h2>
+      <p>
+        This site helps people navigate records published by <%= current_jurisdiction.name %>.
+        It links back to the source system and distinguishes official records,
+        extracted document text, and generated summaries. Those assistive layers
+        can make a record easier to explore; they are not a substitute for it.
+      </p>
+    </article>
+    <article>
+      <h2>Follow the work</h2>
+      <p>
+        <a href="https://notes.civicgallery.org/" target="_blank" rel="noopener">Civic Gallery Notes ↗</a>
+        is where we write about the project, its experiments, and the questions
+        that come up while building public-interest civic software.
+      </p>
+      <p>
+        Start with <a href="https://notes.civicgallery.org/posts/introducing-civic-gallery/" target="_blank" rel="noopener">Introducing Civic Gallery ↗</a>,
+        or read <a href="https://www.davidalexmcclain.com/coding/civic-gallery" target="_blank" rel="noopener">the technical project notes ↗</a>.
+      </p>
+    </article>
+  </section>
+
+  <%= render "public/shared/atlas_footer" %>
+</main>
