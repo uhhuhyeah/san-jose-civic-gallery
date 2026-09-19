@@ -37,6 +37,20 @@ module Api
         assert_response :not_found
         assert_equal "not_found", JSON.parse(response.body).dig("error", "code")
       end
+
+      test "returns a retryable safe error when the database search exceeds its budget" do
+        original_call = Public::SearchQueryTimeout.method(:call)
+        Public::SearchQueryTimeout.define_singleton_method(:call) { |**| raise Public::SearchQueryTimeout::Error }
+
+        begin
+          get "/api/v1/matters/search", params: { query: "agreement" }
+        ensure
+          Public::SearchQueryTimeout.define_singleton_method(:call, original_call)
+        end
+
+        assert_response :service_unavailable
+        assert_equal "search_timeout", JSON.parse(response.body).dig("error", "code")
+      end
     end
   end
 end

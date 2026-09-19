@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_15_122653) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_19_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "vector"
@@ -158,6 +158,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_15_122653) do
     t.string "name", null: false
     t.boolean "print_with_reports"
     t.string "raw_source_digest"
+    t.bigint "searchable_extracted_text_id"
     t.boolean "show_on_internet_page"
     t.integer "sort_order"
     t.string "source_attachment_id", null: false
@@ -180,6 +181,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_15_122653) do
     t.index ["civic_matter_id", "source_present"], name: "idx_civic_matter_attachments_source_presence"
     t.index ["civic_matter_id"], name: "index_civic_matter_attachments_on_civic_matter_id"
     t.index ["last_source_snapshot_id"], name: "index_civic_matter_attachments_on_last_source_snapshot_id"
+    t.index ["searchable_extracted_text_id"], name: "index_civic_matter_attachments_on_searchable_extracted_text_id"
     t.index ["source_file_validated_at", "source_file_imported_at"], name: "idx_civic_matter_attachments_file_validation"
     t.index ["source_system", "legistar_matter_attachment_id"], name: "idx_civic_matter_attachments_unique_per_source", unique: true
     t.index ["source_system", "source_attachment_id"], name: "idx_civic_matter_attachments_unique_source_id", unique: true
@@ -338,6 +340,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_15_122653) do
   add_foreign_key "civic_events", "ingestion_source_snapshots", column: "last_source_snapshot_id", on_delete: :nullify
   add_foreign_key "civic_matter_attachments", "civic_jurisdictions"
   add_foreign_key "civic_matter_attachments", "civic_matters"
+  add_foreign_key "civic_matter_attachments", "document_extracted_texts", column: "searchable_extracted_text_id"
   add_foreign_key "civic_matter_attachments", "ingestion_source_snapshots", column: "last_source_snapshot_id", on_delete: :nullify
   add_foreign_key "civic_matter_themes", "civic_matters"
   add_foreign_key "civic_matter_themes", "generated_artifacts", column: "source_artifact_id", on_delete: :nullify

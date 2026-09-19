@@ -27,6 +27,11 @@ invalid, unavailable, cross-jurisdiction, or source-removed references return
 removals or semantic changes require a new version with a published migration
 window.
 
+Search database work has a five-second ceiling. If the database cannot produce
+a bounded result within that budget, the API returns a retryable `503` with
+the `search_timeout` error code; the MCP tool returns the same error as a tool
+result with `isError: true`.
+
 ## Provenance rules
 
 Official metadata is an index of official public records, not an independent

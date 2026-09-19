@@ -47,6 +47,16 @@ module Api
         }, status: :not_found
       end
 
+      def render_search_timeout
+        render json: {
+          error: {
+            code: "search_timeout",
+            message: "Search is temporarily busy. Please retry with fewer or more specific keywords.",
+            documentation_url: api_documentation_url
+          }
+        }, status: :service_unavailable
+      end
+
       def api_documentation_url
         "#{request.base_url}/docs/api/v1"
       end

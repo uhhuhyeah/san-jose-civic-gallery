@@ -15,6 +15,9 @@ module Documents
     validates :matter_attachment, presence: true
     validates :extractor_name, presence: true
 
+    after_save :sync_attachment_search_projection
+    after_destroy :refresh_attachment_search_projection
+
     SEARCH_INDEX_CHARACTER_LIMIT = 200_000
     SEARCHABLE_CONTENT_SQL = "left(coalesce(document_extracted_texts.content, ''), #{SEARCH_INDEX_CHARACTER_LIMIT})"
     SEARCH_VECTOR_SQL = "to_tsvector('english', #{SEARCHABLE_CONTENT_SQL})"
@@ -30,14 +33,10 @@ module Documents
       normalized = query.to_s.strip
       return none if normalized.blank?
 
-      latest_ok_per_attachment = successful
-        .with_content
-        .select("DISTINCT ON (civic_matter_attachment_id) id")
-        .order(:civic_matter_attachment_id, created_at: :desc, id: :desc)
-
       successful
         .with_content
-        .where(id: latest_ok_per_attachment)
+        .joins(:matter_attachment)
+        .where("civic_matter_attachments.searchable_extracted_text_id = document_extracted_texts.id")
         # Keep this expression aligned with idx_document_extracted_texts_content_search.
         .where(SEARCH_MATCH_SQL, normalized)
     end
@@ -62,6 +61,43 @@ module Documents
     private_class_method :tsquery_sql
 
     private
+
+    def searchable?
+      status == "ok" && content.present?
+    end
+
+    # The public search projection contains one current successful extraction
+    # per attachment. Updating it as text arrives avoids a global DISTINCT ON
+    # over every extraction on each anonymous search request.
+    def sync_attachment_search_projection
+      return refresh_attachment_search_projection unless searchable?
+
+      Civic::MatterAttachment
+        .where(id: civic_matter_attachment_id)
+        .where(<<~SQL.squish, created_at, created_at, id)
+          searchable_extracted_text_id IS NULL OR NOT EXISTS (
+            SELECT 1
+            FROM document_extracted_texts current_searchable_text
+            WHERE current_searchable_text.id = civic_matter_attachments.searchable_extracted_text_id
+              AND (
+                current_searchable_text.created_at > ? OR
+                (current_searchable_text.created_at = ? AND current_searchable_text.id > ?)
+              )
+          )
+        SQL
+        .update_all(searchable_extracted_text_id: id)
+    end
+
+    def refresh_attachment_search_projection
+      attachment = Civic::MatterAttachment.find_by(id: civic_matter_attachment_id)
+      return unless attachment&.searchable_extracted_text_id == id
+
+      replacement = self.class.successful.with_content
+        .where(civic_matter_attachment_id: attachment.id)
+        .order(created_at: :desc, id: :desc)
+        .pick(:id)
+      attachment.update_column(:searchable_extracted_text_id, replacement)
+    end
 
     def jurisdiction_id_for_data_version
       matter_attachment&.civic_jurisdiction_id

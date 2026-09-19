@@ -9,6 +9,7 @@ module Civic
     bumps_jurisdiction_data_version
 
     belongs_to :matter, class_name: "Civic::Matter", foreign_key: :civic_matter_id, inverse_of: :attachments
+    belongs_to :searchable_extracted_text, class_name: "Documents::ExtractedText", optional: true
     belongs_to :last_source_snapshot, class_name: "Ingestion::SourceSnapshot", optional: true
     has_one_attached :source_file
     has_many :extracted_texts, -> { recent_first }, class_name: "Documents::ExtractedText", foreign_key: :civic_matter_attachment_id, inverse_of: :matter_attachment, dependent: :destroy
