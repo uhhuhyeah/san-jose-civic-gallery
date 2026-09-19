@@ -1084,6 +1084,82 @@
   letter-spacing: 0;
 }
 
+/* ============================================================
+ * ABOUT + NOTES
+ * ============================================================ */
+
+.atlas-shell .atlas-about-header {
+  padding: 48px 0 36px;
+  border-bottom: 1px solid var(--atlas-rule);
+}
+.atlas-shell .atlas-about-header .atlas-eyebrow,
+.atlas-shell .atlas-notes-feature .atlas-eyebrow { color: var(--atlas-oxblood); }
+.atlas-shell .atlas-about-header h1,
+.atlas-shell .atlas-notes-feature h2 {
+  margin: 8px 0 16px;
+  font-family: var(--atlas-serif);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.atlas-shell .atlas-about-header h1 { font-size: clamp(42px, 6vw, 72px); }
+.atlas-shell .atlas-about-header > p:last-child {
+  margin: 0;
+  max-width: 62ch;
+  font-family: var(--atlas-serif);
+  font-size: 19px;
+  line-height: 1.55;
+  color: var(--atlas-ink-soft);
+}
+.atlas-shell .atlas-about-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 36px 0 64px;
+  border: 1px solid var(--atlas-rule);
+}
+.atlas-shell .atlas-about-grid article { padding: 28px 32px; }
+.atlas-shell .atlas-about-grid article + article { border-left: 1px solid var(--atlas-rule); }
+.atlas-shell .atlas-about-grid h2 {
+  margin: 0 0 12px;
+  font-family: var(--atlas-serif);
+  font-size: 26px;
+  font-weight: 400;
+}
+.atlas-shell .atlas-about-grid p {
+  margin: 0;
+  font-family: var(--atlas-serif);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--atlas-ink-soft);
+}
+.atlas-shell .atlas-about-grid p + p { margin-top: 14px; }
+.atlas-shell .atlas-about-grid a,
+.atlas-shell .atlas-notes-feature a { color: var(--atlas-oxblood); text-underline-offset: 3px; }
+.atlas-shell .atlas-notes-feature {
+  margin: 36px 0 12px;
+  padding: 32px;
+  border: 1px solid var(--atlas-rule);
+  border-left: 3px solid var(--atlas-accent-deep);
+}
+.atlas-shell .atlas-notes-feature h2 { font-size: clamp(28px, 4vw, 44px); }
+.atlas-shell .atlas-notes-feature p:not(.atlas-eyebrow) {
+  max-width: 56ch;
+  margin: 0;
+  font-family: var(--atlas-serif);
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--atlas-ink-soft);
+}
+.atlas-shell .atlas-notes-feature a {
+  display: inline-block;
+  margin-top: 18px;
+  font-family: var(--atlas-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
 
 /* ============================================================
  * ANIMATIONS — used sparingly for entrance, with reduced-motion override
@@ -3838,6 +3914,10 @@
   .atlas-shell .atlas-facts-strip > div:nth-child(2n) { border-right: 0; }
   .atlas-shell .atlas-date--lg .atlas-date-day { font-size: 64px; }
   .atlas-shell .atlas-footer { flex-direction: column; align-items: flex-start; }
+  .atlas-shell .atlas-about-grid { grid-template-columns: 1fr; }
+  .atlas-shell .atlas-about-grid article + article { border-top: 1px solid var(--atlas-rule); border-left: 0; }
+  .atlas-shell .atlas-about-grid article,
+  .atlas-shell .atlas-notes-feature { padding: 24px; }
   .atlas-shell .atlas-session-row {
     grid-template-columns: 64px 1fr;
   }
