@@ -32,13 +32,6 @@
     Wander it the way you'd wander a map. Follow whatever catches your eye.
   </p>
 
-  <section class="atlas-notes-feature" aria-labelledby="notes-feature-title">
-    <p class="atlas-eyebrow">From Civic Gallery Notes</p>
-    <h2 id="notes-feature-title">How we are building<br><em>a better map for public records.</em></h2>
-    <p>Field notes, experiments, and updates from the project behind this site.</p>
-    <a href="https://notes.civicgallery.org/" target="_blank" rel="noopener">Visit Civic Gallery Notes <span aria-hidden="true">↗</span></a>
-  </section>
-
   <%# ---------- BODY FILTER ---------- %>
   <%= form_with url: root_path, method: :get, local: true, class: "atlas-body-filter" do |form| %>
     <%= form.label :body_name, "Show themes for", for: "pulse-body-name" %>
@@ -189,6 +182,13 @@
       <h3>The month in <%= current_jurisdiction.short_name %>, in brief</h3>
       <p>Monthly roundups summarize what came before <%= current_jurisdiction.governing_bodies_phrase %> in one read. <span class="atlas-em">Read monthly roundups →</span></p>
     <% end %>
+  </section>
+
+  <section class="atlas-notes-feature" aria-labelledby="notes-feature-title">
+    <p class="atlas-eyebrow">From Civic Gallery Notes</p>
+    <h2 id="notes-feature-title">How we are building<br><em>a better map for public records.</em></h2>
+    <p>Field notes, experiments, and updates from the project behind this site.</p>
+    <a href="https://notes.civicgallery.org/" target="_blank" rel="noopener">Visit Civic Gallery Notes <span aria-hidden="true">↗</span></a>
   </section>
 
   <%# ---------- LEDGER ---------- %>
