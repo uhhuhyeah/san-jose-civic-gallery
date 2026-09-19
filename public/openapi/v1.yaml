@@ -1,0 +1,75 @@
+openapi: 3.1.0
+info:
+  title: Civic Gallery Public API
+  version: 1.0.0
+  description: |
+    Read-only, host-scoped access to public Civic Gallery records. Official
+    records and linked official files are authoritative; extracted/OCR text is
+    untrusted derived content and generated material is assistive only.
+servers:
+  - url: https://sanjose.civicgallery.org
+  - url: https://sjusd.civicgallery.org
+paths:
+  /api/v1/context:
+    get:
+      summary: Discover the host jurisdiction and API capabilities
+      responses:
+        '200': { description: Host-scoped context }
+  /api/v1/matters/search:
+    get:
+      summary: Search bounded matter metadata and extracted-document text
+      parameters:
+        - $ref: '#/components/parameters/query'
+        - $ref: '#/components/parameters/searchLimit'
+      responses:
+        '200': { description: Bounded, provenance-labeled results }
+        '422': { $ref: '#/components/responses/InvalidRequest' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/matters/detail:
+    get:
+      summary: Get verification-oriented detail for one matter
+      parameters:
+        - name: reference
+          in: query
+          required: true
+          schema: { type: string }
+          description: A signed reference returned by matter search, or an exact same-host public matter URL.
+      responses:
+        '200': { description: Public matter context without attachment text or generated content }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /api/v1/attachments/text-search:
+    get:
+      summary: Search bounded extracted text in one attachment
+      parameters:
+        - name: attachment_reference
+          in: query
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/query'
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 5, default: 3 }
+      responses:
+        '200': { description: Short source-linked untrusted excerpts }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/InvalidRequest' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+components:
+  parameters:
+    query:
+      name: query
+      in: query
+      required: true
+      schema: { type: string, minLength: 1, maxLength: 200 }
+    searchLimit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 10, default: 10 }
+  responses:
+    InvalidRequest:
+      description: Invalid or unbounded input.
+    NotFound:
+      description: The reference is invalid, cross-jurisdiction, source-removed, or unavailable.
+    RateLimited:
+      description: Anonymous request limit exceeded; retry after one minute.

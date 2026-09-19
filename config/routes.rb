@@ -21,6 +21,18 @@ Rails.application.routes.draw do
   get "sitemap.xml", to: "public/discovery#sitemap", defaults: { format: :xml }, as: :sitemap
   get "llms.txt", to: "public/discovery#llms", defaults: { format: :text }, as: :llms
   get "llms-full.txt", to: "public/discovery#llms_full", defaults: { format: :text }, as: :llms_full
+  get "docs/api/v1", to: "public/discovery#api_v1", as: :api_v1_documentation
+
+  namespace :api do
+    namespace :v1 do
+      get "context", to: "records#context"
+      get "matters/search", to: "records#search"
+      get "matters/detail", to: "records#detail"
+      get "attachments/text-search", to: "records#attachment_text_search"
+    end
+  end
+
+  match "mcp", to: "mcp#show", via: [ :get, :post, :delete ]
 
   namespace :public do
     get "meetings", to: "meetings#index"
