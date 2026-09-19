@@ -1,40 +1,24 @@
-require "net/http"
-
 module Mcp
   class PublicApiClient
-    def initialize(base_url:, client_ip: nil)
-      @base_uri = URI.parse(base_url)
-      @client_ip = client_ip
+    def initialize(jurisdiction:, request:, routes:)
+      @gateway = Api::V1::RecordsGateway.new(jurisdiction:, request:, routes:)
+      @base_url = request.base_url
     end
 
     def context
-      get("/api/v1/context")
+      @gateway.context(base_url: @base_url, documentation_url: "#{@base_url}/docs/api/v1")
     end
 
     def search_matters(arguments)
-      get("/api/v1/matters/search", arguments.slice("query", "limit"))
+      @gateway.search(query: arguments["query"], limit: arguments["limit"])
     end
 
     def matter_detail(arguments)
-      get("/api/v1/matters/detail", arguments.slice("reference"))
+      @gateway.detail(reference: arguments["reference"])
     end
 
     def attachment_text_search(arguments)
-      get("/api/v1/attachments/text-search", arguments.slice("attachment_reference", "query", "limit"))
-    end
-
-    private
-
-    def get(path, query = {})
-      uri = @base_uri.dup
-      uri.path = path
-      uri.query = query.to_query.presence
-      headers = { "Accept" => "application/json" }
-      headers["CF-Connecting-IP"] = @client_ip if @client_ip.present?
-      response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https") { |http| http.get(uri.request_uri, headers) }
-      JSON.parse(response.body)
-    rescue JSON::ParserError
-      { "error" => { "code" => "upstream_error", "message" => "The public API returned an invalid response." } }
+      @gateway.attachment_text_search(attachment_reference: arguments["attachment_reference"], query: arguments["query"], limit: arguments["limit"])
     end
   end
 end

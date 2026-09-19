@@ -5,7 +5,7 @@ class McpController < ApplicationController
   before_action :skip_mcp_session
   before_action :reject_untrusted_origin
 
-  class_attribute :api_client_factory, default: ->(request) { Mcp::PublicApiClient.new(base_url: request.base_url, client_ip: request.get_header("HTTP_CF_CONNECTING_IP").presence || request.remote_ip) }
+  class_attribute :api_client_factory, default: ->(controller) { Mcp::PublicApiClient.new(jurisdiction: controller.send(:current_jurisdiction), request: controller.request, routes: controller) }
 
   rate_limit to: PublicRateLimitedSearch::SEARCH_RATE_LIMIT,
              within: PublicRateLimitedSearch::SEARCH_RATE_WINDOW,
@@ -18,10 +18,10 @@ class McpController < ApplicationController
   def show
     return head :method_not_allowed unless request.post?
 
-    response = Mcp::Server.new(api_client: api_client_factory.call(request)).respond(parsed_request)
-    return head response.fetch(:http_status) if response.key?(:http_status)
+    response = Mcp::Server.new(api_client: api_client_factory.call(self)).respond(parsed_request)
+    return head :accepted if response.nil?
 
-    render json: response, status: response.fetch(:http_status, :ok)
+    render json: response
   rescue JSON::ParserError
     render json: Mcp::Server.invalid_request("Request body must be valid JSON."), status: :bad_request
   end

@@ -40,10 +40,10 @@ Generated classifications and generated-summary statuses are assistive only.
 The Rails application provides a stateless Streamable HTTP MCP endpoint at
 `https://<jurisdiction-host>/mcp`. It supports the `2025-03-26` transport
 handshake and the read-only `get_page_context`, `search_matters`,
-`get_matter_detail`, and `search_attachment_text` tools. The MCP adapter makes
-its record requests through the public API client, so API and MCP have one
-record-access contract. Browser-originated MCP requests must be same-origin;
-normal remote MCP clients omit `Origin`.
+`get_matter_detail`, and `search_attachment_text` tools. The MCP adapter and
+JSON endpoints share one in-process API gateway, avoiding a request back into
+Puma while retaining one bounded record-access contract. Browser-originated
+MCP requests must be same-origin; normal remote MCP clients omit `Origin`.
 
 The current WebMCP paths remain browser compatibility routes. They are not a
 documented primary integration and will be retained through the v1 migration

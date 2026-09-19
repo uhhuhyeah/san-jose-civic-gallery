@@ -52,7 +52,23 @@ module Mcp
     end
 
     def respond(message)
-      return self.class.invalid_request("JSON-RPC 2.0 is required.") unless message.is_a?(Hash) && message["jsonrpc"] == "2.0"
+      return batch_response(message) if message.is_a?(Array)
+
+      response_for(message)
+    end
+
+    private
+
+    def batch_response(messages)
+      return self.class.invalid_request("A JSON-RPC batch cannot be empty.") if messages.empty?
+
+      responses = messages.filter_map { |message| response_for(message) }
+      responses.presence
+    end
+
+    def response_for(message)
+      return self.class.invalid_request("JSON-RPC 2.0 is required.") unless valid_message?(message)
+      return if notification?(message)
 
       id = message["id"]
       case message["method"]
@@ -69,11 +85,15 @@ module Mcp
       end
     end
 
-    private
-
     def tool_result(id, params)
+      return error(id, -32602, "Tool call params must be an object.") unless params.is_a?(Hash)
+
       name = params["name"]
+      return error(id, -32602, "Tool name is required.") unless name.is_a?(String)
+
       arguments = params["arguments"] || {}
+      return error(id, -32602, "Tool arguments must be an object.") unless arguments.is_a?(Hash)
+
       payload = case name
       when "get_page_context" then @api_client.context
       when "search_matters" then @api_client.search_matters(arguments)
@@ -91,6 +111,14 @@ module Mcp
 
     def error(id, code, message)
       { jsonrpc: "2.0", id: id, error: { code: code, message: message } }
+    end
+
+    def valid_message?(message)
+      message.is_a?(Hash) && message["jsonrpc"] == "2.0" && message["method"].is_a?(String)
+    end
+
+    def notification?(message)
+      !message.key?("id")
     end
   end
 end

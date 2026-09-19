@@ -36,4 +36,30 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     post "/mcp", params: { jsonrpc: "2.0", id: 1, method: "tools/list" }.to_json, headers: { "CONTENT_TYPE" => "application/json", "ORIGIN" => "https://attacker.example" }
     assert_response :forbidden
   end
+
+  test "accepts mixed JSON-RPC batches and acknowledges notifications without a body" do
+    post "/mcp", params: [
+      { jsonrpc: "2.0", method: "notifications/cancelled", params: { requestId: 9 } },
+      { jsonrpc: "2.0", id: 4, method: "tools/list" }
+    ].to_json, headers: { "CONTENT_TYPE" => "application/json" }
+
+    assert_response :success
+    response_body = JSON.parse(response.body)
+    assert_equal 1, response_body.length
+    assert_equal 4, response_body.first.fetch("id")
+    assert_equal "search_matters", response_body.first.dig("result", "tools", 1, "name")
+
+    post "/mcp", params: { jsonrpc: "2.0", method: "notifications/cancelled", params: { requestId: 9 } }.to_json, headers: { "CONTENT_TYPE" => "application/json" }
+    assert_response :accepted
+    assert_empty response.body
+  end
+
+  test "returns invalid params for a non-object tool arguments value" do
+    post "/mcp", params: { jsonrpc: "2.0", id: 4, method: "tools/call", params: { name: "search_matters", arguments: "bad" } }.to_json, headers: { "CONTENT_TYPE" => "application/json" }
+
+    assert_response :success
+    error = JSON.parse(response.body).fetch("error")
+    assert_equal(-32_602, error.fetch("code"))
+    assert_equal "Tool arguments must be an object.", error.fetch("message")
+  end
 end
