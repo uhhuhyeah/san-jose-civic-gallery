@@ -17,6 +17,10 @@ module Public
       render formats: :text, content_type: "text/plain"
     end
 
+    def api_v1
+      render formats: :html
+    end
+
     def sitemap
       # Events with no ingested agenda items render only template scaffolding
       # and are noindex'd at the page level; advertising them in the sitemap

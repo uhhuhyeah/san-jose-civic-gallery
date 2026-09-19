@@ -48,6 +48,14 @@ module Public
       assert_not_includes response.body, "sanjose.legistar.com"
     end
 
+    test "publishes the public API guide without presenting WebMCP as required" do
+      get "/docs/api/v1"
+
+      assert_response :success
+      assert_includes response.body, "Civic Gallery Public API v1"
+      assert_includes response.body, "/mcp"
+    end
+
     test "llms-full.txt provides verification workflow without crossing source boundaries" do
       host! SANJOSE_HOST
 
@@ -61,8 +69,8 @@ module Public
       assert_includes response.body, "## Corpus and Source Boundaries"
       assert_includes response.body, "## Recommended Agent Workflow"
       assert_includes response.body, "## Citation Guidance"
-      assert_includes response.body, "optional, browser-bound WebMCP tools"
-      assert_includes response.body, "bounded `search_matters` capability"
+      assert_includes response.body, "versioned public API guide"
+      assert_includes response.body, "Browser-native WebMCP remains an optional compatibility enhancement"
       assert_includes response.body, "never use semantic/embedding search"
       assert_includes response.body, "sanjose.legistar.com"
       assert_not_includes response.body, "simbli.eboardsolutions.com"

@@ -12,6 +12,8 @@ This repository is intentionally documented in a compact way so contributors and
 - `schema-guide.md`: source-system and app-schema contributor guide
 - `webmcp.md`: what the browser-native WebMCP enhancement exposes, its trust
   boundaries, and how contributors can safely extend it
+- `public-api.md`: versioned public JSON API and remote MCP contract, limits,
+  provenance rules, and compatibility posture
 - `document-backfill.md`: operator workflow for importing and extracting
   historical matter attachments
 - `manual-attachment-upload.md`: operator playbook for hand-uploading

@@ -21,6 +21,13 @@ Each host has a separate jurisdiction-specific corpus. Do not combine records ac
 - [Glossary](<%= glossary_url %>): Civic Gallery terminology and source-system language.
 - [Sitemap](<%= sitemap_url %>): Crawlable page inventory for this host.
 
+## API for agents
+
+- [API v1 guide](<%= api_v1_documentation_url %>): Supported, versioned, read-only machine interface for this host.
+- [API context](<%= api_v1_context_url %>): Host jurisdiction and capability discovery.
+- [OpenAPI v1](<%= request.base_url %>/openapi/v1.yaml): Endpoint and input contract.
+- Remote MCP endpoint: `<%= request.base_url %>/mcp` (Streamable HTTP; optional adapter over API v1).
+
 ## Source Boundaries
 
 - Primary source system: <%= current_jurisdiction.ingestion_source_label %> (<%= current_jurisdiction.source_host %>).
