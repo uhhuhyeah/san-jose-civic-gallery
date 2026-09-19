@@ -83,6 +83,8 @@ module Public
       render json: result
     rescue WebMcpMatterSearch::InvalidInput => error
       render json: { error: error.message }, status: :unprocessable_entity
+    rescue SearchQueryTimeout::Error
+      render json: { error: "Search is temporarily busy. Please retry with fewer or more specific keywords." }, status: :service_unavailable
     end
 
     # This endpoint is only the same-origin backing operation for the browser

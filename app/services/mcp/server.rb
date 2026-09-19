@@ -103,6 +103,17 @@ module Mcp
       end
 
       result(id, { content: [ { type: "text", text: JSON.generate(payload) } ], isError: payload.key?("error") })
+    rescue Public::SearchQueryTimeout::Error
+      result(id, {
+        content: [ {
+          type: "text",
+          text: JSON.generate(error: {
+            code: "search_timeout",
+            message: "Search is temporarily busy. Please retry with fewer or more specific keywords."
+          })
+        } ],
+        isError: true
+      })
     end
 
     def result(id, value)

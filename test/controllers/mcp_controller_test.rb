@@ -62,4 +62,18 @@ class McpControllerTest < ActionDispatch::IntegrationTest
     assert_equal(-32_602, error.fetch("code"))
     assert_equal "Tool arguments must be an object.", error.fetch("message")
   end
+
+  test "returns a retryable tool error when the search database budget is exceeded" do
+    timeout_client = Object.new
+    timeout_client.define_singleton_method(:search_matters) { |_| raise Public::SearchQueryTimeout::Error }
+    server = Mcp::Server.new(api_client: timeout_client)
+
+    response = server.respond({
+      "jsonrpc" => "2.0", "id" => 5, "method" => "tools/call",
+      "params" => { "name" => "search_matters", "arguments" => { "query" => "agreement" } }
+    })
+
+    assert_equal true, response.dig(:result, :isError)
+    assert_equal "search_timeout", JSON.parse(response.dig(:result, :content, 0, :text)).dig("error", "code")
+  end
 end

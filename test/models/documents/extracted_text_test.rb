@@ -42,11 +42,12 @@ module Documents
       assert_includes results.first.search_snippet, "<mark>library</mark>"
     end
 
-    test "matching latest repeats the partial index predicate on the outer query" do
+    test "matching latest searches the attachment's current extraction without a global distinct query" do
       sql = ExtractedText.matching_latest("library outreach").to_sql
 
-      assert_operator sql.scan(%("document_extracted_texts"."status" = 'ok')).size, :>=, 1
+      assert_includes sql, "civic_matter_attachments.searchable_extracted_text_id = document_extracted_texts.id"
       assert_includes sql, "to_tsvector('english', left(coalesce(document_extracted_texts.content, ''), 200000))"
+      assert_not_includes sql, "DISTINCT ON"
       assert_not_includes sql, "ts_rank_cd"
       assert_not_includes sql, "ts_headline"
     end
@@ -70,6 +71,18 @@ module Documents
       results = ExtractedText.search("library outreach").to_a
 
       assert_equal [ latest.id ], results.map(&:id)
+      assert_equal latest.id, @attachment.reload.searchable_extracted_text_id
+    end
+
+    test "keeps the latest successful extraction searchable when later extraction states fail or are empty" do
+      successful = @attachment.extracted_texts.create!(
+        extractor_name: "pdftotext", status: "ok", content: "Library agreement", character_count: 17
+      )
+      @attachment.extracted_texts.create!(extractor_name: "pdftotext", status: "empty")
+      @attachment.extracted_texts.create!(extractor_name: "pdftotext", status: "error", error_message: "bad PDF")
+
+      assert_equal successful.id, @attachment.reload.searchable_extracted_text_id
+      assert_equal [ successful.id ], ExtractedText.matching_latest("library").pluck(:id)
     end
   end
 end

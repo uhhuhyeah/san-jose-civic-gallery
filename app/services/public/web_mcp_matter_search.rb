@@ -26,6 +26,12 @@ module Public
     end
 
     def call
+      SearchQueryTimeout.call { search_results }
+    end
+
+    private
+
+    def search_results
       metadata_matches = Civic::Matter
         .for_jurisdiction(@jurisdiction)
         .search(@query)
@@ -59,8 +65,6 @@ module Public
       payload[:next_steps] = [ "Try different or fewer keywords in the Civic Gallery matters search." ] if payload[:results].empty?
       payload
     end
-
-    private
 
     def normalize_query(value)
       query = value.to_s.strip

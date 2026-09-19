@@ -17,6 +17,8 @@ module Api
         render json: gateway.search(query: params[:query], limit: params[:limit])
       rescue Public::WebMcpMatterSearch::InvalidInput => error
         render_invalid_input(error)
+      rescue Public::SearchQueryTimeout::Error
+        render_search_timeout
       end
 
       def detail
