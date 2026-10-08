@@ -7,8 +7,9 @@ Rails.application.configure do
     policy.form_action :self
     policy.img_src     :self, :https, :data
     policy.font_src    :self, :data
-    policy.script_src  :self, "https://gc.zgo.at"
-    policy.connect_src :self, "https://*.goatcounter.com"
+    policy.script_src  :self, "https://gc.zgo.at", "https://www.googletagmanager.com"
+    policy.connect_src :self, "https://*.goatcounter.com",
+      "https://*.google-analytics.com", "https://*.analytics.google.com", "https://*.googletagmanager.com"
     policy.style_src   :self, :unsafe_inline
   end
 end

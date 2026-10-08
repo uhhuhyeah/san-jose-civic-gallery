@@ -20,8 +20,9 @@ class SecurityHeadersTest < ActionDispatch::IntegrationTest
     assert_includes csp, "form-action 'self'"
     assert_includes csp, "img-src 'self' https: data:"
     assert_includes csp, "font-src 'self' data:"
-    assert_includes csp, "script-src 'self' https://gc.zgo.at"
-    assert_includes csp, "connect-src 'self' https://*.goatcounter.com"
+    assert_includes csp, "script-src 'self' https://gc.zgo.at https://www.googletagmanager.com"
+    assert_includes csp, "connect-src 'self' https://*.goatcounter.com https://*.google-analytics.com " \
+                         "https://*.analytics.google.com https://*.googletagmanager.com"
     assert_includes csp, "style-src 'self' 'unsafe-inline'"
   end
 
