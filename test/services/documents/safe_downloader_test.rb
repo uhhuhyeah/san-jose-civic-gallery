@@ -61,7 +61,7 @@ module Documents
     end
 
     test "follows redirects up to the cap, re-validating the host each hop" do
-      first = SafeDownloaderTest.fake_redirect(location: "https://sanjose.legistar.com/file.pdf")
+      first = SafeDownloaderTest.fake_redirect(location: "https://scvwd.legistar.com/file.pdf")
       success = SafeDownloaderTest.fake_success(
         headers: { "Content-Type" => "application/pdf" },
         chunks: [ "%PDF-1.4 ok" ]
@@ -72,7 +72,7 @@ module Documents
         result = SafeDownloader.call(url: "https://sanjose.legistar.com/View.ashx?M=F&ID=1", io:)
 
         assert_equal "%PDF-1.4 ok", io.string
-        assert_equal "https://sanjose.legistar.com/file.pdf", result.final_url
+        assert_equal "https://scvwd.legistar.com/file.pdf", result.final_url
       end
     end
 

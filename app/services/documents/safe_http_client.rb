@@ -26,6 +26,7 @@ module Documents
 
     DEFAULT_ALLOWED_HOSTS = %w[
       sanjose.legistar.com
+      scvwd.legistar.com
       legistar.granicus.com
       www.sanjoseca.gov
       sccgov.iqm2.com
