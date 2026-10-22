@@ -15,9 +15,12 @@ module Iqm2
       # actually UTF-8 on the wire, where Net::HTTP hands us an ASCII-8BIT body.
       # Left alone, Nokogiri honors the bogus declaration and mis-parses the
       # document into an empty tree (zero refs / guard trips). Force UTF-8 so the
-      # real content is parsed regardless of the lying prolog. (Fixtures read
-      # from disk are already UTF-8, which is why this only bit in production.)
-      doc = Nokogiri::HTML(payload.to_s, nil, "UTF-8")
+      # real content is parsed regardless of the lying prolog, and scrub so a
+      # stray invalid byte becomes a replacement character instead of raising
+      # ArgumentError on the downstream regex match in recognizable_feed?.
+      # (Fixtures read from disk are already UTF-8, which is why this only bit
+      # in production.)
+      doc = Nokogiri::HTML(payload.to_s.dup.force_encoding(Encoding::UTF_8).scrub, nil, "UTF-8")
 
       # A blocked, empty, or interstitial response must be a recorded failure,
       # never an empty-but-successful discovery pass (the sync layer would

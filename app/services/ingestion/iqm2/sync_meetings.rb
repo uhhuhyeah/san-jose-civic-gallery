@@ -49,7 +49,10 @@ module Ingestion
 
       def self.calendar_response_diagnostics(listing)
         payload = listing[:payload].to_s
-        text = payload.scrub
+        # String#scrub alone is a no-op on an ASCII-8BIT body (every byte is
+        # valid in binary), so force UTF-8 first; otherwise an invalid byte
+        # would surface later when the hash is JSON-serialized for the log line.
+        text = payload.dup.force_encoding(Encoding::UTF_8).scrub
         normalized_text = text.gsub(/\s+/, " ").strip
 
         {
