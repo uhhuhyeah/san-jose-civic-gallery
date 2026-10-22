@@ -135,6 +135,7 @@ module Public
       def matter_attachment_fragment(attachment, latest_text:, summary_artifact:)
         [
           "public/matter-attachment/v1",
+          "source-hosts-#{Documents::OfficialSourceHosts.digest}",
           attachment.cache_key_with_version,
           attachment.source_file_attachment&.cache_key_with_version,
           attachment.source_file_attachment&.blob&.cache_key_with_version,
