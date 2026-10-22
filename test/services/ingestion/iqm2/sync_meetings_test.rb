@@ -75,6 +75,24 @@ module Ingestion
         Rails.logger = original_logger
       end
 
+      test "logs diagnostics without crashing when the payload has invalid UTF-8 bytes" do
+        body = "<html><head><title>Denied \xE2</title></head><body><h1>Access Denied</h1></body></html>".b
+        io = StringIO.new
+        original_logger = Rails.logger
+        Rails.logger = ActiveSupport::Logger.new(io)
+
+        assert_raises(::Iqm2::MeetingCalendar::ParseError) do
+          SyncMeetings.call(client: FakeClient.new(body))
+        end
+
+        log_entry = JSON.parse(io.string.lines.last)
+        diagnostics = log_entry.fetch("iqm2_calendar_response")
+
+        assert_equal "Denied \uFFFD", diagnostics.fetch("html_title")
+      ensure
+        Rails.logger = original_logger
+      end
+
       class FakeClient
         def initialize(listing, status: 200)
           @listing = listing

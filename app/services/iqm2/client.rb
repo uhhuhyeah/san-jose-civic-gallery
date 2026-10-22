@@ -79,8 +79,18 @@ module Iqm2
         status: response.code.to_i,
         fetched_at: Time.current,
         response_sha256: Digest::SHA256.hexdigest(body),
-        payload: body
+        payload: utf8_body(body)
       }
+    end
+
+    # Net::HTTP delivers an ASCII-8BIT body. The IQM2 portal serves UTF-8 bytes,
+    # but a stray invalid byte (a truncated multibyte sequence, or an occasional
+    # mis-encoded character) makes the raw body unserializable into the snapshot's
+    # jsonb payload column. Force UTF-8 and scrub invalid sequences so the payload
+    # always round-trips to JSON; the response_sha256 above stays over the
+    # original raw bytes for byte-fidelity provenance.
+    def utf8_body(body)
+      body.dup.force_encoding(Encoding::UTF_8).scrub
     end
 
     def base_url

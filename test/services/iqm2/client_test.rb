@@ -62,6 +62,34 @@ module Iqm2
       end
     end
 
+    test "meeting_detail sanitizes an invalid UTF-8 body so the payload round-trips to JSON" do
+      raw = "<html>bad \xE2 byte</html>".b
+
+      original_start = Net::HTTP.method(:start)
+      Net::HTTP.define_singleton_method(:start) do |*args, **kwargs, &block|
+        fake_http = Object.new
+        fake_http.define_singleton_method(:request) do |req|
+          response = Net::HTTPOK.new("1.1", "200", "OK")
+          response.define_singleton_method(:body) { raw }
+          response.define_singleton_method(:code) { "200" }
+          response
+        end
+        block.call(fake_http)
+      end
+
+      begin
+        result = Client.new.meeting_detail(meeting_id: "17599")
+
+        assert_equal Encoding::UTF_8, result[:payload].encoding
+        assert result[:payload].valid_encoding?
+        assert_equal "<html>bad \uFFFD byte</html>", result[:payload]
+        # sha256 stays over the original raw bytes, not the scrubbed payload
+        assert_equal Digest::SHA256.hexdigest(raw), result[:response_sha256]
+      ensure
+        Net::HTTP.define_singleton_method(:start, original_start)
+      end
+    end
+
     test "calendar builds a US-formatted date window" do
       captured_uri = nil
 
