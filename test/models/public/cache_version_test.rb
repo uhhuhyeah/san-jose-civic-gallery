@@ -85,6 +85,22 @@ module Public
       assert_not_equal first_key, CacheVersion.matter_show(matter, jurisdiction: jurisdiction.reload)
     end
 
+    test "matter attachment fragment key changes when the official source host list changes" do
+      matter = Civic::Matter.create!(legistar_matter_id: 15887, matter_file: "26-576")
+      attachment = matter.all_attachments.create!(legistar_matter_attachment_id: 39136, name: "Memorandum")
+      key = CacheVersion.matter_attachment_fragment(attachment, latest_text: nil, summary_artifact: nil)
+
+      current_digest = Documents::OfficialSourceHosts.digest
+      widened_digest = Documents::OfficialSourceHosts.digest(
+        Documents::OfficialSourceHosts::LINK_HOSTS + %w[example.legistar.com]
+      )
+
+      assert_includes key, "source-hosts-#{current_digest}"
+      assert_not_equal current_digest, widened_digest
+      assert_equal current_digest,
+        Documents::OfficialSourceHosts.digest(Documents::OfficialSourceHosts::LINK_HOSTS.reverse)
+    end
+
     test "writes scoped to one jurisdiction do not bump the other" do
       sanjose = civic_jurisdictions(:sanjose)
       sjusd = civic_jurisdictions(:sjusd)

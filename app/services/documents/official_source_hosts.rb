@@ -1,3 +1,5 @@
+require "digest"
+
 module Documents
   # Single source of truth for the official civic-record hosts we trust.
   #
@@ -20,5 +22,12 @@ module Documents
     ].freeze
 
     LINK_HOSTS = (ATTACHMENT_HOSTS + LINK_ONLY_HOSTS).freeze
+
+    # Short fingerprint of a host list. Fragment caches that render official
+    # source links fold this in, because their record-based keys do not change
+    # when a host is added and would otherwise keep serving "unavailable".
+    def self.digest(hosts = LINK_HOSTS)
+      Digest::SHA256.hexdigest(hosts.sort.join(",")).first(12)
+    end
   end
 end
