@@ -24,13 +24,7 @@ module Documents
       end
     end
 
-    DEFAULT_ALLOWED_HOSTS = %w[
-      sanjose.legistar.com
-      scvwd.legistar.com
-      legistar.granicus.com
-      www.sanjoseca.gov
-      sccgov.iqm2.com
-    ].freeze
+    DEFAULT_ALLOWED_HOSTS = OfficialSourceHosts::ATTACHMENT_HOSTS
     DEFAULT_OPEN_TIMEOUT = 5
     DEFAULT_READ_TIMEOUT = 30
     MAX_REDIRECTS = 3

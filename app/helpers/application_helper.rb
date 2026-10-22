@@ -1,10 +1,5 @@
 module ApplicationHelper
-  OFFICIAL_SOURCE_HOSTS = %w[
-    sanjose.legistar.com
-    www.sanjoseca.gov
-    simbli.eboardsolutions.com
-    sccgov.iqm2.com
-  ].freeze
+  OFFICIAL_SOURCE_HOSTS = Documents::OfficialSourceHosts::LINK_HOSTS
   EXTRACTED_TEXT_PREVIEW_LENGTH = 1_200
   DOCUMENT_SEARCH_SNIPPET_LENGTH = 320
   GENERATED_SUMMARY_KIND = Generated::SummarizeMatterAttachment::KIND

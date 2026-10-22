@@ -16,6 +16,18 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_equal url, official_source_url(url)
   end
 
+  test "official_source_url allows the Granicus-hosted Legistar attachment host" do
+    url = "https://legistar.granicus.com/sanjose/attachments/2e522c90-5472-4265-a128-b90afa5290a1.pdf"
+    assert_equal url, official_source_url(url)
+  end
+
+  test "official_source_url allows every host the attachment downloader may fetch from" do
+    Documents::SafeHttpClient::DEFAULT_ALLOWED_HOSTS.each do |host|
+      url = "https://#{host}/x"
+      assert_equal url, official_source_url(url), "expected #{host} to be linkable"
+    end
+  end
+
   test "returns the URL for an https://www.sanjoseca.gov link" do
     assert_equal "https://www.sanjoseca.gov/your-government/appointees/city-clerk/language-access-for-city-council-and-council-committee-meetings",
       official_source_url("https://www.sanjoseca.gov/your-government/appointees/city-clerk/language-access-for-city-council-and-council-committee-meetings")
