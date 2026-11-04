@@ -41,7 +41,7 @@ ENV RAILS_ENV="production" \
 ENV PLAYWRIGHT_BROWSERS_PATH="/rails/.playwright-browsers"
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y nodejs npm && \
-    npm install -g playwright@1.60.0 && \
+    npm install -g playwright@1.64.1 && \
     playwright install-deps chromium && \
     npm cache clean --force && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives

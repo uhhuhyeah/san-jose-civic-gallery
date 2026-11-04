@@ -11,6 +11,11 @@ servers:
     hosts:
       - <%= deploy_host %>
     cmd: ./bin/jobs
+    # Playwright's Chromium sandbox needs user namespaces, which Docker's
+    # default seccomp profile blocks. The pre-app-boot hook installs this
+    # narrowly extended profile on each deploy host.
+    options:
+      security-opt: seccomp=/etc/docker/playwright-seccomp-profile.json
 
 proxy:
   ssl: true

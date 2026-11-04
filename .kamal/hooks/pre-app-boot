@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -eu
+
+remote_profile="/etc/docker/playwright-seccomp-profile.json"
+profile_url="https://raw.githubusercontent.com/microsoft/playwright/v1.64.1/utils/docker/seccomp_profile.json"
+profile_sha256="cc3e61cabda6bbc1e53e54d27ba4d55a9d3be829b6dd1a596f4a7b31b1cc7849"
+profile_file="$(mktemp)"
+trap 'rm -f "$profile_file"' EXIT
+
+curl --fail --silent --show-error --location "$profile_url" --output "$profile_file"
+printf '%s  %s\n' "$profile_sha256" "$profile_file" | shasum -a 256 -c -
+
+for host in $KAMAL_HOSTS; do
+  scp "$profile_file" "root@$host:$remote_profile.tmp"
+  ssh "root@$host" 'install -m 0644 /etc/docker/playwright-seccomp-profile.json.tmp /etc/docker/playwright-seccomp-profile.json && rm -f /etc/docker/playwright-seccomp-profile.json.tmp'
+done
