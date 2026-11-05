@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# Install the Playwright seccomp profile that the jobs role runs under (see
+# config/deploy.yml). The profile is vendored at
+# config/playwright-seccomp-profile.json, copied from
+# microsoft/playwright utils/docker/seccomp_profile.json at the version pinned
+# in lib/simbli/package.json. Refresh it when bumping Playwright.
+
+set -eu
+
+local_profile="config/playwright-seccomp-profile.json"
+remote_profile="/etc/docker/playwright-seccomp-profile.json"
+# Kamal does not expose its ssh user to hooks; keep in sync with deploy.yml.
+ssh_user="${KAMAL_SSH_USER:-root}"
+
+# KAMAL_HOSTS is comma-separated.
+for host in $(printf '%s' "$KAMAL_HOSTS" | tr ',' ' '); do
+  scp "$local_profile" "$ssh_user@$host:$remote_profile.tmp"
+  ssh "$ssh_user@$host" "install -m 0644 '$remote_profile.tmp' '$remote_profile' && rm -f '$remote_profile.tmp'"
+done

@@ -9,6 +9,12 @@
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version
 ARG RUBY_VERSION=3.3.6
+
+# Node for the Playwright-based Simbli fetcher. Debian bookworm's nodejs
+# package is Node 18, but Playwright >= 1.61 requires Node 20+. Pinned by
+# digest; node and npm are copied into the base stage below.
+FROM docker.io/library/node:22-bookworm-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da AS node
+
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 
 # Rails app lives here
@@ -37,11 +43,17 @@ ENV RAILS_ENV="production" \
 # (lib/simbli/fetch.mjs). Only the jobs role uses these. The Chromium browser
 # binary itself is installed in the build stage under PLAYWRIGHT_BROWSERS_PATH
 # (inside /rails, so it is copied into the final image); here we install Node
-# and the matching system libraries that must exist at runtime.
+# and the matching system libraries that must exist at runtime. The
+# Playwright version comes from lib/simbli/package.json so it is pinned in one
+# place (install-deps runs its own apt-get update).
 ENV PLAYWRIGHT_BROWSERS_PATH="/rails/.playwright-browsers"
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y nodejs npm && \
-    npm install -g playwright@1.60.0 && \
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/npm
+COPY lib/simbli/package.json /tmp/simbli-package.json
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm && \
+    ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx && \
+    npm install -g "playwright@$(node -p 'require("/tmp/simbli-package.json").dependencies.playwright')" && \
+    rm /tmp/simbli-package.json && \
     playwright install-deps chromium && \
     npm cache clean --force && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
