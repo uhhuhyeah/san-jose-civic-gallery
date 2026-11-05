@@ -13,7 +13,9 @@ servers:
     cmd: ./bin/jobs
     # Playwright's Chromium sandbox needs user namespaces, which Docker's
     # default seccomp profile blocks. The pre-app-boot hook installs this
-    # narrowly extended profile on each deploy host.
+    # narrowly extended profile (config/playwright-seccomp-profile.json) on
+    # each deploy host. Only this role gets it, so run the simbli:* rake tasks
+    # here: `kamal app exec --roles=jobs "bin/rails simbli:dump_listing"`.
     options:
       security-opt: seccomp=/etc/docker/playwright-seccomp-profile.json
 
